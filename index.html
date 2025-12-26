@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tic Tac Toe</h1>
+        </header>
+
+        <div id="playerSetup" class="player-setup">
+            <div id="playerManagement" class="player-management hidden">
+                <div class="player-management-header">
+                    <h2>Manage Players</h2>
+                    <button id="closePlayerManagementBtn" class="btn-close">Close</button>
+                </div>
+                <div class="add-player-section">
+                    <div class="input-group">
+                        <label for="newPlayerName">Add New Player:</label>
+                        <div class="input-with-button">
+                            <input type="text" id="newPlayerName" placeholder="Enter player name..." maxlength="20">
+                            <button id="addPlayerBtn" class="btn btn-secondary">Add</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="players-list-section">
+                    <h3>Players</h3>
+                    <div id="playersList" class="players-list"></div>
+                </div>
+                <div class="management-actions">
+                    <a href="#" id="showStatisticsLink" class="statistics-link">Player Statistics</a>
+                </div>
+            </div>
+            <div id="statisticsPasswordModal" class="password-modal hidden">
+                <div class="password-modal-content">
+                    <h3>Enter Passcode</h3>
+                    <input type="password" id="statisticsPasswordInput" class="password-input" placeholder="Enter passcode..." maxlength="10">
+                    <div class="password-modal-buttons">
+                        <button id="submitPasswordBtn" class="btn btn-primary">Submit</button>
+                        <button id="cancelPasswordBtn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                    <div id="passwordError" class="password-error hidden">Incorrect passcode. Please try again.</div>
+                </div>
+            </div>
+            <div id="playerStatistics" class="player-statistics hidden">
+                <div class="statistics-header">
+                    <h2>Player Statistics</h2>
+                    <button id="closeStatisticsBtn" class="btn-close">×</button>
+                </div>
+                <div id="statisticsContent" class="statistics-content"></div>
+            </div>
+            <div class="game-setup">
+                <h2>Start Game</h2>
+                <div class="input-group">
+                    <label for="player1Select">Player 1 (X):</label>
+                    <select id="player1Select" class="player-select">
+                        <option value="">Select a player...</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="player2Select">Player 2 (O):</label>
+                    <select id="player2Select" class="player-select">
+                        <option value="">Select a player...</option>
+                    </select>
+                </div>
+                <div id="computerDifficultyGroup" class="input-group hidden">
+                    <label for="computerDifficulty">Computer Difficulty:</label>
+                    <select id="computerDifficulty" class="player-select">
+                        <option value="easy">Easy</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <button id="startGameBtn" class="btn btn-primary">Start Game</button>
+                <a href="#" id="launchPlayerManagementLink" class="management-link">Launch Player Management</a>
+            </div>
+        </div>
+
+        <div id="gameSection" class="game-section hidden">
+            <div class="game-info">
+                <div class="current-player">
+                    <span id="currentPlayerName"></span>'s turn
+                </div>
+                <div class="player-scores">
+                    <div class="score">
+                        <span id="player1Display"></span>
+                        <div class="stats">
+                            <span>W: <span id="player1Wins">0</span></span>
+                            <span>L: <span id="player1Losses">0</span></span>
+                            <span>D: <span id="player1Draws">0</span></span>
+                        </div>
+                    </div>
+                    <div class="score">
+                        <span id="player2Display"></span>
+                        <div class="stats">
+                            <span>W: <span id="player2Wins">0</span></span>
+                            <span>L: <span id="player2Losses">0</span></span>
+                            <span>D: <span id="player2Draws">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="gameBoard" class="game-board"></div>
+                <svg id="winLine" class="win-line" viewBox="0 0 300 300">
+                    <line id="line" stroke="red" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div id="gameMessage" class="game-message"></div>
+
+            <div id="gameDifficultyGroup" class="game-difficulty-group hidden">
+                <label for="gameComputerDifficulty">Computer Difficulty:</label>
+                <select id="gameComputerDifficulty" class="player-select">
+                    <option value="easy">Easy</option>
+                    <option value="moderate" selected>Moderate</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <div id="memePopup" class="meme-popup hidden">
+                <div class="meme-popup-content">
+                    <button id="closeMemeBtn" class="meme-close-btn">×</button>
+                    <img id="memeImage" src="" alt="Victory Meme">
+                    <div class="meme-message">A special message for <span id="winnerNameSpan"></span></div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button id="newGameBtn" class="btn btn-secondary">New Game</button>
+                <button id="newPlayersBtn" class="btn btn-secondary">New Players</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
