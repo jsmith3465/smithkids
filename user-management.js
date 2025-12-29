@@ -97,6 +97,7 @@ async function loadAllUsers() {
             
             const row = document.createElement('tr');
             row.id = `userRow_${user.UID}`;
+            const isStandard = user.user_type === 'standard';
             row.innerHTML = `
                 <td>${displayName}</td>
                 <td>${user.Username}</td>
@@ -104,11 +105,12 @@ async function loadAllUsers() {
                 <td class="${statusClass}">${statusText}</td>
                 <td>
                     <div class="action-buttons">
-                        ${user.is_suspended ? 
-                            `<button class="btn btn-primary btn-small" onclick="unsuspendUser(${user.UID})">Unsuspend</button>` :
-                            `<button class="btn btn-secondary btn-small" onclick="suspendUser(${user.UID})">Suspend</button>`
-                        }
-                        ${user.user_type === 'standard' ? 
+                        ${isStandard ? (
+                            user.is_suspended ? 
+                                `<button class="btn btn-primary btn-small" onclick="unsuspendUser(${user.UID})">Unsuspend</button>` :
+                                `<button class="btn btn-secondary btn-small" onclick="suspendUser(${user.UID})">Suspend</button>`
+                        ) : ''}
+                        ${isStandard ? 
                             `<button class="btn btn-danger btn-small" onclick="deleteUser(${user.UID}, '${user.Username}')">Delete</button>` :
                             ''
                         }
@@ -175,8 +177,8 @@ async function addUser() {
             .insert({
                 Username: username,
                 Password: password, // Note: In production, this should be hashed
-                First_Name: firstName || null,
-                Last_Name: lastName || null,
+                First_Name: firstName || '',
+                Last_Name: lastName || '',
                 user_type: userType,
                 is_suspended: false
             })
