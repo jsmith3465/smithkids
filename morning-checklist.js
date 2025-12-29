@@ -155,10 +155,11 @@ async function checkAdminAccess() {
 function updateDateTime() {
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const militaryTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const traditionalTime = now.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
     
     document.getElementById('currentDate').textContent = dateStr;
-    document.getElementById('currentTime').textContent = timeStr;
+    document.getElementById('currentTime').textContent = `${militaryTime} (${traditionalTime})`;
 }
 
 function startTimeUpdate() {
@@ -170,8 +171,9 @@ function startTimeUpdate() {
 function updateLaunchTimeDisplay() {
     const hours = launchTime.substring(0, 2);
     const minutes = launchTime.substring(2, 4);
+    const militaryTime = `${hours}:${minutes}`;
     const time12 = new Date(`2000-01-01T${hours}:${minutes}:00`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    document.getElementById('launchTimeDisplay').textContent = `${time12} (${launchTime})`;
+    document.getElementById('launchTimeDisplay').textContent = `${militaryTime} (${time12})`;
 }
 
 function startCountdown() {
@@ -268,7 +270,7 @@ function updateCountdown() {
 
 function speakWarning(minutes) {
     if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(`${minutes} minute warning! ${minutes} minutes until launch!`);
+        const utterance = new SpeechSynthesisUtterance(`${minutes} minute warning`);
         utterance.rate = 0.9;
         utterance.pitch = 0.8;
         utterance.volume = 1.0;
