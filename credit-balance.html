@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Balance - SmithFamJam</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .balance-container {
+            max-width: 900px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+        }
+        
+        .balance-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #CC5500;
+        }
+        
+        .transactions-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .transactions-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .transactions-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .transactions-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .transactions-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .transaction-credit {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .transaction-debit {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .no-transactions {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container balance-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Credit Balance</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="balance-card">
+                <div class="balance-label">Current Credit Balance</div>
+                <div class="balance-amount" id="currentBalance">0</div>
+            </div>
+            
+            <div class="transactions-section">
+                <h2 style="margin-bottom: 20px;">Transaction History</h2>
+                <div id="transactionsList">
+                    <div class="loading">Loading transactions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="credit-balance.js"></script>
+</body>
+</html>
+

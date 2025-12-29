@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Add Credits - SmithFamJam</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .quick-add-container {
+            max-width: 600px;
+        }
+        
+        .quick-add-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .token-info {
+            background: #fff3cd;
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .token-info p {
+            margin: 5px 0;
+            color: #856404;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .user-selection {
+            margin-bottom: 20px;
+        }
+        
+        .user-checkbox-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .user-checkbox-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-checkbox-item:hover {
+            background: #e9ecef;
+        }
+        
+        .user-checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .credit-amount-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .credit-amount-input:focus {
+            border-color: #DAA520;
+            outline: none;
+        }
+        
+        .login-prompt {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container quick-add-container">
+        <header>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Quick Add Credits</h1>
+            </div>
+        </header>
+        
+        <div id="tokenCheck" style="text-align: center; padding: 40px;">
+            <p>Validating access...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="token-info" id="tokenInfo">
+                <p><strong>Admin Quick Access</strong></p>
+                <p id="adminName" style="font-size: 0.9rem;"></p>
+            </div>
+            
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="quick-add-form">
+                <h2 style="margin-bottom: 20px;">Add Credits to Users</h2>
+                
+                <div class="input-group">
+                    <label for="creditAmount">Credit Amount:</label>
+                    <input type="number" id="creditAmount" class="credit-amount-input" min="1" value="10" required>
+                </div>
+                
+                <div class="user-selection">
+                    <label style="margin-bottom: 10px; display: block; font-weight: 600;">Select Users:</label>
+                    <div style="margin-bottom: 10px;">
+                        <button type="button" id="selectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Select All</button>
+                        <button type="button" id="deselectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem; margin-left: 10px;">Deselect All</button>
+                    </div>
+                    <div id="userCheckboxList" class="user-checkbox-list">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+                
+                <button id="addCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
+            </div>
+            
+            <div class="login-prompt">
+                <p style="color: #666; margin-bottom: 10px;">Need full access?</p>
+                <a href="login.html" class="btn btn-secondary">Login to Full Admin Panel</a>
+            </div>
+        </div>
+        
+        <div id="invalidToken" class="hidden" style="text-align: center; padding: 40px; color: #dc3545;">
+            <h2>Invalid or Expired Link</h2>
+            <p>This access link is invalid or has expired.</p>
+            <a href="login.html" class="btn btn-primary" style="margin-top: 20px;">Login to Access</a>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="quick-add-credits.js"></script>
+</body>
+</html>
+

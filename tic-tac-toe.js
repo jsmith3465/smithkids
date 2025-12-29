@@ -1,4 +1,11 @@
-// Tic Tac Toe Game with Player Management
+// Tic Tac Toe Game - Using Users from Database
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { checkCredits, deductCredits, showCreditWarning } from './credit-system.js';
+
+const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 class TicTacToe {
     constructor() {
@@ -11,35 +18,20 @@ class TicTacToe {
         this.gameActive = false;
         this.winningLine = null;
         this.COMPUTER_ID = 'COMPUTER'; // Special ID for Computer player
-        this.players = this.loadPlayers();
-        this.computerDifficulty = this.loadDifficulty(); // Load saved difficulty
-        
-        // Ensure Computer player exists
-        this.ensureComputerPlayer();
+        this.players = {};
+        this.computerDifficulty = this.loadDifficulty();
+        this.users = []; // Store users from database
         
         this.init();
     }
 
-    init() {
+    async init() {
+        // Fetch users from database
+        await this.loadUsersFromDatabase();
+        
         this.playerSetup = document.getElementById('playerSetup');
         this.gameSection = document.getElementById('gameSection');
-        this.playerManagement = document.getElementById('playerManagement');
         this.gameSetup = document.querySelector('.game-setup');
-        this.launchPlayerManagementLink = document.getElementById('launchPlayerManagementLink');
-        this.closePlayerManagementBtn = document.getElementById('closePlayerManagementBtn');
-        this.showStatisticsLink = document.getElementById('showStatisticsLink');
-        this.statisticsPasswordModal = document.getElementById('statisticsPasswordModal');
-        this.statisticsPasswordInput = document.getElementById('statisticsPasswordInput');
-        this.submitPasswordBtn = document.getElementById('submitPasswordBtn');
-        this.cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
-        this.passwordError = document.getElementById('passwordError');
-        this.playerStatistics = document.getElementById('playerStatistics');
-        this.closeStatisticsBtn = document.getElementById('closeStatisticsBtn');
-        this.statisticsContent = document.getElementById('statisticsContent');
-        this.STATISTICS_PASSCODE = '9690'; // Master passcode for statistics
-        this.newPlayerInput = document.getElementById('newPlayerName');
-        this.addPlayerBtn = document.getElementById('addPlayerBtn');
-        this.playersList = document.getElementById('playersList');
         this.player1Select = document.getElementById('player1Select');
         this.player2Select = document.getElementById('player2Select');
         this.computerDifficultyGroup = document.getElementById('computerDifficultyGroup');
@@ -49,7 +41,9 @@ class TicTacToe {
         this.startGameBtn = document.getElementById('startGameBtn');
         
         // Set difficulty selector to saved value
-        this.computerDifficultySelect.value = this.computerDifficulty;
+        if (this.computerDifficultySelect) {
+            this.computerDifficultySelect.value = this.computerDifficulty;
+        }
         this.memePopup = document.getElementById('memePopup');
         this.memeImage = document.getElementById('memeImage');
         this.closeMemeBtn = document.getElementById('closeMemeBtn');
@@ -65,59 +59,45 @@ class TicTacToe {
         this.player2Losses = document.getElementById('player2Losses');
         this.player2Draws = document.getElementById('player2Draws');
         this.gameMessage = document.getElementById('gameMessage');
-        this.currentWinnerName = null; // Store winner name for meme
+        this.currentWinnerName = null;
         this.newGameBtn = document.getElementById('newGameBtn');
         this.newPlayersBtn = document.getElementById('newPlayersBtn');
         this.winLine = document.getElementById('winLine');
         this.line = document.getElementById('line');
         this.boardContainer = document.querySelector('.board-container');
+        this.gameHistoryList = document.getElementById('gameHistoryList');
+        this.gameStartTime = null;
 
         // Event listeners
-        this.launchPlayerManagementLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showPlayerManagement();
-        });
-        this.closePlayerManagementBtn.addEventListener('click', () => this.hidePlayerManagement());
-        this.showStatisticsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showPasswordModal();
-        });
-        this.submitPasswordBtn.addEventListener('click', () => this.checkPassword());
-        this.cancelPasswordBtn.addEventListener('click', () => this.hidePasswordModal());
-        this.statisticsPasswordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.checkPassword();
-            }
-        });
-        this.closeStatisticsBtn.addEventListener('click', () => this.hideStatistics());
-        this.addPlayerBtn.addEventListener('click', () => this.addPlayer());
-        this.newPlayerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.addPlayer();
-            }
-        });
         this.startGameBtn.addEventListener('click', () => this.startGame());
         this.player1Select.addEventListener('change', () => this.updateDifficultyVisibility());
         this.player2Select.addEventListener('change', () => this.updateDifficultyVisibility());
-        this.computerDifficultySelect.addEventListener('change', (e) => {
-            this.computerDifficulty = e.target.value;
-            this.saveDifficulty();
-            // Sync with game difficulty selector
-            if (this.gameComputerDifficultySelect) {
-                this.gameComputerDifficultySelect.value = this.computerDifficulty;
-            }
-        });
-        this.gameComputerDifficultySelect.addEventListener('change', (e) => {
-            this.computerDifficulty = e.target.value;
-            this.saveDifficulty();
-            // Sync with setup difficulty selector
-            this.computerDifficultySelect.value = this.computerDifficulty;
-        });
+        if (this.computerDifficultySelect) {
+            this.computerDifficultySelect.addEventListener('change', (e) => {
+                this.computerDifficulty = e.target.value;
+                this.saveDifficulty();
+                if (this.gameComputerDifficultySelect) {
+                    this.gameComputerDifficultySelect.value = this.computerDifficulty;
+                }
+            });
+        }
+        if (this.gameComputerDifficultySelect) {
+            this.gameComputerDifficultySelect.addEventListener('change', (e) => {
+                this.computerDifficulty = e.target.value;
+                this.saveDifficulty();
+                if (this.computerDifficultySelect) {
+                    this.computerDifficultySelect.value = this.computerDifficulty;
+                }
+            });
+        }
         this.closeMemeBtn.addEventListener('click', () => this.hideMeme());
         this.newGameBtn.addEventListener('click', () => this.newGame());
         this.newPlayersBtn.addEventListener('click', () => this.newPlayers());
         
-        // Winning memes - we'll create text-based memes with winning messages
+        // Load game history
+        this.loadGameHistory();
+        
+        // Winning memes
         this.winningMemeTemplates = [
             { top: "WHEN YOU WIN", bottom: "AT TIC TAC TOE", emoji: "😎" },
             { top: "ME AFTER WINNING", bottom: "TIC TAC TOE", emoji: "🎉" },
@@ -130,9 +110,55 @@ class TicTacToe {
         ];
         
         // Initialize UI
-        this.renderPlayersList();
         this.updatePlayerSelects();
         this.updateDifficultyVisibility();
+    }
+    
+    // Load users from database
+    async loadUsersFromDatabase() {
+        try {
+            const { data, error } = await supabase
+                .from('Users')
+                .select('UID, First_Name, Last_Name, Username')
+                .order('First_Name', { ascending: true });
+            
+            if (error) {
+                console.error('Error loading users:', error);
+                return;
+            }
+            
+            this.users = data || [];
+            
+            // Build players object with Computer player
+            this.players[this.COMPUTER_ID] = {
+                name: 'Computer',
+                wins: 0,
+                losses: 0,
+                draws: 0
+            };
+            
+            // Add users to players object
+            this.users.forEach(user => {
+                const displayName = this.getDisplayName(user);
+                this.players[user.UID] = {
+                    name: displayName,
+                    uid: user.UID,
+                    wins: 0,
+                    losses: 0,
+                    draws: 0
+                };
+            });
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+    
+    // Get display name: "First Name Last Name"
+    getDisplayName(user) {
+        const firstName = user.First_Name || '';
+        const lastName = user.Last_Name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        return fullName || user.Username || 'Unknown';
     }
     
     updateDifficultyVisibility() {
@@ -140,44 +166,20 @@ class TicTacToe {
         const p2Id = this.player2Select.value;
         const hasComputer = this.isComputerPlayer(p1Id) || this.isComputerPlayer(p2Id);
         
-        // Show/hide difficulty selector in setup
-        if (hasComputer) {
+        if (hasComputer && this.computerDifficultyGroup) {
             this.computerDifficultyGroup.classList.remove('hidden');
-        } else {
+        } else if (this.computerDifficultyGroup) {
             this.computerDifficultyGroup.classList.add('hidden');
         }
     }
 
-    // LocalStorage methods
-    loadPlayers() {
-        const stored = localStorage.getItem('ticTacToePlayers');
-        return stored ? JSON.parse(stored) : {};
-    }
-
-    savePlayers() {
-        localStorage.setItem('ticTacToePlayers', JSON.stringify(this.players));
-    }
-    
     loadDifficulty() {
         const stored = localStorage.getItem('ticTacToeDifficulty');
-        return stored || 'moderate'; // Default to moderate
+        return stored || 'moderate';
     }
     
     saveDifficulty() {
         localStorage.setItem('ticTacToeDifficulty', this.computerDifficulty);
-    }
-    
-    ensureComputerPlayer() {
-        // Always ensure Computer player exists
-        if (!this.players[this.COMPUTER_ID]) {
-            this.players[this.COMPUTER_ID] = {
-                name: 'Computer',
-                wins: 0,
-                losses: 0,
-                draws: 0
-            };
-            this.savePlayers();
-        }
     }
     
     isComputerPlayer(playerId) {
@@ -190,104 +192,6 @@ class TicTacToe {
         } else {
             return this.isComputerPlayer(this.player2Id);
         }
-    }
-
-    // Player management
-    addPlayer() {
-        const name = this.newPlayerInput.value.trim();
-        
-        if (!name) {
-            alert('Please enter a player name!');
-            return;
-        }
-
-        // Prevent creating a player named "Computer" (reserved name)
-        if (name.toLowerCase() === 'computer') {
-            alert('"Computer" is a reserved name for the system player!');
-            this.newPlayerInput.value = '';
-            return;
-        }
-
-        // Check if player already exists
-        const existingPlayer = Object.values(this.players).find(p => p.name.toLowerCase() === name.toLowerCase());
-        if (existingPlayer) {
-            alert('A player with this name already exists!');
-            this.newPlayerInput.value = '';
-            return;
-        }
-
-        // Create new player
-        const id = Date.now().toString();
-        this.players[id] = {
-            name: name,
-            wins: 0,
-            losses: 0,
-            draws: 0
-        };
-
-        this.savePlayers();
-        this.newPlayerInput.value = '';
-        this.renderPlayersList();
-        this.updatePlayerSelects();
-    }
-
-    deletePlayer(id) {
-        // Prevent deleting Computer player
-        if (id === this.COMPUTER_ID) {
-            alert('Computer player cannot be deleted!');
-            return;
-        }
-        
-        if (confirm(`Are you sure you want to delete ${this.players[id].name}?`)) {
-            delete this.players[id];
-            this.savePlayers();
-            this.renderPlayersList();
-            this.updatePlayerSelects();
-            
-            // Clear selections if deleted player was selected
-            if (this.player1Select.value === id) {
-                this.player1Select.value = '';
-            }
-            if (this.player2Select.value === id) {
-                this.player2Select.value = '';
-            }
-        }
-    }
-
-    renderPlayersList() {
-        this.playersList.innerHTML = '';
-        
-        const playerArray = Object.entries(this.players).sort((a, b) => {
-            // Put Computer first, then sort others alphabetically
-            if (a[0] === this.COMPUTER_ID) return -1;
-            if (b[0] === this.COMPUTER_ID) return 1;
-            return a[1].name.localeCompare(b[1].name);
-        });
-
-        if (playerArray.length === 0) {
-            this.playersList.innerHTML = '<p class="no-players">No players yet. Add one above!</p>';
-            return;
-        }
-
-        playerArray.forEach(([id, player]) => {
-            const playerItem = document.createElement('div');
-            playerItem.className = 'player-item';
-            const isComputer = id === this.COMPUTER_ID;
-            playerItem.innerHTML = `
-                <div class="player-info">
-                    <span class="player-name">${player.name}${isComputer ? ' 🤖' : ''}</span>
-                    <span class="player-stats-small">W: ${player.wins} | L: ${player.losses} | D: ${player.draws}</span>
-                </div>
-                ${isComputer ? '<span class="computer-badge">System Player</span>' : '<button class="btn-delete" data-id="' + id + '">Delete</button>'}
-            `;
-            
-            if (!isComputer) {
-                const deleteBtn = playerItem.querySelector('.btn-delete');
-                deleteBtn.addEventListener('click', () => this.deletePlayer(id));
-            }
-            
-            this.playersList.appendChild(playerItem);
-        });
     }
 
     updatePlayerSelects() {
@@ -326,11 +230,10 @@ class TicTacToe {
             this.player2Select.value = p2Selected;
         }
         
-        // Update difficulty visibility after restoring selections
         this.updateDifficultyVisibility();
     }
 
-    startGame() {
+    async startGame() {
         const p1Id = this.player1Select.value;
         const p2Id = this.player2Select.value;
 
@@ -343,21 +246,34 @@ class TicTacToe {
             alert('Please select two different players!');
             return;
         }
+        
+        // Check credits before starting (skip for admins)
+        const session = window.authStatus?.getSession();
+        if (session && session.userType !== 'admin') {
+            const creditCheck = await checkCredits(session.uid);
+            if (!creditCheck.hasCredits) {
+                alert(showCreditWarning(creditCheck.balance));
+                return;
+            }
+        }
 
         this.player1Id = p1Id;
         this.player2Id = p2Id;
         this.player1Name = this.players[p1Id].name;
         this.player2Name = this.players[p2Id].name;
+        this.player1Symbol = null; // Will be set in initializeBoard
+        this.player2Symbol = null; // Will be set in initializeBoard
 
         this.playerSetup.classList.add('hidden');
         this.gameSection.classList.remove('hidden');
         
-        // Show/hide difficulty selector on game board
         const hasComputer = this.isComputerPlayer(p1Id) || this.isComputerPlayer(p2Id);
-        if (hasComputer) {
+        if (hasComputer && this.gameDifficultyGroup) {
             this.gameDifficultyGroup.classList.remove('hidden');
-            this.gameComputerDifficultySelect.value = this.computerDifficulty;
-        } else {
+            if (this.gameComputerDifficultySelect) {
+                this.gameComputerDifficultySelect.value = this.computerDifficulty;
+            }
+        } else if (this.gameDifficultyGroup) {
             this.gameDifficultyGroup.classList.add('hidden');
         }
         
@@ -367,18 +283,20 @@ class TicTacToe {
 
     initializeBoard() {
         this.board = Array(9).fill(null);
-        // Randomly select which player goes first
         this.currentPlayer = Math.random() < 0.5 ? 'X' : 'O';
+        // Player 1 is always X, Player 2 is always O (as per UI labels)
+        this.player1Symbol = 'X';
+        this.player2Symbol = 'O';
         this.gameActive = true;
         this.winningLine = null;
         this.clearWinLine();
         this.gameMessage.textContent = '';
         this.gameMessage.className = 'game-message';
-        this.gameMessage.onclick = null; // Remove click handler
-        this.currentWinnerName = null; // Reset winner name
+        this.gameMessage.onclick = null;
+        this.currentWinnerName = null;
         this.hideMeme();
+        this.gameStartTime = Date.now(); // Track game start time
         
-        // Disable New Game button until game is finished
         this.newGameBtn.disabled = true;
         this.newGameBtn.classList.add('btn-disabled');
         
@@ -394,7 +312,6 @@ class TicTacToe {
         
         this.updateDisplay();
         
-        // If Computer goes first, make a move
         if (this.isCurrentPlayerComputer() && this.gameActive) {
             setTimeout(() => {
                 this.computerMove();
@@ -403,7 +320,6 @@ class TicTacToe {
     }
 
     handleCellClick(index) {
-        // Don't allow clicks if it's Computer's turn
         if (this.isCurrentPlayerComputer()) {
             return;
         }
@@ -418,9 +334,7 @@ class TicTacToe {
     makeMove(index) {
         this.board[index] = this.currentPlayer;
         const cell = this.gameBoard.children[index];
-        // Set text immediately for instant display
         cell.textContent = this.currentPlayer;
-        // Force immediate reflow to ensure text appears
         cell.offsetHeight;
         cell.classList.add(this.currentPlayer.toLowerCase());
         cell.classList.add('disabled');
@@ -437,11 +351,10 @@ class TicTacToe {
             this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
             this.updateDisplay();
             
-            // If it's now Computer's turn, make a move
             if (this.isCurrentPlayerComputer() && this.gameActive) {
                 setTimeout(() => {
                     this.computerMove();
-                }, 500); // Small delay for better UX
+                }, 500);
             }
         }
     }
@@ -451,7 +364,6 @@ class TicTacToe {
             return;
         }
         
-        // Get all available moves
         const availableMoves = [];
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
@@ -463,13 +375,12 @@ class TicTacToe {
             return;
         }
         
-        // Use different AI based on difficulty
         let bestMove;
         if (this.computerDifficulty === 'easy') {
             bestMove = this.findEasyMove();
         } else if (this.computerDifficulty === 'moderate') {
             bestMove = this.findBestMove();
-        } else { // hard
+        } else {
             bestMove = this.findHardMove();
         }
         
@@ -477,7 +388,6 @@ class TicTacToe {
     }
     
     findEasyMove() {
-        // Easy: Random moves
         const availableMoves = [];
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
@@ -491,50 +401,44 @@ class TicTacToe {
         const computerSymbol = this.currentPlayer;
         const opponentSymbol = computerSymbol === 'X' ? 'O' : 'X';
         
-        // 1. Check if Computer can win in one move
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
                 this.board[i] = computerSymbol;
                 if (this.checkWinner() && this.checkWinner().player === computerSymbol) {
-                    this.board[i] = null; // Reset
+                    this.board[i] = null;
                     return i;
                 }
-                this.board[i] = null; // Reset
+                this.board[i] = null;
             }
         }
         
-        // 2. Check if opponent can win in one move - block it
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
                 this.board[i] = opponentSymbol;
                 if (this.checkWinner() && this.checkWinner().player === opponentSymbol) {
-                    this.board[i] = null; // Reset
-                    return i; // Block opponent's winning move
+                    this.board[i] = null;
+                    return i;
                 }
-                this.board[i] = null; // Reset
+                this.board[i] = null;
             }
         }
         
-        // 3. Try to create a fork (two winning opportunities)
         const forkMove = this.findForkMove(computerSymbol, opponentSymbol);
         if (forkMove !== null) {
             return forkMove;
         }
         
-        // 4. Block opponent's fork
         const blockForkMove = this.findForkMove(opponentSymbol, computerSymbol);
         if (blockForkMove !== null) {
             return blockForkMove;
         }
         
-        // 5. Take center if available (best strategic position)
         if (this.board[4] === null) {
             return 4;
         }
         
-        // 6. Take opposite corner if opponent has a corner
         const corners = [0, 2, 6, 8];
-        const cornerPairs = [[0, 8], [2, 6]]; // Opposite corners
+        const cornerPairs = [[0, 8], [2, 6]];
         for (let pair of cornerPairs) {
             const [corner1, corner2] = pair;
             if (this.board[corner1] === opponentSymbol && this.board[corner2] === null) {
@@ -545,18 +449,14 @@ class TicTacToe {
             }
         }
         
-        // 7. Take an empty corner
         const availableCorners = corners.filter(i => this.board[i] === null);
         if (availableCorners.length > 0) {
-            // Prefer corners that create better opportunities
             return availableCorners[0];
         }
         
-        // 8. Take an edge that creates opportunities
         const edges = [1, 3, 5, 7];
         const availableEdges = edges.filter(i => this.board[i] === null);
         if (availableEdges.length > 0) {
-            // Prefer edges that are adjacent to computer's pieces
             for (let edge of availableEdges) {
                 const adjacentPositions = this.getAdjacentPositions(edge);
                 const hasAdjacentComputerPiece = adjacentPositions.some(pos => this.board[pos] === computerSymbol);
@@ -567,7 +467,6 @@ class TicTacToe {
             return availableEdges[0];
         }
         
-        // Fallback (shouldn't reach here)
         const availableMoves = [];
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
@@ -578,15 +477,14 @@ class TicTacToe {
     }
     
     findForkMove(playerSymbol, opponentSymbol) {
-        // Check if placing a piece creates two winning opportunities (fork)
         for (let i = 0; i < 9; i++) {
             if (this.board[i] === null) {
                 this.board[i] = playerSymbol;
                 const winningLines = this.countWinningLines(playerSymbol);
-                this.board[i] = null; // Reset
+                this.board[i] = null;
                 
                 if (winningLines >= 2) {
-                    return i; // This creates a fork
+                    return i;
                 }
             }
         }
@@ -595,9 +493,9 @@ class TicTacToe {
     
     countWinningLines(symbol) {
         const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-            [0, 4, 8], [2, 4, 6]  // Diagonals
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
         
         let count = 0;
@@ -607,7 +505,6 @@ class TicTacToe {
             const symbolCount = line.filter(cell => cell === symbol).length;
             const emptyCount = line.filter(cell => cell === null).length;
             
-            // If this line has 2 of our symbols and 1 empty, it's a winning opportunity
             if (symbolCount === 2 && emptyCount === 1) {
                 count++;
             }
@@ -616,23 +513,15 @@ class TicTacToe {
     }
     
     getAdjacentPositions(position) {
-        // Returns positions adjacent to the given position
         const adjacentMap = {
-            0: [1, 3, 4],
-            1: [0, 2, 4],
-            2: [1, 4, 5],
-            3: [0, 4, 6],
-            4: [0, 1, 2, 3, 5, 6, 7, 8],
-            5: [2, 4, 8],
-            6: [3, 4, 7],
-            7: [4, 6, 8],
-            8: [4, 5, 7]
+            0: [1, 3, 4], 1: [0, 2, 4], 2: [1, 4, 5],
+            3: [0, 4, 6], 4: [0, 1, 2, 3, 5, 6, 7, 8], 5: [2, 4, 8],
+            6: [3, 4, 7], 7: [4, 6, 8], 8: [4, 5, 7]
         };
         return adjacentMap[position] || [];
     }
     
     findHardMove() {
-        // Hard: Use minimax algorithm for optimal play
         const computerSymbol = this.currentPlayer;
         const opponentSymbol = computerSymbol === 'X' ? 'O' : 'X';
         
@@ -652,19 +541,18 @@ class TicTacToe {
             }
         }
         
-        return bestMove !== null ? bestMove : this.findBestMove(); // Fallback to moderate if needed
+        return bestMove !== null ? bestMove : this.findBestMove();
     }
     
     minimax(board, depth, isMaximizing, computerSymbol, opponentSymbol) {
-        // Check for terminal states
         const winner = this.evaluateBoard(board, computerSymbol, opponentSymbol);
         
         if (winner === computerSymbol) {
-            return 10 - depth; // Prefer faster wins
+            return 10 - depth;
         } else if (winner === opponentSymbol) {
-            return depth - 10; // Prefer slower losses
+            return depth - 10;
         } else if (this.isBoardFull(board)) {
-            return 0; // Draw
+            return 0;
         }
         
         if (isMaximizing) {
@@ -694,9 +582,9 @@ class TicTacToe {
     
     evaluateBoard(board, computerSymbol, opponentSymbol) {
         const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-            [0, 4, 8], [2, 4, 6]  // Diagonals
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
         
         for (let pattern of winPatterns) {
@@ -714,14 +602,9 @@ class TicTacToe {
 
     checkWinner() {
         const winPatterns = [
-            [0, 1, 2], // Top row
-            [3, 4, 5], // Middle row
-            [6, 7, 8], // Bottom row
-            [0, 3, 6], // Left column
-            [1, 4, 7], // Middle column
-            [2, 5, 8], // Right column
-            [0, 4, 8], // Diagonal top-left to bottom-right
-            [2, 4, 6]  // Diagonal top-right to bottom-left
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
 
         for (let pattern of winPatterns) {
@@ -736,17 +619,14 @@ class TicTacToe {
         return null;
     }
 
-    handleWin(winner) {
+    async handleWin(winner) {
         const winnerName = winner.player === 'X' ? this.player1Name : this.player2Name;
-        const loserName = winner.player === 'X' ? this.player2Name : this.player1Name;
         
-        // Store winner name for meme
         this.currentWinnerName = winnerName;
         
         this.gameMessage.textContent = `${winnerName} wins!`;
         this.gameMessage.classList.add('winner', 'clickable-message');
         
-        // Update stats
         if (winner.player === 'X') {
             this.players[this.player1Id].wins++;
             this.players[this.player2Id].losses++;
@@ -755,161 +635,39 @@ class TicTacToe {
             this.players[this.player1Id].losses++;
         }
         
-        this.savePlayers();
         this.updatePlayerStats();
         this.drawWinLine(winner.pattern);
         
-        // Make message clickable to show meme
+        // Deduct credits (skip for admins)
+        const session = window.authStatus?.getSession();
+        if (session && session.userType !== 'admin') {
+            await deductCredits(session.uid, 'tic_tac_toe');
+        }
+        
+        // Save game result to database
+        const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        await this.saveGameResult(winner.player, false, gameDuration);
+        
         this.gameMessage.onclick = () => {
             if (this.currentWinnerName) {
                 this.showRandomMeme(this.currentWinnerName);
             }
         };
         
-        // Disable all cells
         Array.from(this.gameBoard.children).forEach(cell => {
             cell.classList.add('disabled');
         });
         
-        // Enable New Game button now that game is finished
         this.newGameBtn.disabled = false;
         this.newGameBtn.classList.remove('btn-disabled');
-    }
-    
-    showPlayerManagement() {
-        this.playerManagement.classList.remove('hidden');
-        this.gameSetup.classList.add('hidden');
-        this.hideStatistics(); // Hide statistics if open
-    }
-    
-    hidePlayerManagement() {
-        // Hide statistics if it's open
-        this.playerStatistics.classList.add('hidden');
-        // Hide player management
-        this.playerManagement.classList.add('hidden');
-        // Show game setup
-        this.gameSetup.classList.remove('hidden');
-    }
-    
-    showPasswordModal() {
-        this.statisticsPasswordInput.value = '';
-        this.passwordError.classList.add('hidden');
-        this.statisticsPasswordModal.classList.remove('hidden');
-        // Focus on input
-        setTimeout(() => {
-            this.statisticsPasswordInput.focus();
-        }, 100);
-    }
-    
-    hidePasswordModal() {
-        this.statisticsPasswordModal.classList.add('hidden');
-        this.statisticsPasswordInput.value = '';
-        this.passwordError.classList.add('hidden');
-    }
-    
-    checkPassword() {
-        const enteredPassword = this.statisticsPasswordInput.value.trim();
         
-        if (enteredPassword === this.STATISTICS_PASSCODE) {
-            this.hidePasswordModal();
-            this.showStatistics();
-        } else {
-            this.passwordError.classList.remove('hidden');
-            this.statisticsPasswordInput.value = '';
-            this.statisticsPasswordInput.focus();
-        }
-    }
-    
-    showStatistics() {
-        this.renderStatistics();
-        this.playerManagement.classList.add('hidden');
-        this.playerStatistics.classList.remove('hidden');
-    }
-    
-    hideStatistics() {
-        this.playerStatistics.classList.add('hidden');
-        // Show player management again (since we're in the setup screen)
-        if (this.playerSetup && !this.playerSetup.classList.contains('hidden')) {
-            this.playerManagement.classList.remove('hidden');
-        }
-    }
-    
-    renderStatistics() {
-        this.statisticsContent.innerHTML = '';
-        
-        // Calculate statistics for each player
-        const playerStats = Object.entries(this.players).map(([id, player]) => {
-            const totalGames = player.wins + player.losses + player.draws;
-            const winPercentage = totalGames > 0 
-                ? ((player.wins / totalGames) * 100).toFixed(1) 
-                : '0.0';
-            
-            return {
-                id,
-                name: player.name,
-                wins: player.wins,
-                losses: player.losses,
-                draws: player.draws,
-                totalGames,
-                winPercentage: parseFloat(winPercentage),
-                isComputer: id === this.COMPUTER_ID
-            };
-        });
-        
-        // Sort by winning percentage (descending), then by total games
-        playerStats.sort((a, b) => {
-            if (b.winPercentage !== a.winPercentage) {
-                return b.winPercentage - a.winPercentage;
-            }
-            return b.totalGames - a.totalGames;
-        });
-        
-        if (playerStats.length === 0) {
-            this.statisticsContent.innerHTML = '<p class="no-stats">No player statistics available yet.</p>';
-            return;
-        }
-        
-        // Create statistics table
-        const statsTable = document.createElement('table');
-        statsTable.className = 'stats-table';
-        
-        // Header
-        const headerRow = document.createElement('tr');
-        headerRow.innerHTML = `
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Wins</th>
-            <th>Losses</th>
-            <th>Draws</th>
-            <th>Total Games</th>
-            <th>Win %</th>
-        `;
-        statsTable.appendChild(headerRow);
-        
-        // Data rows
-        playerStats.forEach((stat, index) => {
-            const row = document.createElement('tr');
-            row.className = stat.isComputer ? 'computer-row' : '';
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${stat.name}${stat.isComputer ? ' 🤖' : ''}</td>
-                <td>${stat.wins}</td>
-                <td>${stat.losses}</td>
-                <td>${stat.draws}</td>
-                <td>${stat.totalGames}</td>
-                <td><strong>${stat.winPercentage}%</strong></td>
-            `;
-            statsTable.appendChild(row);
-        });
-        
-        this.statisticsContent.appendChild(statsTable);
+        // Reload game history
+        this.loadGameHistory();
     }
     
     showRandomMeme(winnerName) {
-        // Set winner name in the message
         this.winnerNameSpan.textContent = winnerName;
         
-        // Create a random winning meme
         const memeTemplate = this.winningMemeTemplates[Math.floor(Math.random() * this.winningMemeTemplates.length)];
         this.createTextMeme(memeTemplate);
         
@@ -917,35 +675,29 @@ class TicTacToe {
     }
     
     createTextMeme(template) {
-        // Create a text-based winning meme
         const canvas = document.createElement('canvas');
         canvas.width = 600;
         canvas.height = 500;
         const ctx = canvas.getContext('2d');
         
-        // Background gradient
         const gradient = ctx.createLinearGradient(0, 0, 600, 500);
         gradient.addColorStop(0, '#FFD700');
         gradient.addColorStop(1, '#FFA500');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 600, 500);
         
-        // Border
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 5;
         ctx.strokeRect(5, 5, 590, 490);
         
-        // Top text
         ctx.fillStyle = '#000';
         ctx.font = 'bold 48px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(template.top, 300, 150);
         
-        // Bottom text
         ctx.font = 'bold 48px Arial';
         ctx.fillText(template.bottom, 300, 250);
         
-        // Emoji
         ctx.font = 'bold 100px Arial';
         ctx.fillText(template.emoji, 300, 380);
         
@@ -956,28 +708,36 @@ class TicTacToe {
         this.memePopup.classList.add('hidden');
     }
 
-    handleDraw() {
+    async handleDraw() {
         this.gameMessage.textContent = "It's a draw! (Cat's Game)";
         this.gameMessage.classList.add('draw');
         
-        // Update stats
         this.players[this.player1Id].draws++;
         this.players[this.player2Id].draws++;
         
-        this.savePlayers();
         this.updatePlayerStats();
         
-        // Enable New Game button now that game is finished
+        // Deduct credits (skip for admins)
+        const session = window.authStatus?.getSession();
+        if (session && session.userType !== 'admin') {
+            await deductCredits(session.uid, 'tic_tac_toe');
+        }
+        
+        // Save game result to database
+        const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        await this.saveGameResult(null, true, gameDuration);
+        
         this.newGameBtn.disabled = false;
         this.newGameBtn.classList.remove('btn-disabled');
+        
+        // Reload game history
+        this.loadGameHistory();
     }
 
     drawWinLine(pattern) {
         const [a, b, c] = pattern;
-        const boardRect = this.gameBoard.getBoundingClientRect();
         const containerRect = this.boardContainer.getBoundingClientRect();
         
-        // Get cell positions
         const getCellCenter = (index) => {
             const cell = this.gameBoard.children[index];
             const cellRect = cell.getBoundingClientRect();
@@ -989,12 +749,10 @@ class TicTacToe {
         const start = getCellCenter(a);
         const end = getCellCenter(c);
         
-        // Set SVG dimensions to match container
         this.winLine.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
         this.winLine.setAttribute('width', containerRect.width);
         this.winLine.setAttribute('height', containerRect.height);
         
-        // Draw the line
         this.line.setAttribute('x1', start.x);
         this.line.setAttribute('y1', start.y);
         this.line.setAttribute('x2', end.x);
@@ -1044,23 +802,187 @@ class TicTacToe {
         this.playerSetup.classList.remove('hidden');
         this.updatePlayerSelects();
     }
+    
+    async saveGameResult(winnerSymbol, isDraw, gameDuration) {
+        const session = window.authStatus?.getSession();
+        if (!session || !session.uid) {
+            console.error('No user session found');
+            return;
+        }
+        
+        try {
+            // Determine player UIDs and symbols
+            const p1IsComputer = this.isComputerPlayer(this.player1Id);
+            const p2IsComputer = this.isComputerPlayer(this.player2Id);
+            
+            // Get player UIDs (null for Computer)
+            const player1Uid = p1IsComputer ? null : parseInt(this.player1Id);
+            const player2Uid = p2IsComputer ? null : parseInt(this.player2Id);
+            
+            // Use stored player symbols
+            const player1Symbol = this.player1Symbol || 'X';
+            const player2Symbol = this.player2Symbol || 'O';
+            
+            // Determine winner UID
+            let winnerUid = null;
+            if (!isDraw && winnerSymbol) {
+                if (winnerSymbol === player1Symbol) {
+                    winnerUid = p1IsComputer ? null : player1Uid;
+                } else {
+                    winnerUid = p2IsComputer ? null : player2Uid;
+                }
+            }
+            
+            const gameData = {
+                player1_uid: player1Uid,
+                player2_uid: player2Uid,
+                player1_symbol: player1Symbol,
+                player2_symbol: player2Symbol,
+                winner_uid: winnerUid,
+                is_computer_player: p1IsComputer || p2IsComputer,
+                is_draw: isDraw,
+                game_duration_seconds: gameDuration
+            };
+            
+            const { error } = await supabase
+                .from('TTT_Game_Results')
+                .insert(gameData);
+            
+            if (error) {
+                console.error('Error saving game result:', error);
+            }
+        } catch (error) {
+            console.error('Error saving game result:', error);
+        }
+    }
+    
+    async loadGameHistory() {
+        if (!this.gameHistoryList) return;
+        
+        try {
+            // Get all game results
+            const { data: games, error: gamesError } = await supabase
+                .from('TTT_Game_Results')
+                .select('game_id, player1_uid, player2_uid, player1_symbol, player2_symbol, winner_uid, is_computer_player, is_draw, game_duration_seconds, created_at')
+                .order('created_at', { ascending: false })
+                .limit(50);
+            
+            if (gamesError) {
+                console.error('Error loading game history:', gamesError);
+                this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">Error loading game history</p>';
+                return;
+            }
+            
+            if (!games || games.length === 0) {
+                this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">No games played yet. Start a game to see history!</p>';
+                return;
+            }
+            
+            // Get unique user UIDs
+            const userIds = new Set();
+            games.forEach(game => {
+                if (game.player1_uid) userIds.add(game.player1_uid);
+                if (game.player2_uid) userIds.add(game.player2_uid);
+            });
+            
+            // Fetch user information
+            const { data: users, error: usersError } = await supabase
+                .from('Users')
+                .select('UID, First_Name, Last_Name, Username')
+                .in('UID', Array.from(userIds));
+            
+            if (usersError) {
+                console.error('Error loading users:', usersError);
+            }
+            
+            // Create user map
+            const userMap = {};
+            if (users) {
+                users.forEach(user => {
+                    userMap[user.UID] = user;
+                });
+            }
+            
+            // Build history display
+            this.gameHistoryList.innerHTML = '';
+            
+            games.forEach(game => {
+                const historyItem = document.createElement('div');
+                historyItem.style.cssText = 'padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #DAA520;';
+                
+                // Get player names
+                const p1Name = game.player1_uid 
+                    ? this.getUserName(userMap[game.player1_uid])
+                    : 'Computer 🤖';
+                const p2Name = game.player2_uid 
+                    ? this.getUserName(userMap[game.player2_uid])
+                    : 'Computer 🤖';
+                
+                // Determine result
+                let resultText = '';
+                let resultColor = '#666';
+                if (game.is_draw) {
+                    resultText = 'Draw';
+                    resultColor = '#856404';
+                } else if (game.winner_uid === null && game.is_computer_player) {
+                    resultText = 'Computer Won';
+                    resultColor = '#CC5500';
+                } else if (game.winner_uid) {
+                    const winnerName = this.getUserName(userMap[game.winner_uid]);
+                    resultText = `${winnerName} Won`;
+                    resultColor = '#28a745';
+                } else {
+                    resultText = 'Unknown';
+                }
+                
+                // Format date
+                const gameDate = new Date(game.created_at);
+                const dateStr = gameDate.toLocaleDateString() + ' ' + gameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                historyItem.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-weight: 600; color: #333; margin-bottom: 5px;">
+                                ${p1Name} (${game.player1_symbol}) vs ${p2Name} (${game.player2_symbol})
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666;">
+                                ${dateStr} • ${game.game_duration_seconds}s
+                            </div>
+                        </div>
+                        <div style="font-weight: 700; color: ${resultColor}; font-size: 1.1rem;">
+                            ${resultText}
+                        </div>
+                    </div>
+                `;
+                
+                this.gameHistoryList.appendChild(historyItem);
+            });
+        } catch (error) {
+            console.error('Error loading game history:', error);
+            this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">Error loading game history</p>';
+        }
+    }
+    
+    getUserName(user) {
+        if (!user) return 'Unknown';
+        if (user.First_Name && user.Last_Name) {
+            return `${user.First_Name} ${user.Last_Name}`;
+        }
+        return user.Username || 'Unknown';
+    }
 }
 
 // Initialize the game when DOM is loaded and authenticated
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for authentication check to complete
-    // auth.js will set window.authStatus when ready
     const checkAuth = setInterval(() => {
         if (window.authStatus && window.authStatus.isAuthenticated) {
             clearInterval(checkAuth);
             new TicTacToe();
         } else if (window.authStatus && !window.authStatus.isAuthenticated) {
-            // User will be redirected to login, don't initialize game
             clearInterval(checkAuth);
         }
     }, 100);
     
-    // Timeout after 5 seconds to prevent infinite waiting
     setTimeout(() => {
         clearInterval(checkAuth);
         if (!window.authStatus || !window.authStatus.isAuthenticated) {
@@ -1068,3 +990,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 5000);
 });
+

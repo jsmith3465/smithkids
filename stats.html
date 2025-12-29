@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics - SmithFamJam</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .stats-container {
+            max-width: 1000px;
+        }
+        
+        .stats-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #DAA520;
+            padding-bottom: 10px;
+        }
+        
+        .snake-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-card-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+        }
+        
+        .stat-card-player {
+            font-size: 1rem;
+            color: #333;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        
+        .ttt-stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .ttt-stats-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .ttt-stats-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .ttt-stats-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .ttt-stats-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .ttt-stats-table .most-row {
+            background: #fff3cd;
+            font-weight: 600;
+        }
+        
+        .ttt-stats-table .most-row:hover {
+            background: #ffeaa7;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container stats-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Game Statistics</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <!-- Snake Game Statistics -->
+            <div class="stats-section">
+                <h2>🐍 Snake Game Statistics</h2>
+                <div id="snakeStats" class="snake-stats">
+                    <div class="loading">Loading statistics...</div>
+                </div>
+            </div>
+            
+            <!-- Tic Tac Toe Statistics -->
+            <div class="stats-section">
+                <h2>⭕❌ Tic Tac Toe Statistics</h2>
+                <div id="tttStats">
+                    <div class="loading">Loading statistics...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="stats.js"></script>
+</body>
+</html>
+

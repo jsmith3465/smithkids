@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - SmithFamJam</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #gameHistorySection {
+            margin-top: 30px;
+        }
+        
+        #gameHistorySection h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        #gameHistoryList {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #gameHistoryList::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #gameHistoryList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        #gameHistoryList::-webkit-scrollbar-thumb {
+            background: #DAA520;
+            border-radius: 10px;
+        }
+        
+        #gameHistoryList::-webkit-scrollbar-thumb:hover {
+            background: #CC5500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <h1 style="margin: 0;">Tic Tac Toe</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
+                    <button id="logoutBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Logout</button>
+                </div>
+            </div>
+        </header>
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+        <div id="playerSetup" class="player-setup">
+            <div class="game-setup">
+                <h2>Start Game</h2>
+                <div class="input-group">
+                    <label for="player1Select">Player 1 (X):</label>
+                    <select id="player1Select" class="player-select">
+                        <option value="">Select a player...</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="player2Select">Player 2 (O):</label>
+                    <select id="player2Select" class="player-select">
+                        <option value="">Select a player...</option>
+                    </select>
+                </div>
+                <div id="computerDifficultyGroup" class="input-group hidden">
+                    <label for="computerDifficulty">Computer Difficulty:</label>
+                    <select id="computerDifficulty" class="player-select">
+                        <option value="easy">Easy</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <button id="startGameBtn" class="btn btn-primary">Start Game</button>
+            </div>
+        </div>
+
+        <div id="gameSection" class="game-section hidden">
+            <div class="game-info">
+                <div class="current-player">
+                    <span id="currentPlayerName"></span>'s turn
+                </div>
+                <div class="player-scores">
+                    <div class="score">
+                        <span id="player1Display"></span>
+                        <div class="stats">
+                            <span>W: <span id="player1Wins">0</span></span>
+                            <span>L: <span id="player1Losses">0</span></span>
+                            <span>D: <span id="player1Draws">0</span></span>
+                        </div>
+                    </div>
+                    <div class="score">
+                        <span id="player2Display"></span>
+                        <div class="stats">
+                            <span>W: <span id="player2Wins">0</span></span>
+                            <span>L: <span id="player2Losses">0</span></span>
+                            <span>D: <span id="player2Draws">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="gameBoard" class="game-board"></div>
+                <svg id="winLine" class="win-line" viewBox="0 0 300 300">
+                    <line id="line" stroke="red" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div id="gameMessage" class="game-message"></div>
+
+            <div id="gameDifficultyGroup" class="game-difficulty-group hidden">
+                <label for="gameComputerDifficulty">Computer Difficulty:</label>
+                <select id="gameComputerDifficulty" class="player-select">
+                    <option value="easy">Easy</option>
+                    <option value="moderate" selected>Moderate</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <div id="memePopup" class="meme-popup hidden">
+                <div class="meme-popup-content">
+                    <button id="closeMemeBtn" class="meme-close-btn">×</button>
+                    <img id="memeImage" src="" alt="Victory Meme">
+                    <div class="meme-message">A special message for <span id="winnerNameSpan"></span></div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button id="newGameBtn" class="btn btn-secondary">New Game</button>
+                <button id="newPlayersBtn" class="btn btn-secondary">New Players</button>
+            </div>
+        </div>
+        
+        <div id="gameHistorySection" class="player-setup" style="margin-top: 30px;">
+            <h2 style="margin-bottom: 20px;">Game History</h2>
+            <div id="gameHistoryList" style="background: white; border-radius: 10px; padding: 20px; max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: #999;">Loading game history...</p>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="tic-tac-toe.js"></script>
+</body>
+</html>
+

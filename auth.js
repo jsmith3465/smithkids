@@ -1,0 +1,130 @@
+// Authentication check and session management
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+// Initialize Supabase client
+const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Session timeout: 20 minutes in milliseconds
+const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 minutes
+let sessionTimeoutId = null;
+
+// Check authentication status
+function checkAuthentication() {
+    const sessionData = sessionStorage.getItem('userSession');
+    
+    if (!sessionData) {
+        // No session, redirect to login
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    try {
+        const session = JSON.parse(sessionData);
+        
+        // Verify session is valid
+        if (!session.uid || !session.username) {
+            sessionStorage.removeItem('userSession');
+            window.location.href = 'login.html';
+            return false;
+        }
+        
+        // Check if session has expired (20 minutes)
+        const now = Date.now();
+        const loginTime = new Date(session.loginTime).getTime();
+        const elapsed = now - loginTime;
+        
+        if (elapsed > SESSION_TIMEOUT) {
+            // Session expired
+            sessionStorage.removeItem('userSession');
+            alert('Your session has expired. Please log in again.');
+            window.location.href = 'login.html';
+            return false;
+        }
+        
+        // Reset session timeout
+        resetSessionTimeout();
+
+        // Display user info
+        displayUserInfo(session);
+        
+        // Show main content (if element exists - for pages that use it)
+        const authCheck = document.getElementById('authCheck');
+        const mainContent = document.getElementById('mainContent');
+        if (authCheck) authCheck.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('hidden');
+        
+        return true;
+    } catch (error) {
+        console.error('Error parsing session:', error);
+        sessionStorage.removeItem('userSession');
+        window.location.href = 'login.html';
+        return false;
+    }
+}
+
+// Reset session timeout
+function resetSessionTimeout() {
+    // Clear existing timeout
+    if (sessionTimeoutId) {
+        clearTimeout(sessionTimeoutId);
+    }
+    
+    // Set new timeout
+    sessionTimeoutId = setTimeout(() => {
+        sessionStorage.removeItem('userSession');
+        alert('Your session has expired due to inactivity. Please log in again.');
+        window.location.href = 'login.html';
+    }, SESSION_TIMEOUT);
+    
+    // Also reset on user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, resetSessionTimeout, { once: true });
+    });
+}
+
+// Display user information
+function displayUserInfo(session) {
+    const userInfo = document.getElementById('userInfo');
+    const displayName = session.firstName && session.lastName 
+        ? `${session.firstName} ${session.lastName}` 
+        : session.username;
+    userInfo.textContent = `Welcome, ${displayName}`;
+}
+
+// Handle logout
+function handleLogout() {
+    if (sessionTimeoutId) {
+        clearTimeout(sessionTimeoutId);
+    }
+    sessionStorage.removeItem('userSession');
+    window.location.href = 'login.html';
+}
+
+// Export handleLogout for use in other scripts
+window.handleLogout = handleLogout;
+
+// Initialize authentication check when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Set up logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Check authentication
+    const isAuthenticated = checkAuthentication();
+    
+    // Export authentication status for use in other scripts
+    window.authStatus = {
+        isAuthenticated: isAuthenticated,
+        getSession: () => {
+            const sessionData = sessionStorage.getItem('userSession');
+            return sessionData ? JSON.parse(sessionData) : null;
+        }
+    };
+});
+

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Tic Tac Toe</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .login-form {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .login-form h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .login-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        .login-error.show {
+            display: block;
+        }
+        
+        .login-loading {
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+        
+        .login-loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container">
+        <div class="login-form">
+            <h1>Tic Tac Toe</h1>
+            <div id="loginError" class="login-error"></div>
+            <div id="loginLoading" class="login-loading">Logging in...</div>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="login.js"></script>
+</body>
+</html>
+
