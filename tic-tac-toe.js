@@ -985,7 +985,12 @@ class TicTacToe {
                 .select('room_id, room_code')
                 .single();
             
-            if (error) throw error;
+            if (error) {
+                console.error('Error creating room:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                alert(`Failed to create room: ${error.message || 'Unknown error'}. Please check the console for details.`);
+                return;
+            }
             
             this.roomId = room.room_id;
             this.roomCode = room.room_code;
@@ -1006,7 +1011,8 @@ class TicTacToe {
             
         } catch (error) {
             console.error('Error creating room:', error);
-            alert('Failed to create room. Please try again.');
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            alert(`Failed to create room: ${error.message || 'Unknown error'}. Please check the console for details.`);
         }
     }
     
