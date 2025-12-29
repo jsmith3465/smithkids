@@ -14,6 +14,8 @@ let codeEntered = false;
 let warning15Min = false;
 let warning10Min = false;
 let warning5Min = false;
+let warning1Min = false;
+let warning0Min = false;
 let launchAlarmPlayed = false;
 
 // Initialize page
@@ -203,6 +205,8 @@ function updateCountdown() {
         warning15Min = false;
         warning10Min = false;
         warning5Min = false;
+        warning1Min = false;
+        warning0Min = false;
         launchAlarmPlayed = false;
     }
     
@@ -241,24 +245,35 @@ function updateCountdown() {
     }
     
     // Audio warnings (only if countdown is positive)
-    // Check for exact minute marks (15:00, 10:00, 5:00)
+    // Check for exact minute marks (15:00, 10:00, 5:00, 1:00)
     // Use minutesLeft and secondsLeft to check for exact minute marks
     if (totalSeconds > 0) {
         // 15 minutes exactly (15:00)
         if (minutesLeft === 15 && secondsLeft === 0 && !warning15Min) {
             warning15Min = true;
-            speakWarning('15 minutes');
+            playWarningAudio('Media/15_min_warning.mp3', 1.0); // Maximum volume
         } 
         // 10 minutes exactly (10:00)
         else if (minutesLeft === 10 && secondsLeft === 0 && !warning10Min) {
             warning10Min = true;
-            speakWarning('10 minutes');
+            playWarningAudio('Media/10_min_warning.mp3', 1.0);
         } 
         // 5 minutes exactly (5:00)
         else if (minutesLeft === 5 && secondsLeft === 0 && !warning5Min) {
             warning5Min = true;
-            speakWarning('5 minutes');
+            playWarningAudio('Media/5_min_warning.mp3', 1.0);
         }
+        // 1 minute exactly (1:00)
+        else if (minutesLeft === 1 && secondsLeft === 0 && !warning1Min) {
+            warning1Min = true;
+            playWarningAudio('Media/1_min_warning.mp3', 1.0);
+        }
+    }
+    
+    // 0 minute warning (when countdown reaches exactly 0:00)
+    if (totalSeconds === 0 && !warning0Min) {
+        warning0Min = true;
+        playWarningAudio('Media/0_min_warning.mp3', 1.0);
     }
     
     // Launch alarm (when countdown reaches zero)
@@ -268,13 +283,15 @@ function updateCountdown() {
     }
 }
 
-function speakWarning(minutes) {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(`${minutes} minute warning`);
-        utterance.rate = 0.9;
-        utterance.pitch = 0.8;
-        utterance.volume = 1.0;
-        window.speechSynthesis.speak(utterance);
+function playWarningAudio(audioPath, volume = 1.0) {
+    try {
+        const audio = new Audio(audioPath);
+        audio.volume = volume;
+        audio.play().catch(error => {
+            console.error('Error playing warning audio:', error);
+        });
+    } catch (error) {
+        console.error('Error creating audio element:', error);
     }
 }
 
