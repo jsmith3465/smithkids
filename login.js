@@ -57,7 +57,7 @@ async function authenticateUser(username, password) {
         // Query the Users table to find the user
         const { data, error } = await supabase
             .from('Users')
-            .select('UID, Username, Password, First_Name, Last_Name, user_type')
+            .select('UID, Username, Password, First_Name, Last_Name, user_type, is_suspended')
             .eq('Username', username)
             .single();
 
@@ -79,6 +79,15 @@ async function authenticateUser(username, password) {
         if (data.Password !== password) {
             return { success: false, message: 'Invalid username or password' };
         }
+        
+        // Check if account is suspended
+        if (data.is_suspended) {
+            return { 
+                success: false, 
+                message: 'Your account has been suspended. Please speak to your Superior to have access reinstated.',
+                isSuspended: true
+            };
+        }
 
         return {
             success: true,
@@ -87,7 +96,8 @@ async function authenticateUser(username, password) {
                 username: data.Username,
                 firstName: data.First_Name,
                 lastName: data.Last_Name,
-                userType: data.user_type || 'standard'
+                userType: data.user_type || 'standard',
+                isSuspended: false
             }
         };
     } catch (error) {
@@ -135,6 +145,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!authResult.success) {
                 showError(authResult.message);
+                loginLoading.classList.remove('show');
+                loginForm.style.opacity = '1';
+                loginForm.style.pointerEvents = 'auto';
+                passwordInput.value = '';
+                passwordInput.focus();
+                return;
+            }
+            
+            // Check if account is suspended
+            if (authResult.user.isSuspended) {
+                showError('Your account has been suspended. Please speak to your Superior to have access reinstated.');
                 loginLoading.classList.remove('show');
                 loginForm.style.opacity = '1';
                 loginForm.style.pointerEvents = 'auto';

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Smith Team Six</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .management-container {
+            max-width: 1200px;
+        }
+        
+        .management-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .users-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .users-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .users-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .users-table .suspended {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .users-table .active {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-small {
+            padding: 5px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .add-user-form {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .no-users {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container management-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">User Management</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div id="adminCheck" style="text-align: center; padding: 40px; color: #dc3545;">
+                <p>Checking admin access...</p>
+            </div>
+            
+            <div id="adminContent" class="hidden">
+                <div class="success-message" id="successMessage"></div>
+                <div class="error-message" id="errorMessage"></div>
+                
+                <!-- Add User Section -->
+                <div class="management-section">
+                    <h2 style="margin-bottom: 20px;">Add New User</h2>
+                    <div class="add-user-form">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="newUsername">Username *</label>
+                                <input type="text" id="newUsername" class="input" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="newPassword">Password *</label>
+                                <input type="password" id="newPassword" class="input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="newFirstName">First Name</label>
+                                <input type="text" id="newFirstName" class="input">
+                            </div>
+                            <div class="input-group">
+                                <label for="newLastName">Last Name</label>
+                                <input type="text" id="newLastName" class="input">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="newUserType">User Type *</label>
+                            <select id="newUserType" class="input" required>
+                                <option value="standard">Standard</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button id="addUserBtn" class="btn btn-primary" style="margin-top: 15px;">Add User</button>
+                    </div>
+                </div>
+                
+                <!-- Users List Section -->
+                <div class="management-section">
+                    <h2 style="margin-bottom: 20px;">All Users</h2>
+                    <div id="usersList">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="user-management.js"></script>
+</body>
+</html>
+

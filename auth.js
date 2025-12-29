@@ -12,7 +12,7 @@ const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 minutes
 let sessionTimeoutId = null;
 
 // Check authentication status
-function checkAuthentication() {
+async function checkAuthentication() {
     const sessionData = sessionStorage.getItem('userSession');
     
     if (!sessionData) {
@@ -35,6 +35,32 @@ function checkAuthentication() {
                 window.location.href = 'login.html';
             }, 100);
             return false;
+        }
+        
+        // Check if account is suspended (verify with database)
+        try {
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+            const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            const { data: userData, error: userError } = await supabase
+                .from('Users')
+                .select('is_suspended')
+                .eq('UID', session.uid)
+                .single();
+            
+            if (!userError && userData && userData.is_suspended) {
+                sessionStorage.removeItem('userSession');
+                alert('Your account has been suspended. Please speak to your Superior to have access reinstated.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 100);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error checking suspension status:', error);
+            // Continue if check fails (don't block user)
         }
         
         // Check if session has expired (20 minutes)
@@ -142,7 +168,7 @@ function handleLogout() {
 window.handleLogout = handleLogout;
 
 // Initialize authentication check when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Set up logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -150,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check authentication
-    const isAuthenticated = checkAuthentication();
+    const isAuthenticated = await checkAuthentication();
     
     // Export authentication status for use in other scripts
     window.authStatus = {
