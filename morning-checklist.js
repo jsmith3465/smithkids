@@ -378,6 +378,10 @@ async function submitExitCode() {
         
         // Code is correct, allow navigation
         codeEntered = true;
+        
+        // Save the navigation URL before hiding the modal (which clears it)
+        const urlToNavigate = pendingNavigationUrl;
+        
         hideExitCodeModal();
         
         // Cleanup intervals
@@ -388,8 +392,9 @@ async function submitExitCode() {
             clearInterval(timeUpdateInterval);
         }
         
-        if (pendingNavigationUrl) {
-            window.location.href = pendingNavigationUrl;
+        // Redirect to the intended page if there was one
+        if (urlToNavigate) {
+            window.location.href = urlToNavigate;
         }
         
     } catch (error) {
