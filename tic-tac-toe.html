@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe - SmithFamJam</title>
+    <title>Tic Tac Toe - Smith Team Six</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -49,6 +49,49 @@
                     </select>
                 </div>
                 <button id="startGameBtn" class="btn btn-primary">Start Game</button>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <button id="playRemoteBtn" class="btn btn-secondary" style="width: 100%;">Play Remote Player</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remote Room Section -->
+        <div id="remoteRoomSection" class="player-setup hidden">
+            <div class="game-setup">
+                <h2>Remote Game Room</h2>
+                <div id="roomInfo" class="hidden">
+                    <div style="background: #f0f0f0; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <p style="margin: 5px 0; font-weight: 600;">Room Code: <span id="roomCodeDisplay" style="color: #DAA520; font-size: 1.2rem;"></span></p>
+                        <p style="margin: 5px 0; color: #666; font-size: 0.9rem;">Share this link with your opponent:</p>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                            <input type="text" id="roomLinkInput" readonly style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; background: white;">
+                            <button id="copyLinkBtn" class="btn btn-primary" style="padding: 8px 15px;">Copy Link</button>
+                        </div>
+                    </div>
+                    <div id="guestInfo" style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                        <p style="margin: 5px 0; font-weight: 600; color: #2e7d32;">Guest Joined: <span id="guestNameDisplay"></span></p>
+                    </div>
+                    <button id="startRemoteGameBtn" class="btn btn-primary" style="width: 100%; display: none;">Start Game</button>
+                    <button id="cancelRemoteBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guest Entry Section -->
+        <div id="guestEntrySection" class="player-setup hidden">
+            <div class="game-setup">
+                <h2>Join Remote Game</h2>
+                <p style="color: #666; margin-bottom: 20px;">Enter your name to join the game room</p>
+                <div class="input-group">
+                    <label for="guestFirstName">First Name:</label>
+                    <input type="text" id="guestFirstName" class="player-select" required>
+                </div>
+                <div class="input-group">
+                    <label for="guestLastName">Last Name:</label>
+                    <input type="text" id="guestLastName" class="player-select" required>
+                </div>
+                <button id="joinRoomBtn" class="btn btn-primary" style="width: 100%;">Join Room</button>
+                <button id="cancelGuestBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">Cancel</button>
             </div>
         </div>
 

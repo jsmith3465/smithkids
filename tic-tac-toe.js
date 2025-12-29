@@ -22,6 +22,18 @@ class TicTacToe {
         this.computerDifficulty = this.loadDifficulty();
         this.users = []; // Store users from database
         
+        // Remote game properties
+        this.isRemoteGame = false;
+        this.isHost = false;
+        this.isGuest = false;
+        this.roomId = null;
+        this.roomCode = null;
+        this.remoteSessionId = null;
+        this.realtimeSubscription = null;
+        this.guestFirstName = null;
+        this.guestLastName = null;
+        this.guestIP = null;
+        
         this.init();
     }
 
@@ -67,8 +79,45 @@ class TicTacToe {
         this.boardContainer = document.querySelector('.board-container');
         this.gameStartTime = null;
 
+        // Remote game elements
+        this.remoteRoomSection = document.getElementById('remoteRoomSection');
+        this.guestEntrySection = document.getElementById('guestEntrySection');
+        this.playRemoteBtn = document.getElementById('playRemoteBtn');
+        this.roomCodeDisplay = document.getElementById('roomCodeDisplay');
+        this.roomLinkInput = document.getElementById('roomLinkInput');
+        this.copyLinkBtn = document.getElementById('copyLinkBtn');
+        this.guestInfo = document.getElementById('guestInfo');
+        this.guestNameDisplay = document.getElementById('guestNameDisplay');
+        this.startRemoteGameBtn = document.getElementById('startRemoteGameBtn');
+        this.cancelRemoteBtn = document.getElementById('cancelRemoteBtn');
+        this.guestFirstNameInput = document.getElementById('guestFirstName');
+        this.guestLastNameInput = document.getElementById('guestLastName');
+        this.joinRoomBtn = document.getElementById('joinRoomBtn');
+        this.cancelGuestBtn = document.getElementById('cancelGuestBtn');
+
+        // Check if joining as guest (room code in URL)
+        this.checkForRoomCode();
+
         // Event listeners
         this.startGameBtn.addEventListener('click', () => this.startGame());
+        if (this.playRemoteBtn) {
+            this.playRemoteBtn.addEventListener('click', () => this.createRemoteRoom());
+        }
+        if (this.copyLinkBtn) {
+            this.copyLinkBtn.addEventListener('click', () => this.copyRoomLink());
+        }
+        if (this.startRemoteGameBtn) {
+            this.startRemoteGameBtn.addEventListener('click', () => this.startRemoteGame());
+        }
+        if (this.cancelRemoteBtn) {
+            this.cancelRemoteBtn.addEventListener('click', () => this.cancelRemoteRoom());
+        }
+        if (this.joinRoomBtn) {
+            this.joinRoomBtn.addEventListener('click', () => this.joinRemoteRoom());
+        }
+        if (this.cancelGuestBtn) {
+            this.cancelGuestBtn.addEventListener('click', () => this.cancelGuestEntry());
+        }
         this.player1Select.addEventListener('change', () => this.updateDifficultyVisibility());
         this.player2Select.addEventListener('change', () => this.updateDifficultyVisibility());
         if (this.computerDifficultySelect) {
@@ -334,7 +383,20 @@ class TicTacToe {
         this.makeMove(index);
     }
     
-    makeMove(index) {
+    async makeMove(index) {
+        if (!this.gameActive || this.board[index] !== null) return;
+        
+        // For remote games, check if it's the current player's turn
+        if (this.isRemoteGame) {
+            const session = window.authStatus?.getSession();
+            const isPlayer1 = this.isHost && this.currentPlayer === 'X';
+            const isPlayer2 = this.isGuest && this.currentPlayer === 'O';
+            
+            if (!isPlayer1 && !isPlayer2) {
+                return; // Not your turn
+            }
+        }
+        
         this.board[index] = this.currentPlayer;
         const cell = this.gameBoard.children[index];
         cell.textContent = this.currentPlayer;
@@ -342,19 +404,35 @@ class TicTacToe {
         cell.classList.add(this.currentPlayer.toLowerCase());
         cell.classList.add('disabled');
 
+        // Update game state in database if remote
+        if (this.isRemoteGame) {
+            await this.updateRemoteGameState();
+        }
+
         const winner = this.checkWinner();
         
         if (winner) {
             this.gameActive = false;
+            if (this.isRemoteGame) {
+                await this.updateRemoteGameState();
+            }
             this.handleWin(winner);
         } else if (this.board.every(cell => cell !== null)) {
             this.gameActive = false;
+            if (this.isRemoteGame) {
+                await this.updateRemoteGameState();
+            }
             this.handleDraw();
         } else {
             this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
             this.updateDisplay();
             
-            if (this.isCurrentPlayerComputer() && this.gameActive) {
+            // Update remote game state after turn change
+            if (this.isRemoteGame) {
+                await this.updateRemoteGameState();
+            }
+            
+            if (this.isCurrentPlayerComputer() && this.gameActive && !this.isRemoteGame) {
                 setTimeout(() => {
                     this.computerMove();
                 }, 500);
@@ -755,6 +833,25 @@ class TicTacToe {
         this.line.setAttribute('y2', '0');
     }
 
+    updateBoardDisplay() {
+        if (!this.gameBoard) return;
+        
+        for (let i = 0; i < 9; i++) {
+            const cell = this.gameBoard.children[i];
+            if (!cell) continue;
+            
+            cell.textContent = this.board[i] || '';
+            cell.classList.remove('x', 'o', 'disabled');
+            
+            if (this.board[i]) {
+                cell.classList.add(this.board[i].toLowerCase());
+                cell.classList.add('disabled');
+            } else {
+                cell.classList.remove('disabled');
+            }
+        }
+    }
+    
     updateDisplay() {
         const currentName = this.currentPlayer === 'X' ? this.player1Name : this.player2Name;
         this.currentPlayerName.textContent = currentName;
@@ -831,16 +928,423 @@ class TicTacToe {
                 game_duration_seconds: gameDuration
             };
             
-            const { error } = await supabase
+            const { data: gameResult, error } = await supabase
                 .from('TTT_Game_Results')
-                .insert(gameData);
+                .insert(gameData)
+                .select('game_id')
+                .single();
             
             if (error) {
                 console.error('Error saving game result:', error);
+                return null;
             }
+            
+            // If this is a remote game, update the remote session with game_id
+            if (this.isRemoteGame && this.remoteSessionId && gameResult) {
+                await supabase
+                    .from('Remote_Game_Sessions')
+                    .update({ game_id: gameResult.game_id })
+                    .eq('session_id', this.remoteSessionId);
+            }
+            
+            return gameResult ? gameResult.game_id : null;
         } catch (error) {
             console.error('Error saving game result:', error);
+            return null;
         }
+    }
+    
+    // Remote Game Methods
+    checkForRoomCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        if (roomCode) {
+            this.showGuestEntry();
+        }
+    }
+    
+    async createRemoteRoom() {
+        const session = window.authStatus?.getSession();
+        if (!session || !session.uid) {
+            alert('Please log in to create a remote game room.');
+            return;
+        }
+        
+        try {
+            // Generate unique room code
+            const roomCode = this.generateRoomCode();
+            
+            // Create room in database
+            const { data: room, error } = await supabase
+                .from('Game_Rooms')
+                .insert({
+                    room_code: roomCode,
+                    host_user_uid: session.uid,
+                    game_type: 'tic_tac_toe'
+                })
+                .select('room_id, room_code')
+                .single();
+            
+            if (error) throw error;
+            
+            this.roomId = room.room_id;
+            this.roomCode = room.room_code;
+            this.isHost = true;
+            this.isRemoteGame = true;
+            
+            // Show room info
+            this.roomCodeDisplay.textContent = this.roomCode;
+            const roomLink = `${window.location.origin}${window.location.pathname}?room=${this.roomCode}`;
+            this.roomLinkInput.value = roomLink;
+            
+            // Hide player setup, show remote room section
+            this.playerSetup.classList.add('hidden');
+            this.remoteRoomSection.classList.remove('hidden');
+            
+            // Subscribe to guest joins
+            this.subscribeToGuestJoins();
+            
+        } catch (error) {
+            console.error('Error creating room:', error);
+            alert('Failed to create room. Please try again.');
+        }
+    }
+    
+    generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+    
+    subscribeToGuestJoins() {
+        if (!this.roomId) return;
+        
+        // Subscribe to Remote_Game_Sessions for this room
+        this.realtimeSubscription = supabase
+            .channel(`room-${this.roomId}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'Remote_Game_Sessions',
+                filter: `room_id=eq.${this.roomId}`
+            }, (payload) => {
+                this.handleGuestJoin(payload.new);
+            })
+            .subscribe();
+    }
+    
+    async handleGuestJoin(sessionData) {
+        this.remoteSessionId = sessionData.session_id;
+        this.guestFirstName = sessionData.guest_first_name;
+        this.guestLastName = sessionData.guest_last_name;
+        
+        // Show guest info
+        this.guestNameDisplay.textContent = `${this.guestFirstName} ${this.guestLastName}`;
+        this.guestInfo.style.display = 'block';
+        this.startRemoteGameBtn.style.display = 'block';
+    }
+    
+    async startRemoteGame() {
+        if (!this.guestFirstName || !this.guestLastName) {
+            alert('Waiting for guest to join...');
+            return;
+        }
+        
+        const session = window.authStatus?.getSession();
+        if (!session) return;
+        
+        // Set up players
+        this.player1Id = session.uid.toString();
+        this.player1Name = `${session.firstName || 'Host'} ${session.lastName || ''}`.trim();
+        this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
+        this.player2Id = 'GUEST'; // Special ID for guest
+        
+        // Initialize game state in database
+        await this.initializeRemoteGameState();
+        
+        // Start the game
+        this.player1Symbol = 'X';
+        this.player2Symbol = 'O';
+        this.currentPlayer = 'X';
+        this.board = Array(9).fill(null);
+        this.gameActive = true;
+        this.gameStartTime = Date.now();
+        
+        // Hide remote room section, show game section
+        this.remoteRoomSection.classList.add('hidden');
+        this.gameSection.classList.remove('hidden');
+        
+        // Subscribe to game state changes
+        this.subscribeToGameState();
+        
+        // Initialize board
+        this.initializeBoard();
+        this.updateDisplay();
+    }
+    
+    async initializeRemoteGameState() {
+        if (!this.roomId) return;
+        
+        const gameState = {
+            room_id: this.roomId,
+            board_state: this.board,
+            current_player: this.currentPlayer,
+            player1_symbol: this.player1Symbol,
+            player2_symbol: this.player2Symbol,
+            player1_name: this.player1Name,
+            player2_name: this.player2Name,
+            game_active: true
+        };
+        
+        const { error } = await supabase
+            .from('Game_State')
+            .upsert(gameState, { onConflict: 'room_id' });
+        
+        if (error) {
+            console.error('Error initializing game state:', error);
+        }
+    }
+    
+    subscribeToGameState() {
+        if (!this.roomId) return;
+        
+        // Unsubscribe from previous subscription if exists
+        if (this.realtimeSubscription) {
+            supabase.removeChannel(this.realtimeSubscription);
+        }
+        
+        // Subscribe to game state changes
+        this.realtimeSubscription = supabase
+            .channel(`game-state-${this.roomId}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'Game_State',
+                filter: `room_id=eq.${this.roomId}`
+            }, (payload) => {
+                this.handleGameStateUpdate(payload.new);
+            })
+            .subscribe();
+    }
+    
+    async handleGameStateUpdate(state) {
+        // Don't update if this is our own move (we already updated locally)
+        // Compare board states to detect if it's our move
+        const boardChanged = JSON.stringify(state.board_state) !== JSON.stringify(this.board);
+        if (!boardChanged) {
+            return; // No change, ignore
+        }
+        
+        // Update board and game state
+        this.board = state.board_state;
+        this.currentPlayer = state.current_player;
+        this.gameActive = state.game_active;
+        
+        // Update board display
+        this.updateBoardDisplay();
+        
+        // Check for win or draw locally
+        const winner = this.checkWinner();
+        if (winner) {
+            this.gameActive = false;
+            await this.updateRemoteGameState();
+            this.handleWin(winner);
+        } else if (this.board.every(cell => cell !== null)) {
+            this.gameActive = false;
+            await this.updateRemoteGameState();
+            this.handleDraw();
+        }
+        
+        this.updateDisplay();
+    }
+    
+    async updateRemoteGameState() {
+        if (!this.roomId) return;
+        
+        // Check for winner
+        const winner = this.checkWinner();
+        const isDraw = !winner && this.board.every(cell => cell !== null);
+        
+        const gameState = {
+            room_id: this.roomId,
+            board_state: this.board,
+            current_player: this.currentPlayer,
+            game_active: this.gameActive,
+            winner: winner ? winner.player : null,
+            is_draw: isDraw
+        };
+        
+        const { error } = await supabase
+            .from('Game_State')
+            .update(gameState)
+            .eq('room_id', this.roomId);
+        
+        if (error) {
+            console.error('Error updating game state:', error);
+        }
+    }
+    
+    async joinRemoteRoom() {
+        const firstName = this.guestFirstNameInput.value.trim();
+        const lastName = this.guestLastNameInput.value.trim();
+        
+        if (!firstName || !lastName) {
+            alert('Please enter both first and last name.');
+            return;
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            alert('Invalid room code.');
+            return;
+        }
+        
+        try {
+            // Get room by code
+            const { data: room, error: roomError } = await supabase
+                .from('Game_Rooms')
+                .select('room_id, host_user_uid')
+                .eq('room_code', roomCode)
+                .eq('is_active', true)
+                .single();
+            
+            if (roomError || !room) {
+                alert('Room not found or is no longer active.');
+                return;
+            }
+            
+            // Get IP address
+            const ip = await this.getClientIP();
+            
+            // Create remote session
+            const { data: session, error: sessionError } = await supabase
+                .from('Remote_Game_Sessions')
+                .insert({
+                    room_id: room.room_id,
+                    host_user_uid: room.host_user_uid,
+                    guest_first_name: firstName,
+                    guest_last_name: lastName,
+                    guest_ip_address: ip
+                })
+                .select('session_id')
+                .single();
+            
+            if (sessionError) throw sessionError;
+            
+            this.remoteSessionId = session.session_id;
+            this.roomId = room.room_id;
+            this.roomCode = roomCode;
+            this.isGuest = true;
+            this.isRemoteGame = true;
+            this.guestFirstName = firstName;
+            this.guestLastName = lastName;
+            this.guestIP = ip;
+            
+            // Wait for host to start game
+            this.guestEntrySection.classList.add('hidden');
+            this.gameSection.classList.remove('hidden');
+            
+            // Show waiting message
+            this.gameMessage.textContent = 'Waiting for host to start the game...';
+            this.gameMessage.style.display = 'block';
+            
+            // Subscribe to game state
+            this.subscribeToGameState();
+            
+            // Also subscribe to check when game starts
+            const gameStateChannel = supabase
+                .channel(`game-start-${this.roomId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'Game_State',
+                    filter: `room_id=eq.${this.roomId}`
+                }, (payload) => {
+                    if (payload.new.game_active) {
+                        this.handleRemoteGameStart(payload.new);
+                    }
+                })
+                .subscribe();
+            
+        } catch (error) {
+            console.error('Error joining room:', error);
+            alert('Failed to join room. Please try again.');
+        }
+    }
+    
+    handleRemoteGameStart(state) {
+        this.player1Name = state.player1_name;
+        this.player2Name = state.player2_name;
+        this.player1Symbol = state.player1_symbol;
+        this.player2Symbol = state.player2_symbol;
+        this.board = state.board_state || Array(9).fill(null);
+        this.currentPlayer = state.current_player || 'X';
+        this.gameActive = state.game_active;
+        this.gameStartTime = Date.now();
+        
+        // Set player IDs
+        const session = window.authStatus?.getSession();
+        if (session) {
+            this.player1Id = session.uid.toString();
+        }
+        this.player2Id = 'GUEST';
+        
+        this.gameMessage.style.display = 'none';
+        this.initializeBoard();
+        this.updateBoardDisplay();
+        this.updateDisplay();
+    }
+    
+    async getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error('Error fetching IP:', error);
+            return 'unknown';
+        }
+    }
+    
+    showGuestEntry() {
+        this.playerSetup.classList.add('hidden');
+        this.guestEntrySection.classList.remove('hidden');
+    }
+    
+    cancelRemoteRoom() {
+        if (this.realtimeSubscription) {
+            supabase.removeChannel(this.realtimeSubscription);
+        }
+        this.remoteRoomSection.classList.add('hidden');
+        this.playerSetup.classList.remove('hidden');
+        this.resetRemoteGame();
+    }
+    
+    cancelGuestEntry() {
+        window.location.href = window.location.pathname;
+    }
+    
+    resetRemoteGame() {
+        this.isRemoteGame = false;
+        this.isHost = false;
+        this.isGuest = false;
+        this.roomId = null;
+        this.roomCode = null;
+        this.remoteSessionId = null;
+        this.guestFirstName = null;
+        this.guestLastName = null;
+        this.guestIP = null;
+    }
+    
+    copyRoomLink() {
+        this.roomLinkInput.select();
+        document.execCommand('copy');
+        alert('Link copied to clipboard!');
     }
     
 }
