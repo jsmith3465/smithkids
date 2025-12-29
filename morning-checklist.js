@@ -66,7 +66,7 @@ async function checkAdminAccess() {
         .single();
     
     if (!settings || !settings.checklist_code) {
-        alert('Please set your admin code in Settings before accessing the Morning Checklist page.');
+        alert('Please set your pin code in Settings before accessing the Morning Checklist page.');
         window.location.href = 'settings.html';
         return;
     }
@@ -304,7 +304,7 @@ function preventNavigation() {
     window.addEventListener('beforeunload', (e) => {
         if (!codeEntered) {
             e.preventDefault();
-            e.returnValue = 'You must enter your admin code to leave this page.';
+            e.returnValue = 'You must enter your pin code to leave this page.';
         }
     });
     
@@ -345,7 +345,14 @@ async function submitExitCode() {
     const codeError = document.getElementById('exitCodeError');
     
     if (!enteredCode) {
-        codeError.textContent = 'Please enter a code.';
+        codeError.textContent = 'Please enter a pin code.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    // Validate pin code format (4-8 digits)
+    if (!/^\d{4,8}$/.test(enteredCode)) {
+        codeError.textContent = 'Pin code must be 4-8 digits.';
         codeError.style.display = 'block';
         return;
     }
@@ -358,7 +365,7 @@ async function submitExitCode() {
             .single();
         
         if (!settings || enteredCode !== settings.checklist_code) {
-            codeError.textContent = 'Incorrect code. Please try again.';
+            codeError.textContent = 'Incorrect pin code. Please try again.';
             codeError.style.display = 'block';
             return;
         }
@@ -410,7 +417,14 @@ async function submitLaunchTimeChange() {
     const codeError = document.getElementById('launchTimeError');
     
     if (!enteredCode) {
-        codeError.textContent = 'Please enter a code.';
+        codeError.textContent = 'Please enter a pin code.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    // Validate pin code format (4-8 digits)
+    if (!/^\d{4,8}$/.test(enteredCode)) {
+        codeError.textContent = 'Pin code must be 4-8 digits.';
         codeError.style.display = 'block';
         return;
     }
@@ -438,7 +452,7 @@ async function submitLaunchTimeChange() {
             .single();
         
         if (!settings || enteredCode !== settings.checklist_code) {
-            codeError.textContent = 'Incorrect code. Please try again.';
+            codeError.textContent = 'Incorrect pin code. Please try again.';
             codeError.style.display = 'block';
             return;
         }
@@ -568,7 +582,14 @@ async function submitCode() {
     const codeError = document.getElementById('codeError');
     
     if (!enteredCode) {
-        codeError.textContent = 'Please enter a code.';
+        codeError.textContent = 'Please enter a pin code.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    // Validate pin code format (4-8 digits)
+    if (!/^\d{4,8}$/.test(enteredCode)) {
+        codeError.textContent = 'Pin code must be 4-8 digits.';
         codeError.style.display = 'block';
         return;
     }
@@ -588,13 +609,13 @@ async function submitCode() {
         const savedCode = settings?.checklist_code;
         
         if (!savedCode) {
-            codeError.textContent = 'No code set. Please set your code in Settings first.';
+            codeError.textContent = 'No pin code set. Please set your pin code in Settings first.';
             codeError.style.display = 'block';
             return;
         }
         
         if (enteredCode !== savedCode) {
-            codeError.textContent = 'Incorrect code. Please try again.';
+            codeError.textContent = 'Incorrect pin code. Please try again.';
             codeError.style.display = 'block';
             return;
         }

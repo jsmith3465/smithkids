@@ -100,25 +100,25 @@
             <div class="error-message" id="errorMessage"></div>
             
             <div class="settings-section">
-                <h2>Checklist Posting Code</h2>
+                <h2>Pin Code</h2>
                 <p style="color: #666; margin-bottom: 20px;">
-                    Set a code that will be required to post checklist changes and award credits. 
-                    This code helps ensure only authorized admins can post checklist updates.
+                    Set a pin code that will be required to post checklist changes and award credits. 
+                    This pin code helps ensure only authorized admins can post checklist updates.
                 </p>
                 
                 <div class="input-group">
-                    <label for="checklistCode">Checklist Code:</label>
-                    <input type="password" id="checklistCode" placeholder="Enter code (leave blank to keep current)">
-                    <div class="help-text">Enter a new code to change it, or leave blank to keep your current code.</div>
+                    <label for="checklistCode">Pin Code:</label>
+                    <input type="password" id="checklistCode" placeholder="Enter pin code (leave blank to keep current)" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+                    <div class="help-text">Enter a new pin code (4-8 digits) to change it, or leave blank to keep your current pin code.</div>
                 </div>
                 
                 <div class="input-group">
-                    <label for="confirmCode">Confirm Code:</label>
-                    <input type="password" id="confirmCode" placeholder="Confirm code">
+                    <label for="confirmCode">Confirm Pin Code:</label>
+                    <input type="password" id="confirmCode" placeholder="Confirm pin code" maxlength="8" pattern="[0-9]*" inputmode="numeric">
                 </div>
                 
                 <button id="saveCodeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                    Save Code
+                    Save Pin Code
                 </button>
             </div>
             

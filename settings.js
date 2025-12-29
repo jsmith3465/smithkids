@@ -84,7 +84,7 @@ async function loadSettings() {
         if (settings) {
             if (settings.checklist_code) {
                 // Don't show the actual code, just indicate one is set
-                document.getElementById('checklistCode').placeholder = 'Code is set (enter new code to change)';
+                document.getElementById('checklistCode').placeholder = 'Pin code is set (enter new pin code to change)';
             }
             
             if (settings.launch_time) {
@@ -113,13 +113,20 @@ async function saveCode() {
     
     // If code is provided, validate it
     if (newCode) {
-        if (newCode.length < 4) {
-            showError('Code must be at least 4 characters long.');
+        // Check if it's all digits
+        if (!/^\d+$/.test(newCode)) {
+            showError('Pin code must contain only digits (0-9).');
+            return;
+        }
+        
+        // Check length (4-8 digits)
+        if (newCode.length < 4 || newCode.length > 8) {
+            showError('Pin code must be between 4 and 8 digits.');
             return;
         }
         
         if (newCode !== confirmCode) {
-            showError('Codes do not match. Please try again.');
+            showError('Pin codes do not match. Please try again.');
             return;
         }
     }
@@ -155,7 +162,7 @@ async function saveCode() {
         } else {
             // Create new settings
             if (!newCode) {
-                showError('Please enter a code to set.');
+                showError('Please enter a pin code to set.');
                 return;
             }
             
@@ -175,15 +182,16 @@ async function saveCode() {
         document.getElementById('confirmCode').value = '';
         
         if (newCode) {
-            showSuccess('Code saved successfully!');
-            document.getElementById('checklistCode').placeholder = 'Code is set (enter new code to change)';
+            showSuccess('Pin code saved successfully!');
+            document.getElementById('checklistCode').placeholder = 'Pin code is set (enter new pin code to change)';
         } else {
             showSuccess('Settings updated successfully!');
         }
         
     } catch (error) {
-        console.error('Error saving code:', error);
-        showError('Error saving code. Please try again.');
+        console.error('Error saving pin code:', error);
+        const errorMessage = error.message || error.details || 'Unknown error';
+        showError(`Error saving pin code: ${errorMessage}. Please try again.`);
     }
 }
 
@@ -252,7 +260,7 @@ async function saveLaunchTime() {
             if (updateError) throw updateError;
         } else {
             // Create new settings with default code (user must set code first)
-            showError('Please set your checklist code first.');
+            showError('Please set your pin code first.');
             return;
         }
         
