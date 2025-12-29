@@ -40,8 +40,16 @@ class TicTacToe {
     }
 
     async init() {
-        // Fetch users from database
-        await this.loadUsersFromDatabase();
+        // Check if this is a guest session first
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        const guestSession = sessionStorage.getItem('guestSession');
+        const isGuest = roomCode && guestSession;
+        
+        // Only fetch users from database if not a guest
+        if (!isGuest) {
+            await this.loadUsersFromDatabase();
+        }
         
         this.playerSetup = document.getElementById('playerSetup');
         this.gameSection = document.getElementById('gameSection');
@@ -1096,14 +1104,19 @@ class TicTacToe {
                         // Auto-join with guest info
                         this.guestFirstName = guestInfo.firstName;
                         this.guestLastName = guestInfo.lastName;
+                        console.log('Guest session found, joining room as guest...');
                         this.joinRemoteRoomAsGuest(roomCode);
                         return;
+                    } else {
+                        console.log('Guest session found but room code mismatch or missing name');
                     }
                 } catch (e) {
                     console.error('Error parsing guest session:', e);
                 }
+            } else {
+                console.log('No guest session found, showing guest entry form');
             }
-            // No guest session, show guest entry form
+            // No guest session or mismatch, show guest entry form
             this.showGuestEntry();
         }
     }
@@ -1166,7 +1179,9 @@ class TicTacToe {
             // Hide player setup and guest entry, show game section
             if (this.playerSetup) this.playerSetup.classList.add('hidden');
             if (this.guestEntrySection) this.guestEntrySection.classList.add('hidden');
-            if (this.gameSection) this.gameSection.classList.remove('hidden');
+            if (this.gameSection) {
+                this.gameSection.classList.remove('hidden');
+            }
             
             // Set up guest player
             this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
@@ -1202,6 +1217,12 @@ class TicTacToe {
             // Initialize board display
             this.initializeBoard();
             this.updateDisplay();
+            
+            // Make sure main content is visible
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.remove('hidden');
+            }
             
         } catch (error) {
             console.error('Error joining room as guest:', error);

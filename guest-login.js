@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('guestSession', JSON.stringify(guestInfo));
         
         // Redirect to Tic Tac Toe page with room code
+        // Use relative path - should work if files are in same directory
         window.location.href = `tic-tac-toe.html?room=${roomCode}`;
     });
 });
