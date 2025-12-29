@@ -1,4 +1,4 @@
-// Add Credits page for admins
+// Credit Manager page for admins
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
