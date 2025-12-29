@@ -388,20 +388,54 @@ header h1 {
     font-style: italic;
 }
 
-.player-select {
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+/* Enhanced select styling to match button design */
+.player-select,
+select.chores-input,
+select.input,
+select {
+    padding: 15px 30px;
+    border: 2px solid #DAA520;
     border-radius: 10px;
     font-size: 1rem;
+    font-weight: 600;
     background: white;
+    color: #333;
     transition: all 0.3s ease;
     outline: none;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23DAA520' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 45px;
+    min-height: 50px;
 }
 
-.player-select:focus {
+.player-select:hover,
+select.chores-input:hover,
+select.input:hover,
+select:hover {
+    border-color: #CC5500;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+}
+
+.player-select:focus,
+select.chores-input:focus,
+select.input:focus,
+select:focus {
     border-color: #DAA520;
-    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.2), 0 5px 15px rgba(218, 165, 32, 0.3);
+    transform: translateY(-2px);
+}
+
+.player-select:active,
+select.chores-input:active,
+select.input:active,
+select:active {
+    transform: translateY(0);
 }
 
 .input-group:has(#computerDifficulty) {
