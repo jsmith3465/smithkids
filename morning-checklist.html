@@ -13,25 +13,40 @@
         .checklist-header {
             background: white;
             border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
         
         .checklist-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 1200px) {
+            .checklist-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .checklist-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         .user-checklist-box {
             background: white;
             border: 3px solid #DAA520;
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 12px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         .user-checklist-box:hover {
@@ -41,18 +56,18 @@
         
         .user-name {
             text-align: center;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #CC5500;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #e0e0e0;
         }
         
         .checklist-item {
             display: flex;
             align-items: center;
-            padding: 12px 0;
+            padding: 6px 0;
             border-bottom: 1px solid #f0f0f0;
         }
         
@@ -61,15 +76,16 @@
         }
         
         .checklist-item input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
-            margin-right: 12px;
+            margin-right: 8px;
             accent-color: #DAA520;
+            flex-shrink: 0;
         }
         
         .checklist-item label {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             color: #333;
             cursor: pointer;
             flex: 1;
@@ -149,14 +165,19 @@
         .countdown-red {
             color: #dc3545 !important;
         }
+        
+        #countdownDisplay.countdown-green,
+        #countdownDisplay.countdown-yellow,
+        #countdownDisplay.countdown-red {
+            display: inline;
+        }
     </style>
 </head>
 <body>
     <div class="container checklist-container">
         <header>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <a href="#" id="backLink" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
                     <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Morning Checklist</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -172,27 +193,20 @@
         <div id="mainContent" class="hidden">
             <!-- Date and Time Display -->
             <div class="checklist-header" style="text-align: center;">
-                <div id="dateTimeDisplay" style="margin-bottom: 20px;">
-                    <div id="currentDate" style="font-size: 1.5rem; font-weight: 700; color: #CC5500; margin-bottom: 10px;"></div>
-                    <div id="currentTime" style="font-size: 2rem; font-weight: 700; color: #DAA520; font-family: 'Courier New', monospace;"></div>
+                <div id="dateTimeDisplay" style="font-size: 1.1rem; font-weight: 700; color: #CC5500; margin-bottom: 10px;">
+                    <span id="currentDate"></span> | <span id="currentTime" style="font-family: 'Courier New', monospace; color: #DAA520;"></span>
                 </div>
                 
                 <!-- Launch Time and Countdown -->
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">Launch Time: <span id="launchTimeDisplay" style="font-weight: 700; color: #CC5500;"></span></div>
-                        <button id="changeLaunchTimeBtn" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">Change Launch Time</button>
-                    </div>
-                    <div id="countdownDisplay" style="font-size: 2.5rem; font-weight: 700; font-family: 'Courier New', monospace; padding: 20px; border-radius: 10px; background: #f8f9fa;">
-                        <div id="countdownText">Loading...</div>
-                    </div>
+                <div style="font-size: 1.8rem; font-weight: 700; margin-top: 10px;">
+                    <span style="color: #666;">Launch Time: <span id="launchTimeDisplay" style="color: #CC5500;"></span></span>
+                    <span style="margin: 0 15px; color: #999;">|</span>
+                    <span id="countdownDisplay" style="font-family: 'Courier New', monospace;">
+                        <span id="countdownText" class="countdown-green">Loading...</span>
+                    </span>
                 </div>
-            </div>
-            
-            <div class="checklist-header">
-                <div class="date-selector">
-                    <label for="checklistDate">View Date:</label>
-                    <input type="date" id="checklistDate" value="">
+                <div style="margin-top: 8px;">
+                    <button id="changeLaunchTimeBtn" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem;">Change Launch Time</button>
                 </div>
             </div>
             
@@ -201,11 +215,11 @@
             </div>
             
             <!-- Post Changes Button at Bottom -->
-            <div class="checklist-header" style="margin-top: 30px;">
-                <button id="postChangesBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+            <div class="checklist-header" style="margin-top: 15px;">
+                <button id="postChangesBtn" class="btn btn-primary" style="width: 100%; padding: 10px; font-size: 1rem;">
                     Award Credits
                 </button>
-                <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">
+                <p style="text-align: center; color: #666; font-size: 0.85rem; margin-top: 8px;">
                     Checklist data is saved automatically. Enter your pin code to award credits to users who completed all items.
                 </p>
             </div>

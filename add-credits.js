@@ -49,7 +49,6 @@ async function checkUserAccess() {
     
     if (session.userType === 'admin') {
         // Show admin content
-        document.getElementById('adminCheck').classList.add('hidden');
         document.getElementById('adminContent').classList.remove('hidden');
         document.getElementById('standardContent').classList.add('hidden');
         
@@ -59,7 +58,6 @@ async function checkUserAccess() {
         setupAdminEventListeners();
     } else {
         // Show standard user content
-        document.getElementById('adminCheck').classList.add('hidden');
         document.getElementById('adminContent').classList.add('hidden');
         document.getElementById('standardContent').classList.remove('hidden');
         
@@ -316,8 +314,8 @@ window.removeCreditsFromUser = async function(userId) {
                 from_user_uid: session.uid,
                 to_user_uid: userId,
                 amount: amount,
-                transaction_type: 'credit_adjusted',
-                description: `Admin removed ${amount} credits`
+                transaction_type: 'credit_added',
+                description: `Admin removed ${amount} credits (balance adjusted)`
             });
         
         if (transError) throw transError;
@@ -383,7 +381,7 @@ window.setUserBalance = async function(userId) {
                     from_user_uid: session.uid,
                     to_user_uid: userId,
                     amount: Math.abs(difference),
-                    transaction_type: difference > 0 ? 'credit_added' : 'credit_adjusted',
+                    transaction_type: 'credit_added',
                     description: difference > 0 
                         ? `Admin set balance: added ${difference} credits`
                         : `Admin set balance: removed ${Math.abs(difference)} credits`

@@ -80,9 +80,8 @@ async function checkAdminAccess() {
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
     
-    // Set today's date as default
+    // Set today's date as default (always use today)
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('checklistDate').value = today;
     
     // Initialize date/time display and countdown
     updateDateTime();
@@ -90,13 +89,8 @@ async function checkAdminAccess() {
     startCountdown();
     startTimeUpdate();
     
-    // Load checklists
+    // Load checklists for today
     await loadChecklists(today);
-    
-    // Add date change listener
-    document.getElementById('checklistDate').addEventListener('change', async (e) => {
-        await loadChecklists(e.target.value);
-    });
     
     // Add post changes button listener
     document.getElementById('postChangesBtn').addEventListener('click', () => {
@@ -106,16 +100,6 @@ async function checkAdminAccess() {
     // Add launch time change button listener
     document.getElementById('changeLaunchTimeBtn').addEventListener('click', () => {
         showLaunchTimeModal();
-    });
-    
-    // Handle back link
-    document.getElementById('backLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!codeEntered) {
-            showExitCodeModal('index.html');
-        } else {
-            window.location.href = 'index.html';
-        }
     });
     
     // Add code modal listeners
@@ -239,6 +223,19 @@ function updateCountdown() {
         countdownDisplay.classList.add('countdown-yellow');
     } else {
         countdownDisplay.classList.add('countdown-red');
+    }
+    
+    // Update the countdown display container color as well
+    const countdownContainer = document.getElementById('countdownDisplay');
+    if (countdownContainer) {
+        countdownContainer.className = '';
+        if (totalMinutes > 15) {
+            countdownContainer.classList.add('countdown-green');
+        } else if (totalMinutes > 5) {
+            countdownContainer.classList.add('countdown-yellow');
+        } else {
+            countdownContainer.classList.add('countdown-red');
+        }
     }
     
     // Audio warnings (only if countdown is positive)
@@ -490,18 +487,22 @@ let pendingChanges = {};
 
 // Handle checklist changes (save immediately to database)
 window.handleChecklistChange = async function(userUid, item, checked, date) {
+    // Always use today's date
+    const today = new Date().toISOString().split('T')[0];
+    const useDate = date || today;
+    
     try {
         // Check if checklist entry exists for this user and date
         const { data: existing, error: checkError } = await supabase
             .from('Morning_Checklist')
             .select('checklist_id, make_bed, clean_room, get_dressed, eat_breakfast, brush_teeth, comb_hair')
             .eq('user_uid', userUid)
-            .eq('checklist_date', date)
+            .eq('checklist_date', useDate)
             .single();
         
         const updateData = {
             user_uid: parseInt(userUid),
-            checklist_date: date,
+            checklist_date: useDate,
             [item]: checked,
             updated_at: new Date().toISOString()
         };
@@ -542,13 +543,13 @@ window.handleChecklistChange = async function(userUid, item, checked, date) {
         }
         
         // Also store in pendingChanges for the "Post Changes" functionality
-        if (!pendingChanges[date]) {
-            pendingChanges[date] = {};
+        if (!pendingChanges[useDate]) {
+            pendingChanges[useDate] = {};
         }
-        if (!pendingChanges[date][userUid]) {
-            pendingChanges[date][userUid] = {};
+        if (!pendingChanges[useDate][userUid]) {
+            pendingChanges[useDate][userUid] = {};
         }
-        pendingChanges[date][userUid][item] = checked;
+        pendingChanges[useDate][userUid][item] = checked;
         
     } catch (error) {
         console.error('Error saving checklist item:', error);
@@ -632,7 +633,8 @@ async function submitCode() {
 }
 
 async function postChecklistChanges() {
-    const date = document.getElementById('checklistDate').value;
+    // Always use today's date
+    const date = new Date().toISOString().split('T')[0];
     
     try {
         // Get all users to check for completed checklists
@@ -815,6 +817,10 @@ async function awardChecklistCredits(userUid, user, date) {
 async function loadChecklists(date) {
     const checklistGrid = document.getElementById('checklistGrid');
     
+    // Always use today's date
+    const today = new Date().toISOString().split('T')[0];
+    const useDate = date || today;
+    
     try {
         // Get all standard users
         const { data: users, error: usersError } = await supabase
@@ -830,11 +836,11 @@ async function loadChecklists(date) {
             return;
         }
         
-        // Get checklist data for the selected date
+        // Get checklist data for today's date
         const { data: checklists, error: checklistsError } = await supabase
             .from('Morning_Checklist')
             .select('user_uid, make_bed, clean_room, get_dressed, eat_breakfast, brush_teeth, comb_hair')
-            .eq('checklist_date', date);
+            .eq('checklist_date', useDate);
         
         if (checklistsError) throw checklistsError;
         
@@ -869,32 +875,32 @@ async function loadChecklists(date) {
                 <div class="user-name">${displayName}</div>
                 <div class="checklist-item">
                     <input type="checkbox" id="make_bed_${user.UID}" ${checklist.make_bed ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'make_bed', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'make_bed', this.checked, '${useDate}')">
                     <label for="make_bed_${user.UID}">Make Bed</label>
                 </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="clean_room_${user.UID}" ${checklist.clean_room ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'clean_room', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'clean_room', this.checked, '${useDate}')">
                     <label for="clean_room_${user.UID}">Clean Room</label>
                 </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="get_dressed_${user.UID}" ${checklist.get_dressed ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'get_dressed', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'get_dressed', this.checked, '${useDate}')">
                     <label for="get_dressed_${user.UID}">Get Dressed</label>
                 </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="eat_breakfast_${user.UID}" ${checklist.eat_breakfast ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'eat_breakfast', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'eat_breakfast', this.checked, '${useDate}')">
                     <label for="eat_breakfast_${user.UID}">Eat Breakfast</label>
                 </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="brush_teeth_${user.UID}" ${checklist.brush_teeth ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'brush_teeth', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'brush_teeth', this.checked, '${useDate}')">
                     <label for="brush_teeth_${user.UID}">Brush Teeth</label>
                 </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="comb_hair_${user.UID}" ${checklist.comb_hair ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'comb_hair', this.checked, '${date}')">
+                           onchange="handleChecklistChange(${user.UID}, 'comb_hair', this.checked, '${useDate}')">
                     <label for="comb_hair_${user.UID}">Comb Hair</label>
                 </div>
             `;

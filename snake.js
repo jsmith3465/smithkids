@@ -35,7 +35,6 @@ class SnakeGame {
         this.controlButtons = document.getElementById('controlButtons');
         this.gameOverModal = document.getElementById('gameOverModal');
         this.playAgainBtn = document.getElementById('playAgainBtn');
-        this.backToHomeBtn = document.getElementById('backToHomeBtn');
         this.scoreDisplay = document.getElementById('scoreDisplay');
         this.levelDisplay = document.getElementById('levelDisplay');
         this.lengthDisplay = document.getElementById('lengthDisplay');
@@ -44,9 +43,6 @@ class SnakeGame {
         this.startBtn.addEventListener('click', () => this.startGame());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
         this.playAgainBtn.addEventListener('click', () => this.resetGame());
-        this.backToHomeBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
         
         // Keyboard controls
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
