@@ -526,6 +526,15 @@ async function loadUserTransactions() {
 }
 
 function setupAdminEventListeners() {
+    // Tab switching
+    const tabs = document.querySelectorAll('.credits-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            switchTab(targetTab);
+        });
+    });
+    
     const selectAllBtn = document.getElementById('selectAllBtn');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const addCreditsBtn = document.getElementById('addCreditsBtn');
@@ -545,6 +554,19 @@ function setupAdminEventListeners() {
     addCreditsBtn.addEventListener('click', async () => {
         await addCredits();
     });
+}
+
+function switchTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.credits-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+    const selectedContent = document.getElementById(`${tabName}Tab`);
+    
+    if (selectedTab) selectedTab.classList.add('active');
+    if (selectedContent) selectedContent.classList.add('active');
 }
 
 async function addCredits() {

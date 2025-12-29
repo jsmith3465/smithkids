@@ -189,6 +189,48 @@
             color: #999;
             font-style: italic;
         }
+        
+        /* Tab Navigation */
+        .credits-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .credits-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+        
+        .credits-tab:hover {
+            color: #DAA520;
+            background: rgba(218, 165, 32, 0.05);
+        }
+        
+        .credits-tab.active {
+            color: #CC5500;
+            border-bottom-color: #CC5500;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -214,43 +256,55 @@
                 <div class="success-message" id="successMessage"></div>
                 <div class="error-message" id="errorMessage"></div>
                 
-                <!-- Quick Access Link Section -->
-                <div class="credits-form">
-                    <h2 style="margin-bottom: 20px;">Quick Access Link</h2>
-                    <p style="color: #666; margin-bottom: 15px;">Bookmark this link for quick access to add credits without logging in. This link is unique to your admin account.</p>
-                    <div id="quickLinkSection">
-                        <div class="loading">Loading link...</div>
+                <!-- Tab Navigation -->
+                <div class="credits-tabs">
+                    <button class="credits-tab active" data-tab="add">Add Credits</button>
+                    <button class="credits-tab" data-tab="quick">Quick Link</button>
+                </div>
+                
+                <!-- Add Credits Tab -->
+                <div id="addTab" class="tab-content active">
+                    <!-- Add Credits Section -->
+                    <div class="credits-form">
+                        <h2 style="margin-bottom: 20px;">Add Credits to Users</h2>
+                        
+                        <div class="input-group">
+                            <label for="creditAmount">Credit Amount:</label>
+                            <input type="number" id="creditAmount" class="credit-amount-input" min="1" value="10" required>
+                        </div>
+                        
+                        <div class="user-selection">
+                            <label style="margin-bottom: 10px; display: block; font-weight: 600;">Select Users:</label>
+                            <div style="margin-bottom: 10px;">
+                                <button type="button" id="selectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Select All</button>
+                                <button type="button" id="deselectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem; margin-left: 10px;">Deselect All</button>
+                            </div>
+                            <div id="userCheckboxList" class="user-checkbox-list">
+                                <div class="loading">Loading users...</div>
+                            </div>
+                        </div>
+                        
+                        <button id="addCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
+                    </div>
+                    
+                    <!-- View All Credits Section -->
+                    <div class="credits-form">
+                        <h2 style="margin-bottom: 20px;">All Users Credit Balances</h2>
+                        <div id="allCreditsList">
+                            <div class="loading">Loading credit balances...</div>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Add Credits Section -->
-                <div class="credits-form">
-                    <h2 style="margin-bottom: 20px;">Add Credits to Users</h2>
-                    
-                    <div class="input-group">
-                        <label for="creditAmount">Credit Amount:</label>
-                        <input type="number" id="creditAmount" class="credit-amount-input" min="1" value="10" required>
-                    </div>
-                    
-                    <div class="user-selection">
-                        <label style="margin-bottom: 10px; display: block; font-weight: 600;">Select Users:</label>
-                        <div style="margin-bottom: 10px;">
-                            <button type="button" id="selectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Select All</button>
-                            <button type="button" id="deselectAllBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem; margin-left: 10px;">Deselect All</button>
+                <!-- Quick Link Tab -->
+                <div id="quickTab" class="tab-content">
+                    <!-- Quick Access Link Section -->
+                    <div class="credits-form">
+                        <h2 style="margin-bottom: 20px;">Quick Access Link</h2>
+                        <p style="color: #666; margin-bottom: 15px;">Bookmark this link for quick access to add credits without logging in. This link is unique to your admin account.</p>
+                        <div id="quickLinkSection">
+                            <div class="loading">Loading link...</div>
                         </div>
-                        <div id="userCheckboxList" class="user-checkbox-list">
-                            <div class="loading">Loading users...</div>
-                        </div>
-                    </div>
-                    
-                    <button id="addCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
-                </div>
-                
-                <!-- View All Credits Section -->
-                <div class="credits-form">
-                    <h2 style="margin-bottom: 20px;">All Users Credit Balances</h2>
-                    <div id="allCreditsList">
-                        <div class="loading">Loading credit balances...</div>
                     </div>
                 </div>
             </div>
