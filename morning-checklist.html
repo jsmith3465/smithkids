@@ -6,8 +6,26 @@
     <title>Morning Checklist - Smith Team Six</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Full screen styling for morning checklist */
+        body {
+            padding: 0 !important;
+            display: block !important;
+            align-items: stretch !important;
+            justify-content: stretch !important;
+            min-height: 100vh;
+            overflow: auto;
+        }
+        
         .checklist-container {
-            max-width: 1400px;
+            max-width: 100% !important;
+            width: 100vw;
+            min-height: 100vh;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 20px;
+            border: 8px solid #DAA520;
+            box-sizing: border-box;
+            background: white;
         }
         
         .checklist-header {
@@ -23,6 +41,12 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             margin-top: 15px;
+        }
+        
+        @media (max-width: 1400px) {
+            .checklist-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
         
         @media (max-width: 1200px) {
@@ -171,6 +195,11 @@
         #countdownDisplay.countdown-red {
             display: inline;
         }
+        
+        .page-footer {
+            margin-top: 20px;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -220,7 +249,7 @@
                     Approve Checklist
                 </button>
                 <p style="text-align: center; color: #666; font-size: 0.85rem; margin-top: 8px;">
-                    Checklist data is saved automatically. Enter your pin code to approve checklist and award credits to users who completed all items.
+                    Checklist changes are saved only when you click "Approve Checklist" and enter your pin code. Users who completed all items will receive credits.
                 </p>
             </div>
             

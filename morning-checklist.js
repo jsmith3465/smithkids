@@ -491,84 +491,23 @@ async function submitLaunchTimeChange() {
     }
 }
 
-// Store pending changes
+// Store pending changes (only saved when Approve Checklist is clicked)
 let pendingChanges = {};
 
-// Handle checklist changes (save immediately to database)
-window.handleChecklistChange = async function(userUid, item, checked, date) {
+// Handle checklist changes (store in memory only, don't save to database)
+window.handleChecklistChange = function(userUid, item, checked, date) {
     // Always use today's date
     const today = new Date().toISOString().split('T')[0];
     const useDate = date || today;
     
-    try {
-        // Check if checklist entry exists for this user and date
-        const { data: existing, error: checkError } = await supabase
-            .from('Morning_Checklist')
-            .select('checklist_id, make_bed, clean_room, get_dressed, eat_breakfast, brush_teeth, comb_hair')
-            .eq('user_uid', userUid)
-            .eq('checklist_date', useDate)
-            .single();
-        
-        const updateData = {
-            user_uid: parseInt(userUid),
-            checklist_date: useDate,
-            [item]: checked,
-            updated_at: new Date().toISOString()
-        };
-        
-        if (existing) {
-            // Merge with existing data to preserve other items
-            updateData.make_bed = existing.make_bed || false;
-            updateData.clean_room = existing.clean_room || false;
-            updateData.get_dressed = existing.get_dressed || false;
-            updateData.eat_breakfast = existing.eat_breakfast || false;
-            updateData.brush_teeth = existing.brush_teeth || false;
-            updateData.comb_hair = existing.comb_hair || false;
-            // Override the changed item
-            updateData[item] = checked;
-            
-            // Update existing entry
-            const { error: updateError } = await supabase
-                .from('Morning_Checklist')
-                .update(updateData)
-                .eq('checklist_id', existing.checklist_id);
-            
-            if (updateError) throw updateError;
-        } else {
-            // Set defaults for all items
-            updateData.make_bed = item === 'make_bed' ? checked : false;
-            updateData.clean_room = item === 'clean_room' ? checked : false;
-            updateData.get_dressed = item === 'get_dressed' ? checked : false;
-            updateData.eat_breakfast = item === 'eat_breakfast' ? checked : false;
-            updateData.brush_teeth = item === 'brush_teeth' ? checked : false;
-            updateData.comb_hair = item === 'comb_hair' ? checked : false;
-            
-            // Create new entry
-            const { error: insertError } = await supabase
-                .from('Morning_Checklist')
-                .insert(updateData);
-            
-            if (insertError) throw insertError;
-        }
-        
-        // Also store in pendingChanges for the "Post Changes" functionality
-        if (!pendingChanges[useDate]) {
-            pendingChanges[useDate] = {};
-        }
-        if (!pendingChanges[useDate][userUid]) {
-            pendingChanges[useDate][userUid] = {};
-        }
-        pendingChanges[useDate][userUid][item] = checked;
-        
-    } catch (error) {
-        console.error('Error saving checklist item:', error);
-        // Revert checkbox on error
-        const checkbox = document.getElementById(`${item}_${userUid}`);
-        if (checkbox) {
-            checkbox.checked = !checked;
-        }
-        alert('Error saving checklist item. Please try again.');
+    // Store in pendingChanges - will be saved when Approve Checklist is clicked
+    if (!pendingChanges[useDate]) {
+        pendingChanges[useDate] = {};
     }
+    if (!pendingChanges[useDate][userUid]) {
+        pendingChanges[useDate][userUid] = {};
+    }
+    pendingChanges[useDate][userUid][item] = checked;
 };
 
 function showCodeModal() {
