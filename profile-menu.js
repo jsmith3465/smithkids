@@ -45,7 +45,7 @@ async function createProfileMenu() {
                 transition: background 0.2s ease;
                 text-align: right;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                💰 Credit Manager
+                💰 Credit Management
             </a>
             <a href="approvals.html" style="
                 display: block;
