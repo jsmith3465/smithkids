@@ -6,29 +6,56 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Motivational quotes for kids aged 7-13
+// Motivational quotes from "The Way of the Warrior Kid" and related themes for kids aged 7-13
 const motivationalQuotes = [
-    { text: "You are braver than you believe, stronger than you seem, and smarter than you think!", author: "A.A. Milne" },
-    { text: "Every expert was once a beginner. Every pro was once an amateur. Every icon was once an unknown.", author: "Robin Sharma" },
-    { text: "The only way to do great work is to love what you do!", author: "Steve Jobs" },
-    { text: "You miss 100% of the shots you don't take!", author: "Wayne Gretzky" },
-    { text: "Believe you can and you're halfway there!", author: "Theodore Roosevelt" },
-    { text: "It's not whether you get knocked down, it's whether you get back up!", author: "Vince Lombardi" },
-    { text: "Dream big and dare to fail!", author: "Norman Vaughan" },
-    { text: "The future belongs to those who believe in the beauty of their dreams!", author: "Eleanor Roosevelt" },
-    { text: "You are never too old to set another goal or to dream a new dream!", author: "C.S. Lewis" },
-    { text: "Success is the sum of small efforts repeated day in and day out!", author: "Robert Collier" },
-    { text: "The only person you should try to be better than is the person you were yesterday!", author: "Unknown" },
-    { text: "You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose!", author: "Dr. Seuss" },
-    { text: "Why fit in when you were born to stand out?", author: "Dr. Seuss" },
-    { text: "Be yourself; everyone else is already taken!", author: "Oscar Wilde" },
-    { text: "Mistakes are proof that you are trying!", author: "Unknown" },
-    { text: "The more that you read, the more things you will know. The more that you learn, the more places you'll go!", author: "Dr. Seuss" },
-    { text: "Today is your day! Your mountain is waiting, so get on your way!", author: "Dr. Seuss" },
-    { text: "You're off to great places! Today is your day!", author: "Dr. Seuss" },
-    { text: "Think left and think right and think low and think high. Oh, the thinks you can think up if only you try!", author: "Dr. Seuss" },
-    { text: "You're braver than you believe and stronger and smarter than you think!", author: "A.A. Milne" }
+    { text: "Discipline equals freedom. By staying disciplined, you can achieve your goals and overcome challenges.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Good is never good enough! Always strive to improve and set new goals after achieving one.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "A warrior kid never quits. When things get tough, that's when you push harder.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Hard work beats talent when talent doesn't work hard. Keep pushing yourself every single day.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "You become what you do every day. Make your habits work for you, not against you.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "A warrior kid is disciplined, strong, and ready for anything. Train your body and your mind.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "The only easy day was yesterday. Today you get stronger, faster, and better.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Don't just do your best—do what's required. Then do more. That's what makes you a warrior.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Excuses are for people who don't want it bad enough. Warriors find a way to get it done.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Every champion was once a beginner. Every expert was once a student. Keep learning and growing.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Mental toughness is just as important as physical strength. Train both every single day.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "A warrior kid doesn't make excuses—they make results. Show up and do the work.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "The difference between ordinary and extraordinary is that little extra. Give that extra effort today.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "You don't have to be great to start, but you have to start to be great. Begin your journey today.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "A warrior kid is always prepared. Train hard, study hard, and be ready for any challenge.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Success isn't given—it's earned. Every day is a chance to earn your success.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "When you feel like quitting, remember why you started. Keep pushing forward, warrior kid!", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "A warrior kid never backs down from a challenge. Face your fears and overcome them.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "The only way to get better is to practice. Every day you practice, you get one step closer to your goal.", author: "The Way of the Warrior Kid", type: "quote" },
+    { text: "Be the warrior kid who shows up, works hard, and never gives up. That's how champions are made.", author: "The Way of the Warrior Kid", type: "quote" }
 ];
+
+// Bible verses about Jesus for kids aged 7-13 (NIV)
+const bibleVerses = [
+    { text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.", book: "John", chapter: 3, verse: 16, type: "bible" },
+    { text: "Jesus said, 'Let the little children come to me, and do not hinder them, for the kingdom of heaven belongs to such as these.'", book: "Matthew", chapter: 19, verse: 14, type: "bible" },
+    { text: "Jesus answered, 'I am the way and the truth and the life. No one comes to the Father except through me.'", book: "John", chapter: 14, verse: 6, type: "bible" },
+    { text: "For I can do everything through Christ, who gives me strength.", book: "Philippians", chapter: 4, verse: 13, type: "bible" },
+    { text: "Jesus said to her, 'I am the resurrection and the life. The one who believes in me will live, even though they die.'", book: "John", chapter: 11, verse: 25, type: "bible" },
+    { text: "But Jesus looked at them and said, 'With man this is impossible, but with God all things are possible.'", book: "Matthew", chapter: 19, verse: 26, type: "bible" },
+    { text: "Jesus said, 'I am the light of the world. Whoever follows me will never walk in darkness, but will have the light of life.'", book: "John", chapter: 8, verse: 12, type: "bible" },
+    { text: "Come to me, all you who are weary and burdened, and I will give you rest.", book: "Matthew", chapter: 11, verse: 28, type: "bible" },
+    { text: "For the Son of Man came to seek and to save the lost.", book: "Luke", chapter: 19, verse: 10, type: "bible" },
+    { text: "Jesus said, 'I am the good shepherd. The good shepherd lays down his life for the sheep.'", book: "John", chapter: 10, verse: 11, type: "bible" },
+    { text: "Jesus said, 'Do not let your hearts be troubled. You believe in God; believe also in me.'", book: "John", chapter: 14, verse: 1, type: "bible" },
+    { text: "For even the Son of Man did not come to be served, but to serve, and to give his life as a ransom for many.", book: "Mark", chapter: 10, verse: 45, type: "bible" },
+    { text: "Jesus said, 'I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty.'", book: "John", chapter: 6, verse: 35, type: "bible" },
+    { text: "But God demonstrates his own love for us in this: While we were still sinners, Christ died for us.", book: "Romans", chapter: 5, verse: 8, type: "bible" },
+    { text: "Jesus said, 'I have come that they may have life, and have it to the full.'", book: "John", chapter: 10, verse: 10, type: "bible" },
+    { text: "For to us a child is born, to us a son is given, and the government will be on his shoulders. And he will be called Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace.", book: "Isaiah", chapter: 9, verse: 6, type: "bible" },
+    { text: "Jesus said, 'Love your neighbor as yourself.'", book: "Matthew", chapter: 22, verse: 39, type: "bible" },
+    { text: "Jesus said, 'Do to others as you would have them do to you.'", book: "Luke", chapter: 6, verse: 31, type: "bible" },
+    { text: "Trust in the Lord with all your heart and lean not on your own understanding.", book: "Proverbs", chapter: 3, verse: 5, type: "bible" },
+    { text: "When I am afraid, I put my trust in you.", book: "Psalm", chapter: 56, verse: 3, type: "bible" }
+];
+
+// Combined array - we'll use weighted selection to maintain 3:2 ratio (Bible verses : motivational quotes)
+// For every 5 messages: 3 Bible verses, 2 motivational quotes
 
 // Get time-based greeting
 function getTimeBasedGreeting() {
@@ -42,27 +69,65 @@ function getTimeBasedGreeting() {
     }
 }
 
-// Get a random quote (can be made to change per login by using session storage)
+// Get a random quote or Bible verse with 3:2 ratio (Bible verses : motivational quotes)
+// For every 5 messages: 3 Bible verses, 2 motivational quotes
 function getRandomQuote() {
-    // Use session storage to track if we've shown a quote this session
-    // For a new quote each login, we could use login timestamp
+    // Use session storage to track selections and maintain ratio
     const sessionData = sessionStorage.getItem('userSession');
-    let quoteIndex = 0;
+    let selectionCount = 0;
+    let bibleCount = 0;
+    let quoteCount = 0;
     
-    if (sessionData) {
+    // Get selection history from session storage
+    const selectionHistory = sessionStorage.getItem('quoteSelectionHistory');
+    if (selectionHistory) {
         try {
-            const session = JSON.parse(sessionData);
-            // Use login time to seed random selection (so it's consistent per session)
-            const loginTime = session.loginTime || Date.now().toString();
-            quoteIndex = parseInt(loginTime.slice(-2)) % motivationalQuotes.length;
+            const history = JSON.parse(selectionHistory);
+            selectionCount = history.count || 0;
+            bibleCount = history.bibleCount || 0;
+            quoteCount = history.quoteCount || 0;
         } catch (e) {
-            quoteIndex = Math.floor(Math.random() * motivationalQuotes.length);
+            // Reset if corrupted
+            selectionCount = 0;
+            bibleCount = 0;
+            quoteCount = 0;
         }
-    } else {
-        quoteIndex = Math.floor(Math.random() * motivationalQuotes.length);
     }
     
-    return motivationalQuotes[quoteIndex];
+    // Determine which type to select based on ratio
+    // Every 5 selections should be: 3 Bible, 2 quotes
+    const positionInCycle = selectionCount % 5;
+    let selectedType;
+    
+    if (positionInCycle < 3) {
+        // First 3 positions: Bible verses
+        selectedType = 'bible';
+    } else {
+        // Last 2 positions: Motivational quotes
+        selectedType = 'quote';
+    }
+    
+    // Select random item from the chosen type
+    let selectedItem;
+    if (selectedType === 'bible') {
+        const randomIndex = Math.floor(Math.random() * bibleVerses.length);
+        selectedItem = bibleVerses[randomIndex];
+        bibleCount++;
+    } else {
+        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        selectedItem = motivationalQuotes[randomIndex];
+        quoteCount++;
+    }
+    
+    // Update selection history
+    selectionCount++;
+    sessionStorage.setItem('quoteSelectionHistory', JSON.stringify({
+        count: selectionCount,
+        bibleCount: bibleCount,
+        quoteCount: quoteCount
+    }));
+    
+    return selectedItem;
 }
 
 // Initialize landing page
@@ -96,10 +161,32 @@ function initializeLanding() {
     greetingText.textContent = getTimeBasedGreeting() + ',';
     userName.textContent = displayName;
     
-    // Set quote
+    // Set quote or Bible verse
     const quote = getRandomQuote();
-    document.getElementById('quoteText').textContent = `"${quote.text}"`;
-    document.getElementById('quoteAuthor').textContent = `— ${quote.author}`;
+    const quoteTextEl = document.getElementById('quoteText');
+    const quoteAuthorEl = document.getElementById('quoteAuthor');
+    
+    quoteTextEl.textContent = `"${quote.text}"`;
+    
+    if (quote.type === 'bible') {
+        // For Bible verses, make the reference a clickable link
+        const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
+        const referenceLink = document.createElement('a');
+        referenceLink.href = `bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
+        referenceLink.textContent = reference;
+        referenceLink.style.color = '#CC5500';
+        referenceLink.style.textDecoration = 'none';
+        referenceLink.style.fontWeight = '600';
+        referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+        referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+        
+        quoteAuthorEl.innerHTML = '';
+        quoteAuthorEl.appendChild(document.createTextNode('— '));
+        quoteAuthorEl.appendChild(referenceLink);
+        quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
+    } else {
+        quoteAuthorEl.textContent = `— ${quote.author}`;
+    }
     
     // Show main content
     document.getElementById('authCheck').classList.add('hidden');
