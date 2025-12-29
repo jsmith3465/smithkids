@@ -16,6 +16,20 @@ async function checkAuthentication() {
     const sessionData = sessionStorage.getItem('userSession');
     
     if (!sessionData) {
+        // No session, check if this is a guest access attempt (room code in URL on tic-tac-toe page)
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        const isTicTacToePage = window.location.pathname.includes('tic-tac-toe.html');
+        
+        if (isTicTacToePage && roomCode) {
+            // Redirect to guest login instead of regular login
+            console.log('No session data found, redirecting to guest login');
+            setTimeout(() => {
+                window.location.href = `guest-login.html?room=${roomCode}`;
+            }, 100);
+            return false;
+        }
+        
         // No session, redirect to login
         console.log('No session data found');
         setTimeout(() => {
@@ -31,9 +45,22 @@ async function checkAuthentication() {
         if (!session.uid || !session.username) {
             console.log('Invalid session data - missing uid or username');
             sessionStorage.removeItem('userSession');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 100);
+            
+            // Check if this is a guest access attempt (room code in URL on tic-tac-toe page)
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomCode = urlParams.get('room');
+            const isTicTacToePage = window.location.pathname.includes('tic-tac-toe.html');
+            
+            if (isTicTacToePage && roomCode) {
+                // Redirect to guest login instead of regular login
+                setTimeout(() => {
+                    window.location.href = `guest-login.html?room=${roomCode}`;
+                }, 100);
+            } else {
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 100);
+            }
             return false;
         }
         

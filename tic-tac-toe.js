@@ -1086,7 +1086,128 @@ class TicTacToe {
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('room');
         if (roomCode) {
+            // Check if guest session exists (from guest-login.html)
+            const guestSession = sessionStorage.getItem('guestSession');
+            if (guestSession) {
+                try {
+                    const guestInfo = JSON.parse(guestSession);
+                    // Verify room code matches
+                    if (guestInfo.roomCode === roomCode && guestInfo.firstName && guestInfo.lastName) {
+                        // Auto-join with guest info
+                        this.guestFirstName = guestInfo.firstName;
+                        this.guestLastName = guestInfo.lastName;
+                        this.joinRemoteRoomAsGuest(roomCode);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error parsing guest session:', e);
+                }
+            }
+            // No guest session, show guest entry form
             this.showGuestEntry();
+        }
+    }
+    
+    async joinRemoteRoomAsGuest(roomCode) {
+        try {
+            // Get room by code
+            const { data: room, error: roomError } = await supabase
+                .from('Game_Rooms')
+                .select('room_id, host_user_uid, expires_at, game_started')
+                .eq('room_code', roomCode)
+                .eq('is_active', true)
+                .single();
+            
+            if (roomError || !room) {
+                alert('Room not found or is no longer active.');
+                sessionStorage.removeItem('guestSession');
+                window.location.href = 'guest-login.html?room=' + roomCode;
+                return;
+            }
+            
+            // Check if room has expired
+            const now = new Date();
+            const expiresAt = new Date(room.expires_at);
+            
+            if (now > expiresAt && !room.game_started) {
+                alert('This room link has expired. Room links are valid for 15 minutes.');
+                sessionStorage.removeItem('guestSession');
+                window.location.href = 'guest-login.html?room=' + roomCode;
+                return;
+            }
+            
+            this.roomExpiresAt = room.expires_at;
+            
+            // Get IP address
+            const ip = await this.getClientIP();
+            
+            // Create remote session
+            const { data: session, error: sessionError } = await supabase
+                .from('Remote_Game_Sessions')
+                .insert({
+                    room_id: room.room_id,
+                    host_user_uid: room.host_user_uid,
+                    guest_first_name: this.guestFirstName,
+                    guest_last_name: this.guestLastName,
+                    guest_ip_address: ip
+                })
+                .select('session_id')
+                .single();
+            
+            if (sessionError) throw sessionError;
+            
+            this.remoteSessionId = session.session_id;
+            this.roomId = room.room_id;
+            this.roomCode = roomCode;
+            this.isGuest = true;
+            this.isRemoteGame = true;
+            this.guestIP = ip;
+            
+            // Hide player setup and guest entry, show game section
+            if (this.playerSetup) this.playerSetup.classList.add('hidden');
+            if (this.guestEntrySection) this.guestEntrySection.classList.add('hidden');
+            if (this.gameSection) this.gameSection.classList.remove('hidden');
+            
+            // Set up guest player
+            this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
+            this.player2Id = 'GUEST';
+            
+            // Start expiration check for guest
+            this.startExpirationCheck();
+            
+            // Subscribe to game state
+            this.subscribeToGameState();
+            
+            // Check current game state
+            const { data: currentState } = await supabase
+                .from('Game_State')
+                .select('*')
+                .eq('room_id', this.roomId)
+                .single();
+            
+            if (currentState && currentState.game_active) {
+                // Game already started
+                this.handleRemoteGameStart(currentState);
+            } else {
+                // Wait for host to start game
+                if (this.waitingForPlayer) {
+                    this.waitingForPlayer.classList.remove('hidden');
+                    const waitingText = this.waitingForPlayer.querySelector('p');
+                    if (waitingText) {
+                        waitingText.textContent = 'Waiting for host to start the game...';
+                    }
+                }
+            }
+            
+            // Initialize board display
+            this.initializeBoard();
+            this.updateDisplay();
+            
+        } catch (error) {
+            console.error('Error joining room as guest:', error);
+            alert('Error joining room. Please try again.');
+            sessionStorage.removeItem('guestSession');
+            window.location.href = 'guest-login.html?room=' + roomCode;
         }
     }
     
@@ -1140,8 +1261,10 @@ class TicTacToe {
                 this.player1Name = `${session.firstName || 'Host'} ${session.lastName || ''}`.trim();
             }
             
-            // Show room link
-            const roomLink = `${window.location.origin}${window.location.pathname}?room=${this.roomCode}`;
+            // Show room link (point to guest login page)
+            // Generate room link (use relative path to work in any directory structure)
+            const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+            const roomLink = `${window.location.origin}${basePath}/guest-login.html?room=${this.roomCode}`;
             this.roomLinkInput.value = roomLink;
             this.remoteLinkSection.classList.remove('hidden');
             
@@ -1677,21 +1800,56 @@ class TicTacToe {
     
 }
 
-// Initialize the game when DOM is loaded and authenticated
+// Initialize the game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if this is a guest access (room code in URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('room');
+    const guestSession = sessionStorage.getItem('guestSession');
+    
+    if (roomCode && guestSession) {
+        // Guest access - bypass authentication
+        try {
+            const guestInfo = JSON.parse(guestSession);
+            if (guestInfo.roomCode === roomCode) {
+                // Hide auth check, show main content
+                const authCheck = document.getElementById('authCheck');
+                const mainContent = document.getElementById('mainContent');
+                if (authCheck) authCheck.classList.add('hidden');
+                if (mainContent) mainContent.classList.remove('hidden');
+                
+                // Initialize game for guest
+                new TicTacToe();
+                return;
+            }
+        } catch (e) {
+            console.error('Error parsing guest session:', e);
+        }
+    }
+    
+    // Regular authenticated access
     const checkAuth = setInterval(() => {
         if (window.authStatus && window.authStatus.isAuthenticated) {
             clearInterval(checkAuth);
             new TicTacToe();
         } else if (window.authStatus && !window.authStatus.isAuthenticated) {
             clearInterval(checkAuth);
+            // If room code exists but no guest session, redirect to guest login
+            if (roomCode) {
+                window.location.href = `guest-login.html?room=${roomCode}`;
+            }
         }
     }, 100);
     
     setTimeout(() => {
         clearInterval(checkAuth);
         if (!window.authStatus || !window.authStatus.isAuthenticated) {
-            console.error('Authentication check timed out');
+            // If room code exists but no guest session, redirect to guest login
+            if (roomCode) {
+                window.location.href = `guest-login.html?room=${roomCode}`;
+            } else {
+                console.error('Authentication check timed out');
+            }
         }
     }, 5000);
 });
