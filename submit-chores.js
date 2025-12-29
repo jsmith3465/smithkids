@@ -1,4 +1,4 @@
-// Add Workout page for standard users
+// Submit Chores page for all users
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
@@ -42,7 +42,7 @@ async function checkUserAccess() {
         return;
     }
     
-    // All users (admin and standard) can submit workouts
+    // All users (admin and standard) can submit chores
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('standardUserCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
@@ -52,80 +52,89 @@ async function checkUserAccess() {
 }
 
 function setupEventListeners() {
-    const submitBtn = document.getElementById('submitWorkoutBtn');
-    const workoutTypeInput = document.getElementById('workoutType');
-    const workoutDescriptionInput = document.getElementById('workoutDescription');
+    const submitBtn = document.getElementById('submitChoreBtn');
+    const choreTypeSelect = document.getElementById('choreType');
+    const customChoreInput = document.getElementById('customChoreInput');
+    const customChoreText = document.getElementById('customChoreText');
+    
+    // Show/hide custom input based on selection
+    choreTypeSelect.addEventListener('change', () => {
+        if (choreTypeSelect.value === 'Custom') {
+            customChoreInput.style.display = 'block';
+            customChoreText.required = true;
+        } else {
+            customChoreInput.style.display = 'none';
+            customChoreText.required = false;
+            customChoreText.value = '';
+        }
+    });
     
     if (submitBtn) {
         submitBtn.addEventListener('click', async () => {
-            await submitWorkout();
-        });
-    }
-    
-    // Allow Enter key to submit (but not in textarea)
-    if (workoutTypeInput) {
-        workoutTypeInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                await submitWorkout();
-            }
+            await submitChore();
         });
     }
 }
 
-async function submitWorkout() {
+async function submitChore() {
     const session = window.authStatus?.getSession();
     if (!session) return;
     
-    const workoutType = document.getElementById('workoutType').value.trim();
-    const workoutDescription = document.getElementById('workoutDescription').value.trim();
-    const submitBtn = document.getElementById('submitWorkoutBtn');
+    const choreTypeSelect = document.getElementById('choreType');
+    const customChoreText = document.getElementById('customChoreText');
+    const submitBtn = document.getElementById('submitChoreBtn');
     
-    if (!workoutType) {
-        showError('Please enter a workout type.');
+    const selectedType = choreTypeSelect.value;
+    
+    if (!selectedType) {
+        showError('Please select a chore type.');
         return;
     }
     
-    if (!workoutDescription) {
-        showError('Please describe what you did during your workout.');
-        return;
+    let choreType = selectedType;
+    if (selectedType === 'Custom') {
+        const customText = customChoreText.value.trim();
+        if (!customText) {
+            showError('Please enter a custom chore name.');
+            return;
+        }
+        choreType = customText;
     }
     
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
     
     try {
-        // Combine workout type and description for the workout_type field
-        const fullWorkoutInfo = `${workoutType} - ${workoutDescription}`;
-        
         const { error } = await supabase
-            .from('Workouts')
+            .from('Chores')
             .insert({
                 user_uid: session.uid,
-                workout_type: fullWorkoutInfo,
+                chore_type: choreType,
                 credits_amount: 10,
                 is_approved: false
             });
         
         if (error) throw error;
         
-        showSuccess('Workout submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
+        showSuccess('Chore submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
+        
+        // Clear form
+        choreTypeSelect.value = '';
+        customChoreText.value = '';
+        customChoreInput.style.display = 'none';
+        customChoreText.required = false;
         
         // Update profile menu counter if admin
         if (window.createProfileMenu) {
             setTimeout(() => window.createProfileMenu(), 500);
         }
         
-        // Clear form
-        document.getElementById('workoutType').value = '';
-        document.getElementById('workoutDescription').value = '';
-        
     } catch (error) {
-        console.error('Error submitting workout:', error);
-        showError('Error submitting workout. Please try again.');
+        console.error('Error submitting chore:', error);
+        showError('Error submitting chore. Please try again.');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Workout';
+        submitBtn.textContent = 'Submit Chore';
     }
 }
 

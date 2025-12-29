@@ -16,6 +16,12 @@ async function createProfileMenu() {
         creditBalance = await getCreditBalance(session.uid);
     }
     
+    // Get pending approvals count for admins
+    let pendingApprovalsCount = 0;
+    if (isAdmin) {
+        pendingApprovalsCount = await getPendingApprovalsCount();
+    }
+    
     // Find the header area where we'll add the profile menu
     const headerRight = document.querySelector('header > div > div:last-child');
     if (!headerRight) return;
@@ -41,15 +47,31 @@ async function createProfileMenu() {
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Add Credits
             </a>
-            <a href="approve-workouts.html" style="
+            <a href="approvals.html" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
                 text-align: right;
+                position: relative;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                ✅ Approve Workouts
+                ✅ Approvals
+                ${pendingApprovalsCount > 0 ? `<span style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: #dc3545;
+                    color: white;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                ">${pendingApprovalsCount}</span>` : ''}
             </a>
             <a href="user-management.html" style="
                 display: block;
@@ -245,6 +267,41 @@ async function getCreditBalance(userUid) {
         return data ? data.balance : 0;
     } catch (error) {
         console.error('Error fetching credit balance:', error);
+        return 0;
+    }
+}
+
+// Get pending approvals count (workouts + chores)
+async function getPendingApprovalsCount() {
+    try {
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Count unapproved workouts
+        const { count: workoutsCount, error: workoutsError } = await supabase
+            .from('Workouts')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_approved', false);
+        
+        if (workoutsError) {
+            console.error('Error fetching workouts count:', workoutsError);
+        }
+        
+        // Count unapproved chores
+        const { count: choresCount, error: choresError } = await supabase
+            .from('Chores')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_approved', false);
+        
+        if (choresError) {
+            console.error('Error fetching chores count:', choresError);
+        }
+        
+        return (workoutsCount || 0) + (choresCount || 0);
+    } catch (error) {
+        console.error('Error fetching pending approvals count:', error);
         return 0;
     }
 }
