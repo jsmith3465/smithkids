@@ -43,7 +43,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
-                text-align: right;
+                text-align: left;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Credit Management
@@ -54,7 +54,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
-                text-align: right;
+                text-align: left;
                 position: relative;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
@@ -81,7 +81,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
-                text-align: right;
+                text-align: left;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 ☀️ Morning Checklist
@@ -99,7 +99,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
-                text-align: right;
+                text-align: left;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💳 View Credit Balance
@@ -168,7 +168,7 @@ async function createProfileMenu() {
                     color: #333;
                     text-decoration: none;
                     transition: background 0.2s ease;
-                    text-align: right;
+                    text-align: left;
                     white-space: nowrap;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                     📊 View Statistics
@@ -180,7 +180,7 @@ async function createProfileMenu() {
                     color: #333;
                     text-decoration: none;
                     transition: background 0.2s ease;
-                    text-align: right;
+                    text-align: left;
                     white-space: nowrap;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                     ⚙️ Settings
@@ -192,7 +192,7 @@ async function createProfileMenu() {
                     border: none;
                     background: white;
                     color: #dc3545;
-                    text-align: right;
+                    text-align: left;
                     cursor: pointer;
                     font-size: 1rem;
                     transition: background 0.2s ease;
