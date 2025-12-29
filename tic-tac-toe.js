@@ -243,12 +243,19 @@ class TicTacToe {
             return;
         }
         
-        // Check credits before starting (skip for admins)
+        // Check and deduct credits before starting (skip for admins)
         const session = window.authStatus?.getSession();
         if (session && session.userType !== 'admin') {
             const creditCheck = await checkCredits(session.uid);
             if (!creditCheck.hasCredits) {
                 alert(showCreditWarning(creditCheck.balance));
+                return;
+            }
+            
+            // Deduct credit when game begins
+            const deductResult = await deductCredits(session.uid, 'tic_tac_toe');
+            if (!deductResult.success) {
+                alert('Unable to process payment. Please try again.');
                 return;
             }
         }
@@ -634,12 +641,6 @@ class TicTacToe {
         this.updatePlayerStats();
         this.drawWinLine(winner.pattern);
         
-        // Deduct credits (skip for admins)
-        const session = window.authStatus?.getSession();
-        if (session && session.userType !== 'admin') {
-            await deductCredits(session.uid, 'tic_tac_toe');
-        }
-        
         // Save game result to database
         const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
         await this.saveGameResult(winner.player, false, gameDuration);
@@ -710,12 +711,6 @@ class TicTacToe {
         this.players[this.player2Id].draws++;
         
         this.updatePlayerStats();
-        
-        // Deduct credits (skip for admins)
-        const session = window.authStatus?.getSession();
-        if (session && session.userType !== 'admin') {
-            await deductCredits(session.uid, 'tic_tac_toe');
-        }
         
         // Save game result to database
         const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);

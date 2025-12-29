@@ -110,16 +110,17 @@ async function loadAllCredits() {
     const allCreditsList = document.getElementById('allCreditsList');
     
     try {
-        // Get all users
+        // Get only standard users
         const { data: users, error: usersError } = await supabase
             .from('Users')
             .select('UID, First_Name, Last_Name, Username')
+            .eq('user_type', 'standard')
             .order('First_Name', { ascending: true });
         
         if (usersError) throw usersError;
         
         if (!users || users.length === 0) {
-            allCreditsList.innerHTML = '<div class="no-data">No users found.</div>';
+            allCreditsList.innerHTML = '<div class="no-data">No standard users found.</div>';
             return;
         }
         
@@ -147,8 +148,9 @@ async function loadAllCredits() {
         headerRow.innerHTML = `
             <th>User</th>
             <th>Current Balance</th>
-            <th>Update Balance</th>
-            <th>Action</th>
+            <th>Add Credits</th>
+            <th>Remove Credits</th>
+            <th>Set Balance</th>
         `;
         table.appendChild(headerRow);
         
@@ -164,12 +166,24 @@ async function loadAllCredits() {
             row.id = `creditRow_${user.UID}`;
             row.innerHTML = `
                 <td>${displayName} (${user.Username})</td>
-                <td><strong>${currentBalance}</strong></td>
+                <td><strong style="font-size: 1.2rem; color: #CC5500;">${currentBalance}</strong></td>
                 <td>
-                    <input type="number" id="updateBalance_${user.UID}" value="${currentBalance}" min="0" style="width: 80px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="number" id="addAmount_${user.UID}" value="10" min="1" max="1000" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                        <button class="btn btn-primary btn-small" onclick="addCreditsToUser(${user.UID})">Add</button>
+                    </div>
                 </td>
                 <td>
-                    <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.9rem;" onclick="updateUserCredits(${user.UID})">Update</button>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="number" id="removeAmount_${user.UID}" value="10" min="1" max="1000" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                        <button class="btn btn-secondary btn-small" onclick="removeCreditsFromUser(${user.UID})">Remove</button>
+                    </div>
+                </td>
+                <td>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="number" id="setBalance_${user.UID}" value="${currentBalance}" min="0" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                        <button class="btn btn-primary btn-small" onclick="setUserBalance(${user.UID})">Set</button>
+                    </div>
                 </td>
             `;
             table.appendChild(row);
@@ -184,16 +198,149 @@ async function loadAllCredits() {
     }
 }
 
-// Make updateUserCredits available globally
-window.updateUserCredits = async function(userId) {
+// Add credits to a user
+window.addCreditsToUser = async function(userId) {
     const session = window.authStatus?.getSession();
     if (!session || session.userType !== 'admin') {
         showError('Admin access required.');
         return;
     }
     
-    const newBalanceInput = document.getElementById(`updateBalance_${userId}`);
-    const newBalance = parseInt(newBalanceInput.value);
+    const addAmountInput = document.getElementById(`addAmount_${userId}`);
+    const amount = parseInt(addAmountInput.value);
+    
+    if (isNaN(amount) || amount < 1 || amount > 1000) {
+        showError('Please enter a valid amount (1-1000).');
+        return;
+    }
+    
+    try {
+        // Get current balance
+        const { data: existingCredit, error: fetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userId)
+            .single();
+        
+        const oldBalance = existingCredit?.balance || 0;
+        const newBalance = oldBalance + amount;
+        
+        if (existingCredit) {
+            // Update existing balance
+            const { error: updateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (updateError) throw updateError;
+        } else {
+            // Create new credit record
+            const { error: insertError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: userId, balance: amount });
+            
+            if (insertError) throw insertError;
+        }
+        
+        // Record transaction
+        const { error: transError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                from_user_uid: session.uid,
+                to_user_uid: userId,
+                amount: amount,
+                transaction_type: 'credit_added',
+                description: `Admin added ${amount} credits`
+            });
+        
+        if (transError) throw transError;
+        
+        showSuccess(`Successfully added ${amount} credits. New balance: ${newBalance}`);
+        await loadAllCredits();
+        
+    } catch (error) {
+        console.error('Error adding credits:', error);
+        showError('An error occurred while adding credits. Please try again.');
+    }
+};
+
+// Remove credits from a user
+window.removeCreditsFromUser = async function(userId) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const removeAmountInput = document.getElementById(`removeAmount_${userId}`);
+    const amount = parseInt(removeAmountInput.value);
+    
+    if (isNaN(amount) || amount < 1 || amount > 1000) {
+        showError('Please enter a valid amount (1-1000).');
+        return;
+    }
+    
+    try {
+        // Get current balance
+        const { data: existingCredit, error: fetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userId)
+            .single();
+        
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            throw fetchError;
+        }
+        
+        const oldBalance = existingCredit?.balance || 0;
+        const newBalance = Math.max(0, oldBalance - amount);
+        
+        if (existingCredit) {
+            // Update existing balance
+            const { error: updateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (updateError) throw updateError;
+        } else {
+            // No credits to remove
+            showError('User has no credits to remove.');
+            return;
+        }
+        
+        // Record transaction
+        const { error: transError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                from_user_uid: session.uid,
+                to_user_uid: userId,
+                amount: amount,
+                transaction_type: 'credit_adjusted',
+                description: `Admin removed ${amount} credits`
+            });
+        
+        if (transError) throw transError;
+        
+        showSuccess(`Successfully removed ${amount} credits. New balance: ${newBalance}`);
+        await loadAllCredits();
+        
+    } catch (error) {
+        console.error('Error removing credits:', error);
+        showError('An error occurred while removing credits. Please try again.');
+    }
+};
+
+// Set user balance to a specific amount
+window.setUserBalance = async function(userId) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const setBalanceInput = document.getElementById(`setBalance_${userId}`);
+    const newBalance = parseInt(setBalanceInput.value);
     
     if (isNaN(newBalance) || newBalance < 0) {
         showError('Please enter a valid balance (0 or greater).');
@@ -238,19 +385,19 @@ window.updateUserCredits = async function(userId) {
                     amount: Math.abs(difference),
                     transaction_type: difference > 0 ? 'credit_added' : 'credit_adjusted',
                     description: difference > 0 
-                        ? `Admin added ${difference} credits (balance update)`
-                        : `Admin adjusted balance by ${difference} credits`
+                        ? `Admin set balance: added ${difference} credits`
+                        : `Admin set balance: removed ${Math.abs(difference)} credits`
                 });
             
             if (transError) throw transError;
         }
         
-        showSuccess(`Successfully updated balance to ${newBalance} credits.`);
+        showSuccess(`Successfully set balance to ${newBalance} credits.`);
         await loadAllCredits();
         
     } catch (error) {
-        console.error('Error updating credits:', error);
-        showError('An error occurred while updating credits. Please try again.');
+        console.error('Error setting balance:', error);
+        showError('An error occurred while setting balance. Please try again.');
     }
 };
 

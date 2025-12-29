@@ -41,10 +41,16 @@ export async function deductCredits(userUid, gameType, gameId = null) {
             .eq('user_uid', userUid)
             .single();
         
-        if (fetchError && fetchError.code !== 'PGRST116') {
+        // If no record exists or other error (except "not found")
+        if (fetchError) {
+            if (fetchError.code === 'PGRST116') {
+                // No credit record exists - user has 0 credits
+                return { success: false, message: 'Insufficient credits' };
+            }
             throw fetchError;
         }
         
+        // Check if user has enough credits
         if (!creditData || creditData.balance < CREDIT_COST) {
             return { success: false, message: 'Insufficient credits' };
         }
