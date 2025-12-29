@@ -80,16 +80,12 @@ class TicTacToe {
         this.gameStartTime = null;
 
         // Remote game elements
-        this.remoteRoomSection = document.getElementById('remoteRoomSection');
         this.guestEntrySection = document.getElementById('guestEntrySection');
         this.playRemoteBtn = document.getElementById('playRemoteBtn');
-        this.roomCodeDisplay = document.getElementById('roomCodeDisplay');
+        this.remoteLinkSection = document.getElementById('remoteLinkSection');
         this.roomLinkInput = document.getElementById('roomLinkInput');
         this.copyLinkBtn = document.getElementById('copyLinkBtn');
-        this.guestInfo = document.getElementById('guestInfo');
-        this.guestNameDisplay = document.getElementById('guestNameDisplay');
-        this.startRemoteGameBtn = document.getElementById('startRemoteGameBtn');
-        this.cancelRemoteBtn = document.getElementById('cancelRemoteBtn');
+        this.waitingForPlayer = document.getElementById('waitingForPlayer');
         this.guestFirstNameInput = document.getElementById('guestFirstName');
         this.guestLastNameInput = document.getElementById('guestLastName');
         this.joinRoomBtn = document.getElementById('joinRoomBtn');
@@ -105,12 +101,6 @@ class TicTacToe {
         }
         if (this.copyLinkBtn) {
             this.copyLinkBtn.addEventListener('click', () => this.copyRoomLink());
-        }
-        if (this.startRemoteGameBtn) {
-            this.startRemoteGameBtn.addEventListener('click', () => this.startRemoteGame());
-        }
-        if (this.cancelRemoteBtn) {
-            this.cancelRemoteBtn.addEventListener('click', () => this.cancelRemoteRoom());
         }
         if (this.joinRoomBtn) {
             this.joinRoomBtn.addEventListener('click', () => this.joinRemoteRoom());
@@ -997,17 +987,36 @@ class TicTacToe {
             this.isHost = true;
             this.isRemoteGame = true;
             
-            // Show room info
-            this.roomCodeDisplay.textContent = this.roomCode;
+            // Set up host player
+            const session = window.authStatus?.getSession();
+            if (session) {
+                this.player1Id = session.uid.toString();
+                this.player1Name = `${session.firstName || 'Host'} ${session.lastName || ''}`.trim();
+            }
+            
+            // Show room link
             const roomLink = `${window.location.origin}${window.location.pathname}?room=${this.roomCode}`;
             this.roomLinkInput.value = roomLink;
+            this.remoteLinkSection.classList.remove('hidden');
             
-            // Hide player setup, show remote room section
+            // Initialize game board
+            this.board = Array(9).fill(null);
+            this.gameActive = false; // Not active until guest joins
+            
+            // Hide player setup, show game section
             this.playerSetup.classList.add('hidden');
-            this.remoteRoomSection.classList.remove('hidden');
+            this.gameSection.classList.remove('hidden');
+            this.waitingForPlayer.classList.remove('hidden');
+            
+            // Initialize board display
+            this.initializeBoard();
+            this.updateDisplay();
             
             // Subscribe to guest joins
             this.subscribeToGuestJoins();
+            
+            // Subscribe to game state changes
+            this.subscribeToGameState();
             
         } catch (error) {
             console.error('Error creating room:', error);
@@ -1047,47 +1056,58 @@ class TicTacToe {
         this.guestFirstName = sessionData.guest_first_name;
         this.guestLastName = sessionData.guest_last_name;
         
-        // Show guest info
-        this.guestNameDisplay.textContent = `${this.guestFirstName} ${this.guestLastName}`;
-        this.guestInfo.style.display = 'block';
-        this.startRemoteGameBtn.style.display = 'block';
+        // Set up guest player
+        this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
+        this.player2Id = 'GUEST';
+        
+        // Hide waiting message
+        this.waitingForPlayer.classList.add('hidden');
+        
+        // Start the game automatically with random first player
+        await this.startRemoteGame();
     }
     
     async startRemoteGame() {
-        if (!this.guestFirstName || !this.guestLastName) {
-            alert('Waiting for guest to join...');
-            return;
+        // Randomly choose who goes first
+        const firstPlayerIsHost = Math.random() < 0.5;
+        
+        if (firstPlayerIsHost) {
+            // Host goes first (X)
+            this.player1Symbol = 'X';
+            this.player2Symbol = 'O';
+            this.currentPlayer = 'X';
+        } else {
+            // Guest goes first (X), so swap
+            this.player1Symbol = 'O';
+            this.player2Symbol = 'X';
+            this.currentPlayer = 'X';
+            // Swap player names for display
+            const tempName = this.player1Name;
+            const tempId = this.player1Id;
+            this.player1Name = this.player2Name;
+            this.player1Id = this.player2Id;
+            this.player2Name = tempName;
+            this.player2Id = tempId;
         }
         
-        const session = window.authStatus?.getSession();
-        if (!session) return;
-        
-        // Set up players
-        this.player1Id = session.uid.toString();
-        this.player1Name = `${session.firstName || 'Host'} ${session.lastName || ''}`.trim();
-        this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
-        this.player2Id = 'GUEST'; // Special ID for guest
-        
-        // Initialize game state in database
-        await this.initializeRemoteGameState();
-        
-        // Start the game
-        this.player1Symbol = 'X';
-        this.player2Symbol = 'O';
-        this.currentPlayer = 'X';
+        // Reset board
         this.board = Array(9).fill(null);
         this.gameActive = true;
         this.gameStartTime = Date.now();
         
-        // Hide remote room section, show game section
-        this.remoteRoomSection.classList.add('hidden');
-        this.gameSection.classList.remove('hidden');
+        // Update remote session with game start time
+        if (this.remoteSessionId) {
+            await supabase
+                .from('Remote_Game_Sessions')
+                .update({ game_started_at: new Date().toISOString() })
+                .eq('session_id', this.remoteSessionId);
+        }
         
-        // Subscribe to game state changes
-        this.subscribeToGameState();
+        // Initialize game state in database
+        await this.initializeRemoteGameState();
         
-        // Initialize board
-        this.initializeBoard();
+        // Update board display
+        this.updateBoardDisplay();
         this.updateDisplay();
     }
     
@@ -1102,7 +1122,7 @@ class TicTacToe {
             player2_symbol: this.player2Symbol,
             player1_name: this.player1Name,
             player2_name: this.player2Name,
-            game_active: true
+            game_active: this.gameActive
         };
         
         const { error } = await supabase
@@ -1251,31 +1271,37 @@ class TicTacToe {
             this.guestLastName = lastName;
             this.guestIP = ip;
             
-            // Wait for host to start game
+            // Hide guest entry, show game section
             this.guestEntrySection.classList.add('hidden');
             this.gameSection.classList.remove('hidden');
             
-            // Show waiting message
-            this.gameMessage.textContent = 'Waiting for host to start the game...';
-            this.gameMessage.style.display = 'block';
+            // Set up guest player
+            this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
+            this.player2Id = 'GUEST';
             
             // Subscribe to game state
             this.subscribeToGameState();
             
-            // Also subscribe to check when game starts
-            const gameStateChannel = supabase
-                .channel(`game-start-${this.roomId}`)
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'Game_State',
-                    filter: `room_id=eq.${this.roomId}`
-                }, (payload) => {
-                    if (payload.new.game_active) {
-                        this.handleRemoteGameStart(payload.new);
+            // Check current game state
+            const { data: currentState } = await supabase
+                .from('Game_State')
+                .select('*')
+                .eq('room_id', this.roomId)
+                .single();
+            
+            if (currentState && currentState.game_active) {
+                // Game already started
+                this.handleRemoteGameStart(currentState);
+            } else {
+                // Wait for host to start game
+                if (this.waitingForPlayer) {
+                    this.waitingForPlayer.classList.remove('hidden');
+                    const waitingText = this.waitingForPlayer.querySelector('p');
+                    if (waitingText) {
+                        waitingText.textContent = 'Waiting for host to start the game...';
                     }
-                })
-                .subscribe();
+                }
+            }
             
         } catch (error) {
             console.error('Error joining room:', error);
@@ -1295,11 +1321,23 @@ class TicTacToe {
         
         // Set player IDs
         const session = window.authStatus?.getSession();
-        if (session) {
-            this.player1Id = session.uid.toString();
+        if (this.isGuest) {
+            // Guest is player 2
+            this.player2Id = 'GUEST';
+            if (session) {
+                // If guest is logged in, use their UID, otherwise keep as GUEST
+                // For now, keep as GUEST since they're not logged in
+            }
+        } else {
+            // Host is player 1
+            if (session) {
+                this.player1Id = session.uid.toString();
+            }
+            this.player2Id = 'GUEST';
         }
-        this.player2Id = 'GUEST';
         
+        // Hide waiting message
+        this.waitingForPlayer.classList.add('hidden');
         this.gameMessage.style.display = 'none';
         this.initializeBoard();
         this.updateBoardDisplay();
@@ -1322,14 +1360,6 @@ class TicTacToe {
         this.guestEntrySection.classList.remove('hidden');
     }
     
-    cancelRemoteRoom() {
-        if (this.realtimeSubscription) {
-            supabase.removeChannel(this.realtimeSubscription);
-        }
-        this.remoteRoomSection.classList.add('hidden');
-        this.playerSetup.classList.remove('hidden');
-        this.resetRemoteGame();
-    }
     
     cancelGuestEntry() {
         window.location.href = window.location.pathname;
