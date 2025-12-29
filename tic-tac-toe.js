@@ -21,6 +21,7 @@ class TicTacToe {
         this.players = {};
         this.computerDifficulty = this.loadDifficulty();
         this.users = []; // Store users from database
+        this.isAdmin = false; // Will be set after auth check
         
         // Remote game properties
         this.isRemoteGame = false;
@@ -49,6 +50,9 @@ class TicTacToe {
         // Only fetch users from database if not a guest
         if (!isGuest) {
             await this.loadUsersFromDatabase();
+            // Check if current user is admin
+            const session = window.authStatus?.getSession();
+            this.isAdmin = session && session.userType === 'admin';
         }
         
         this.playerSetup = document.getElementById('playerSetup');
@@ -164,7 +168,7 @@ class TicTacToe {
         try {
             const { data, error } = await supabase
                 .from('Users')
-                .select('UID, First_Name, Last_Name, Username')
+                .select('UID, First_Name, Last_Name, Username, user_type')
                 .order('First_Name', { ascending: true });
             
             if (error) {
@@ -198,7 +202,8 @@ class TicTacToe {
             // Add users to players object with credit info
             this.users.forEach(user => {
                 const displayName = this.getDisplayName(user);
-                const creditBalance = creditMap[user.UID] || 0;
+                // Admins have unlimited credits
+                const creditBalance = user.user_type === 'admin' ? Infinity : (creditMap[user.UID] || 0);
                 this.players[user.UID] = {
                     name: displayName,
                     uid: user.UID,
@@ -276,7 +281,8 @@ class TicTacToe {
             const option1 = document.createElement('option');
             option1.value = id;
             let p1Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
-            if (id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
+            // Only show credit warning if not admin and player has no credits
+            if (!this.isAdmin && id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
                 p1Text += ' (No remaining credits - go workout)';
             }
             option1.textContent = p1Text;
@@ -285,7 +291,8 @@ class TicTacToe {
             const option2 = document.createElement('option');
             option2.value = id;
             let p2Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
-            if (id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
+            // Only show credit warning if not admin and player has no credits
+            if (!this.isAdmin && id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
                 p2Text += ' (No remaining credits - go workout)';
             }
             option2.textContent = p2Text;
@@ -324,7 +331,7 @@ class TicTacToe {
         const p1IsComputer = this.isComputerPlayer(p1Id);
         const p2IsComputer = this.isComputerPlayer(p2Id);
         
-        if (!isAdmin) {
+        if (!isAdmin && !this.isAdmin) {
             // Check Player 1 credits
             if (!p1IsComputer) {
                 const p1Player = this.players[p1Id];
@@ -948,9 +955,9 @@ class TicTacToe {
         const p1 = this.players[this.player1Id];
         const p2 = this.players[this.player2Id];
         
-        // Update Player 1 display with credit status
+        // Update Player 1 display with credit status (skip for admins)
         let p1Text = p1.name;
-        if (this.player1Id !== this.COMPUTER_ID && p1.credits !== undefined && p1.credits < 1) {
+        if (!this.isAdmin && this.player1Id !== this.COMPUTER_ID && p1.credits !== undefined && p1.credits < 1) {
             p1Text += ' (No remaining credits - go workout)';
         }
         this.player1Display.textContent = p1Text;
@@ -958,9 +965,9 @@ class TicTacToe {
         this.player1Losses.textContent = p1.losses;
         this.player1Draws.textContent = p1.draws;
         
-        // Update Player 2 display with credit status
+        // Update Player 2 display with credit status (skip for admins)
         let p2Text = p2.name;
-        if (this.player2Id !== this.COMPUTER_ID && p2.credits !== undefined && p2.credits < 1) {
+        if (!this.isAdmin && this.player2Id !== this.COMPUTER_ID && p2.credits !== undefined && p2.credits < 1) {
             p2Text += ' (No remaining credits - go workout)';
         }
         this.player2Display.textContent = p2Text;
@@ -1006,11 +1013,26 @@ class TicTacToe {
                 });
             }
             
+            // Load user types to check for admins
+            const { data: users, error: usersError } = await supabase
+                .from('Users')
+                .select('UID, user_type');
+            
+            const userTypeMap = {};
+            if (users && !usersError) {
+                users.forEach(user => {
+                    userTypeMap[user.UID] = user.user_type;
+                });
+            }
+            
             // Update credit balances in players object
             Object.keys(this.players).forEach(playerId => {
                 if (playerId !== this.COMPUTER_ID && this.players[playerId].uid) {
                     const uid = this.players[playerId].uid;
-                    if (creditMap[uid] !== undefined) {
+                    // Admins have unlimited credits
+                    if (userTypeMap[uid] === 'admin') {
+                        this.players[playerId].credits = Infinity;
+                    } else if (creditMap[uid] !== undefined) {
                         this.players[playerId].credits = creditMap[uid];
                     } else {
                         this.players[playerId].credits = 0;
@@ -1240,7 +1262,7 @@ class TicTacToe {
         }
         
         // Check credits before creating room (skip for admins)
-        if (session.userType !== 'admin') {
+        if (session.userType !== 'admin' && !this.isAdmin) {
             const creditCheck = await checkCredits(session.uid);
             if (!creditCheck.hasCredits) {
                 alert(showCreditWarning(creditCheck.balance));
@@ -1365,7 +1387,7 @@ class TicTacToe {
         if (!session) return;
         
         // Check credits before starting (skip for admins)
-        if (session.userType !== 'admin') {
+        if (session.userType !== 'admin' && !this.isAdmin) {
             const creditCheck = await checkCredits(session.uid);
             if (!creditCheck.hasCredits) {
                 // Show message to both players

@@ -7,7 +7,49 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .settings-container {
-            max-width: 800px;
+            max-width: 1200px;
+        }
+        
+        /* Tab Navigation */
+        .settings-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .settings-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+        
+        .settings-tab:hover {
+            color: #DAA520;
+            background: rgba(218, 165, 32, 0.05);
+        }
+        
+        .settings-tab.active {
+            color: #CC5500;
+            border-bottom-color: #CC5500;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .settings-section {
@@ -38,7 +80,8 @@
         }
         
         .input-group input[type="password"],
-        .input-group input[type="text"] {
+        .input-group input[type="text"],
+        .input-group select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -47,7 +90,8 @@
         }
         
         .input-group input[type="password"]:focus,
-        .input-group input[type="text"]:focus {
+        .input-group input[type="text"]:focus,
+        .input-group select:focus {
             border-color: #DAA520;
             outline: none;
         }
@@ -75,6 +119,77 @@
             margin-bottom: 20px;
             display: none;
         }
+        
+        /* User Management Styles */
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .users-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .users-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .users-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .users-table .suspended {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .users-table .active {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-small {
+            padding: 5px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .add-user-form {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .no-users {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -98,45 +213,103 @@
             <div class="success-message" id="successMessage"></div>
             <div class="error-message" id="errorMessage"></div>
             
-            <div class="settings-section">
-                <h2>Pin Code</h2>
-                <p style="color: #666; margin-bottom: 20px;">
-                    Set a pin code that will be required to post checklist changes and award credits. 
-                    This pin code helps ensure only authorized admins can post checklist updates.
-                </p>
-                
-                <div class="input-group">
-                    <label for="checklistCode">Pin Code:</label>
-                    <input type="password" id="checklistCode" placeholder="Enter pin code (leave blank to keep current)" maxlength="8" pattern="[0-9]*" inputmode="numeric">
-                    <div class="help-text">Enter a new pin code (4-8 digits) to change it, or leave blank to keep your current pin code.</div>
-                </div>
-                
-                <div class="input-group">
-                    <label for="confirmCode">Confirm Pin Code:</label>
-                    <input type="password" id="confirmCode" placeholder="Confirm pin code" maxlength="8" pattern="[0-9]*" inputmode="numeric">
-                </div>
-                
-                <button id="saveCodeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                    Save Pin Code
-                </button>
+            <!-- Tab Navigation -->
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="general">General Settings</button>
+                <button class="settings-tab" data-tab="users">User Management</button>
+                <!-- Future tabs can be added here -->
             </div>
             
-            <div class="settings-section">
-                <h2>Launch Time</h2>
-                <p style="color: #666; margin-bottom: 20px;">
-                    Set the launch time for the morning checklist countdown timer (default: 0700).
-                </p>
-                
-                <div class="input-group">
-                    <label for="launchTimeSetting">Launch Time (Military Format):</label>
-                    <input type="text" id="launchTimeSetting" placeholder="0700" maxlength="4" pattern="[0-9]{4}">
-                    <div class="help-text">Enter time in military format (HHMM), e.g., 0700 for 7:00 AM, 1300 for 1:00 PM</div>
+            <!-- General Settings Tab -->
+            <div id="generalTab" class="tab-content active">
+                <div class="settings-section">
+                    <h2>Pin Code</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Set a pin code that will be required to post checklist changes and award credits. 
+                        This pin code helps ensure only authorized admins can post checklist updates.
+                    </p>
+                    
+                    <div class="input-group">
+                        <label for="checklistCode">Pin Code:</label>
+                        <input type="password" id="checklistCode" placeholder="Enter pin code (leave blank to keep current)" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+                        <div class="help-text">Enter a new pin code (4-8 digits) to change it, or leave blank to keep your current pin code.</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirmCode">Confirm Pin Code:</label>
+                        <input type="password" id="confirmCode" placeholder="Confirm pin code" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+                    </div>
+                    
+                    <button id="saveCodeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Save Pin Code
+                    </button>
                 </div>
                 
-                <button id="saveLaunchTimeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                    Save Launch Time
-                </button>
+                <div class="settings-section">
+                    <h2>Launch Time</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Set the launch time for the morning checklist countdown timer (default: 0700).
+                    </p>
+                    
+                    <div class="input-group">
+                        <label for="launchTimeSetting">Launch Time (Military Format):</label>
+                        <input type="text" id="launchTimeSetting" placeholder="0700" maxlength="4" pattern="[0-9]{4}">
+                        <div class="help-text">Enter time in military format (HHMM), e.g., 0700 for 7:00 AM, 1300 for 1:00 PM</div>
+                    </div>
+                    
+                    <button id="saveLaunchTimeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Save Launch Time
+                    </button>
+                </div>
             </div>
+            
+            <!-- User Management Tab -->
+            <div id="usersTab" class="tab-content">
+                <!-- Add User Section -->
+                <div class="settings-section">
+                    <h2>Add New User</h2>
+                    <div class="add-user-form">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="newUsername">Username *</label>
+                                <input type="text" id="newUsername" class="input" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="newPassword">Password *</label>
+                                <input type="password" id="newPassword" class="input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="newFirstName">First Name</label>
+                                <input type="text" id="newFirstName" class="input">
+                            </div>
+                            <div class="input-group">
+                                <label for="newLastName">Last Name</label>
+                                <input type="text" id="newLastName" class="input">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="newUserType">User Type *</label>
+                            <select id="newUserType" class="input" required>
+                                <option value="standard">Standard</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button id="addUserBtn" class="btn btn-primary" style="margin-top: 15px;">Add User</button>
+                    </div>
+                </div>
+                
+                <!-- Users List Section -->
+                <div class="settings-section">
+                    <h2>All Users</h2>
+                    <div id="usersList">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Future tabs can be added here -->
         </div>
     </div>
 

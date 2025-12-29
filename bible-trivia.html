@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Trivia - Smith Team Six</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .trivia-container {
+            max-width: 800px;
+        }
+        
+        .trivia-header {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .trivia-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            font-size: 1.2rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .question-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question-number {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .answer-option {
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            text-align: left;
+        }
+        
+        .answer-option:hover {
+            border-color: #DAA520;
+            background: #fff3cd;
+            transform: translateX(5px);
+        }
+        
+        .answer-option.selected {
+            border-color: #DAA520;
+            background: #fff3cd;
+        }
+        
+        .answer-option.correct {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .answer-option.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .answer-option.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .feedback-section {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .feedback-section.show {
+            display: block;
+        }
+        
+        .feedback-correct {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .feedback-incorrect {
+            color: #dc3545;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .bible-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        .bible-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.4);
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            display: none;
+        }
+        
+        .results-section.show {
+            display: block;
+        }
+        
+        .results-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+            margin-bottom: 20px;
+        }
+        
+        .results-score {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #DAA520;
+            margin: 20px 0;
+        }
+        
+        .results-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .credits-earned {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #28a745;
+            margin: 20px 0;
+        }
+        
+        .start-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .start-screen h2 {
+            color: #CC5500;
+            margin-bottom: 20px;
+        }
+        
+        .start-screen p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .game-rules {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .game-rules h3 {
+            color: #CC5500;
+            margin-bottom: 15px;
+        }
+        
+        .game-rules ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .game-rules li {
+            padding: 8px 0;
+            color: #666;
+        }
+        
+        .game-rules li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container trivia-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Bible Trivia</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <!-- Start Screen -->
+            <div id="startScreen" class="start-screen">
+                <h2>📖 Bible Trivia Challenge</h2>
+                <p>Test your knowledge of Bible stories! Answer 10 questions and earn credits based on your score.</p>
+                
+                <div class="game-rules">
+                    <h3>How to Play:</h3>
+                    <ul>
+                        <li>Answer 10 biblical questions</li>
+                        <li>If you get a question wrong, you'll get a link to read the Bible story</li>
+                        <li>Earn credits based on your score:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>0-5 correct: 0 credits</li>
+                                <li>6-8 correct: 10 credits</li>
+                                <li>9-10 correct: 20 credits</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button id="startGameBtn" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.2rem;">
+                    Start Game
+                </button>
+            </div>
+            
+            <!-- Game Screen -->
+            <div id="gameScreen" class="hidden">
+                <div class="trivia-header">
+                    <div class="trivia-title">Bible Trivia</div>
+                    <div class="score-display">Question <span id="currentQuestionNum">1</span> of 10 | Score: <span id="currentScore">0</span></div>
+                </div>
+                
+                <div class="question-section">
+                    <div class="question-number" id="questionNumber"></div>
+                    <div class="question-text" id="questionText"></div>
+                    
+                    <div class="answer-options" id="answerOptions"></div>
+                    
+                    <div class="feedback-section" id="feedbackSection">
+                        <div id="feedbackMessage"></div>
+                        <a id="bibleLink" href="#" class="bible-link" target="_blank" style="display: none;">📖 Read This Story in the Bible</a>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <button id="nextQuestionBtn" class="btn btn-primary" style="display: none;">Next Question</button>
+                        <button id="finishGameBtn" class="btn btn-primary" style="display: none;">Finish Game</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Screen -->
+            <div id="resultsScreen" class="results-section">
+                <div class="results-title">Game Complete!</div>
+                <div class="results-score">You got <span id="finalScore">0</span> out of 10 correct</div>
+                <div class="results-message" id="resultsMessage"></div>
+                <div class="credits-earned" id="creditsEarned" style="display: none;"></div>
+                <div class="game-controls" style="margin-top: 30px;">
+                    <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+                    <a href="index.html" class="btn btn-secondary">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="bible-trivia.js"></script>
+</body>
+</html>
+

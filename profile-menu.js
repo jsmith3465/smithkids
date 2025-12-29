@@ -44,6 +44,7 @@ async function createProfileMenu() {
                 text-decoration: none;
                 transition: background 0.2s ease;
                 text-align: right;
+                white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Credit Management
             </a>
@@ -55,6 +56,7 @@ async function createProfileMenu() {
                 transition: background 0.2s ease;
                 text-align: right;
                 position: relative;
+                white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 ✅ Approvals
                 ${pendingApprovalsCount > 0 ? `<span style="
@@ -73,16 +75,6 @@ async function createProfileMenu() {
                     font-weight: 700;
                 ">${pendingApprovalsCount}</span>` : ''}
             </a>
-            <a href="user-management.html" style="
-                display: block;
-                padding: 12px 15px;
-                color: #333;
-                text-decoration: none;
-                transition: background 0.2s ease;
-                text-align: right;
-            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                👥 User Management
-            </a>
             <a href="morning-checklist.html" style="
                 display: block;
                 padding: 12px 15px;
@@ -90,6 +82,7 @@ async function createProfileMenu() {
                 text-decoration: none;
                 transition: background 0.2s ease;
                 text-align: right;
+                white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 ☀️ Morning Checklist
             </a>
@@ -107,6 +100,7 @@ async function createProfileMenu() {
                 text-decoration: none;
                 transition: background 0.2s ease;
                 text-align: right;
+                white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💳 View Credit Balance
             </a>
@@ -157,7 +151,8 @@ async function createProfileMenu() {
                 border: 2px solid #DAA520;
                 border-radius: 10px;
                 box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-                min-width: 200px;
+                min-width: 250px;
+                white-space: nowrap;
                 display: none;
                 z-index: 1000;
                 overflow: hidden;
@@ -174,6 +169,7 @@ async function createProfileMenu() {
                     text-decoration: none;
                     transition: background 0.2s ease;
                     text-align: right;
+                    white-space: nowrap;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                     📊 View Statistics
                 </a>
@@ -185,6 +181,7 @@ async function createProfileMenu() {
                     text-decoration: none;
                     transition: background 0.2s ease;
                     text-align: right;
+                    white-space: nowrap;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                     ⚙️ Settings
                 </a>
