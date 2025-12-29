@@ -11,12 +11,7 @@ function setupWorkoutTracking() {
     const session = window.authStatus?.getSession();
     if (!session) return;
     
-    // Only show for standard users (admins don't need to record workouts)
-    if (session.userType === 'admin') {
-        return;
-    }
-    
-    // Show workout section with link
+    // Show workout section with link for all users (admin and standard)
     const workoutSection = document.getElementById('workoutSection');
     if (workoutSection) {
         workoutSection.classList.remove('hidden');

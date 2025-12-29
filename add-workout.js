@@ -42,12 +42,7 @@ async function checkUserAccess() {
         return;
     }
     
-    // Only standard users can submit workouts (admins don't need to)
-    if (session.userType === 'admin') {
-        document.getElementById('standardUserCheck').innerHTML = '<p style="color: #dc3545;">Admins do not need to submit workouts. You can approve workouts from your profile menu.</p>';
-        return;
-    }
-    
+    // All users (admin and standard) can submit workouts
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('standardUserCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
