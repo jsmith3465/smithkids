@@ -103,13 +103,13 @@ async function submitWorkout() {
             .insert({
                 user_uid: session.uid,
                 workout_type: fullWorkoutInfo,
-                credits_amount: 5,
+                credits_amount: 10,
                 is_approved: false
             });
         
         if (error) throw error;
         
-        showSuccess('Workout submitted successfully! Waiting for admin approval. You will receive 5 credits once approved.');
+        showSuccess('Workout submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
         
         // Clear form
         document.getElementById('workoutType').value = '';

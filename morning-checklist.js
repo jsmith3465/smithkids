@@ -239,14 +239,21 @@ function updateCountdown() {
     }
     
     // Audio warnings (only if countdown is positive)
+    // Check for exact minute marks (15:00, 10:00, 5:00)
+    // Use minutesLeft and secondsLeft to check for exact minute marks
     if (totalSeconds > 0) {
-        if (totalMinutes === 15 && !warning15Min) {
+        // 15 minutes exactly (15:00)
+        if (minutesLeft === 15 && secondsLeft === 0 && !warning15Min) {
             warning15Min = true;
             speakWarning('15 minutes');
-        } else if (totalMinutes === 10 && !warning10Min) {
+        } 
+        // 10 minutes exactly (10:00)
+        else if (minutesLeft === 10 && secondsLeft === 0 && !warning10Min) {
             warning10Min = true;
             speakWarning('10 minutes');
-        } else if (totalMinutes === 5 && !warning5Min) {
+        } 
+        // 5 minutes exactly (5:00)
+        else if (minutesLeft === 5 && secondsLeft === 0 && !warning5Min) {
             warning5Min = true;
             speakWarning('5 minutes');
         }
