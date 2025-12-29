@@ -321,10 +321,11 @@ function initializeAudio() {
         audio1Min = new Audio(basePath + '1_min_warning.mp3');
         audio0Min = new Audio(basePath + '0_min_warning.mp3');
         
-        // Set volume and preload
+        // Set volume and preload - keep muted until actually playing warnings
         [audio15Min, audio10Min, audio5Min, audio1Min, audio0Min].forEach(audio => {
             if (audio) {
                 audio.volume = 1.0;
+                audio.muted = true; // Keep muted until we actually play the warning
                 audio.preload = 'auto';
                 
                 // Add error handlers
@@ -353,6 +354,7 @@ function initializeAudio() {
 }
 
 // Unlock audio by playing and immediately pausing (requires user interaction)
+// Audio is muted during unlock to prevent any sound from playing
 function unlockAudio() {
     if (!audioInitialized || !audio15Min) return;
     
@@ -360,18 +362,28 @@ function unlockAudio() {
     audioElements.forEach(audio => {
         if (audio) {
             try {
+                // Mute audio during unlock process
+                const wasMuted = audio.muted;
+                audio.muted = true;
+                
                 const unlockPromise = audio.play();
                 if (unlockPromise !== undefined) {
                     unlockPromise
                         .then(() => {
                             audio.pause();
                             audio.currentTime = 0;
-                            console.log('Audio unlocked:', audio.src);
+                            // Restore original muted state (should be false for warnings)
+                            audio.muted = wasMuted;
+                            console.log('Audio unlocked (silently):', audio.src);
                         })
                         .catch(error => {
+                            // Restore original muted state
+                            audio.muted = wasMuted;
                             // Silently fail - this is expected if no user interaction yet
-                            // console.warn('Could not unlock audio (will need user interaction):', error);
                         });
+                } else {
+                    // Restore original muted state if play() didn't return a promise
+                    audio.muted = wasMuted;
                 }
             } catch (error) {
                 // Silently fail - this is expected if no user interaction yet
@@ -390,6 +402,10 @@ function playWarningAudio(audioElement, audioName) {
         // Reset to beginning
         audioElement.currentTime = 0;
         
+        // Unmute the audio before playing (it was muted during initialization)
+        audioElement.muted = false;
+        audioElement.volume = 1.0; // Ensure maximum volume
+        
         // Attempt to play
         const playPromise = audioElement.play();
         
@@ -403,7 +419,7 @@ function playWarningAudio(audioElement, audioName) {
                     console.error('Audio name:', audioName);
                     console.error('This may be due to browser autoplay restrictions. User interaction may be required.');
                     // Try to unlock audio by attempting to play again
-                    initializeAudio();
+                    unlockAudio();
                 });
         }
     } catch (error) {
