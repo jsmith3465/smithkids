@@ -28,11 +28,13 @@ class TicTacToe {
         this.isGuest = false;
         this.roomId = null;
         this.roomCode = null;
+        this.roomExpiresAt = null;
         this.remoteSessionId = null;
         this.realtimeSubscription = null;
         this.guestFirstName = null;
         this.guestLastName = null;
         this.guestIP = null;
+        this.expirationCheckInterval = null;
         
         this.init();
     }
@@ -164,23 +166,40 @@ class TicTacToe {
             
             this.users = data || [];
             
+            // Load credit balances for all users
+            const { data: credits, error: creditsError } = await supabase
+                .from('User_Credits')
+                .select('user_uid, balance');
+            
+            const creditMap = {};
+            if (credits && !creditsError) {
+                credits.forEach(credit => {
+                    creditMap[credit.user_uid] = credit.balance || 0;
+                });
+            }
+            
             // Build players object with Computer player
             this.players[this.COMPUTER_ID] = {
                 name: 'Computer',
                 wins: 0,
                 losses: 0,
-                draws: 0
+                draws: 0,
+                credits: Infinity // Computer doesn't need credits
             };
             
-            // Add users to players object
+            // Add users to players object with credit info
             this.users.forEach(user => {
                 const displayName = this.getDisplayName(user);
+                const creditBalance = creditMap[user.UID] || 0;
                 this.players[user.UID] = {
                     name: displayName,
                     uid: user.UID,
+                    firstName: user.First_Name || '',
+                    lastName: user.Last_Name || '',
                     wins: 0,
                     losses: 0,
-                    draws: 0
+                    draws: 0,
+                    credits: creditBalance
                 };
             });
         } catch (error) {
@@ -248,12 +267,20 @@ class TicTacToe {
         playerArray.forEach(([id, player]) => {
             const option1 = document.createElement('option');
             option1.value = id;
-            option1.textContent = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
+            let p1Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
+            if (id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
+                p1Text += ' (No remaining credits - go workout)';
+            }
+            option1.textContent = p1Text;
             this.player1Select.appendChild(option1);
 
             const option2 = document.createElement('option');
             option2.value = id;
-            option2.textContent = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
+            let p2Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
+            if (id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
+                p2Text += ' (No remaining credits - go workout)';
+            }
+            option2.textContent = p2Text;
             this.player2Select.appendChild(option2);
         });
 
@@ -282,21 +309,77 @@ class TicTacToe {
             return;
         }
         
-        // Check and deduct credits before starting (skip for admins)
         const session = window.authStatus?.getSession();
-        if (session && session.userType !== 'admin') {
-            const creditCheck = await checkCredits(session.uid);
-            if (!creditCheck.hasCredits) {
-                alert(showCreditWarning(creditCheck.balance));
-                return;
+        const isAdmin = session && session.userType === 'admin';
+        
+        // Check credits for both players (skip for admins and computer)
+        const p1IsComputer = this.isComputerPlayer(p1Id);
+        const p2IsComputer = this.isComputerPlayer(p2Id);
+        
+        if (!isAdmin) {
+            // Check Player 1 credits
+            if (!p1IsComputer) {
+                const p1Player = this.players[p1Id];
+                if (!p1Player || p1Player.credits === undefined || p1Player.credits < 1) {
+                    const playerName = p1Player ? p1Player.name : 'Player 1';
+                    alert(`${playerName} does not have enough credits to play. Please select a different player or have them earn more credits.`);
+                    return;
+                }
             }
             
-            // Deduct credit when game begins
-            const deductResult = await deductCredits(session.uid, 'tic_tac_toe');
-            if (!deductResult.success) {
-                alert('Unable to process payment. Please try again.');
-                return;
+            // Check Player 2 credits
+            if (!p2IsComputer) {
+                const p2Player = this.players[p2Id];
+                if (!p2Player || p2Player.credits === undefined || p2Player.credits < 1) {
+                    const playerName = p2Player ? p2Player.name : 'Player 2';
+                    alert(`${playerName} does not have enough credits to play. Please select a different player or have them earn more credits.`);
+                    return;
+                }
             }
+            
+            // Deduct credits from both players
+            if (!p1IsComputer) {
+                const p1Player = this.players[p1Id];
+                const deductResult1 = await deductCredits(parseInt(p1Id), 'tic_tac_toe');
+                if (!deductResult1.success) {
+                    alert(`Unable to deduct credits from ${p1Player.name}. Please try again.`);
+                    return;
+                }
+                
+                // Update local credit balance
+                p1Player.credits = deductResult1.newBalance;
+                
+                // Show message if this was their last credit
+                if (deductResult1.newBalance === 0) {
+                    const firstName = p1Player.firstName || '';
+                    const lastName = p1Player.lastName || '';
+                    const fullName = `${firstName} ${lastName}`.trim() || p1Player.name;
+                    alert(`${fullName} has no more available credits. Please workout or be helpful in order to earn more credits!`);
+                }
+            }
+            
+            if (!p2IsComputer) {
+                const p2Player = this.players[p2Id];
+                const deductResult2 = await deductCredits(parseInt(p2Id), 'tic_tac_toe');
+                if (!deductResult2.success) {
+                    alert(`Unable to deduct credits from ${p2Player.name}. Please try again.`);
+                    return;
+                }
+                
+                // Update local credit balance
+                p2Player.credits = deductResult2.newBalance;
+                
+                // Show message if this was their last credit
+                if (deductResult2.newBalance === 0) {
+                    const firstName = p2Player.firstName || '';
+                    const lastName = p2Player.lastName || '';
+                    const fullName = `${firstName} ${lastName}`.trim() || p2Player.name;
+                    alert(`${fullName} has no more available credits. Please workout or be helpful in order to earn more credits!`);
+                }
+            }
+            
+            // Refresh player selects to update credit status
+            this.updatePlayerSelects();
         }
 
         this.player1Id = p1Id;
@@ -321,6 +404,7 @@ class TicTacToe {
         
         this.initializeBoard();
         this.updatePlayerStats();
+        this.updatePlayerDisplays();
     }
 
     initializeBoard() {
@@ -856,25 +940,78 @@ class TicTacToe {
         const p1 = this.players[this.player1Id];
         const p2 = this.players[this.player2Id];
         
-        this.player1Display.textContent = p1.name;
+        // Update Player 1 display with credit status
+        let p1Text = p1.name;
+        if (this.player1Id !== this.COMPUTER_ID && p1.credits !== undefined && p1.credits < 1) {
+            p1Text += ' (No remaining credits - go workout)';
+        }
+        this.player1Display.textContent = p1Text;
         this.player1Wins.textContent = p1.wins;
         this.player1Losses.textContent = p1.losses;
         this.player1Draws.textContent = p1.draws;
         
-        this.player2Display.textContent = p2.name;
+        // Update Player 2 display with credit status
+        let p2Text = p2.name;
+        if (this.player2Id !== this.COMPUTER_ID && p2.credits !== undefined && p2.credits < 1) {
+            p2Text += ' (No remaining credits - go workout)';
+        }
+        this.player2Display.textContent = p2Text;
         this.player2Wins.textContent = p2.wins;
         this.player2Losses.textContent = p2.losses;
         this.player2Draws.textContent = p2.draws;
+    }
+    
+    updatePlayerDisplays() {
+        // This is a helper function that updates player displays with credit status
+        // It's called from updatePlayerStats, so we don't need a separate implementation
+        this.updatePlayerStats();
     }
 
     newGame() {
         this.initializeBoard();
     }
 
-    newPlayers() {
+    async newPlayers() {
+        // Reload credit balances before showing player selection
+        await this.refreshCreditBalances();
         this.gameSection.classList.add('hidden');
         this.playerSetup.classList.remove('hidden');
         this.updatePlayerSelects();
+    }
+    
+    async refreshCreditBalances() {
+        try {
+            // Load credit balances for all users
+            const { data: credits, error: creditsError } = await supabase
+                .from('User_Credits')
+                .select('user_uid, balance');
+            
+            if (creditsError) {
+                console.error('Error refreshing credits:', creditsError);
+                return;
+            }
+            
+            const creditMap = {};
+            if (credits) {
+                credits.forEach(credit => {
+                    creditMap[credit.user_uid] = credit.balance || 0;
+                });
+            }
+            
+            // Update credit balances in players object
+            Object.keys(this.players).forEach(playerId => {
+                if (playerId !== this.COMPUTER_ID && this.players[playerId].uid) {
+                    const uid = this.players[playerId].uid;
+                    if (creditMap[uid] !== undefined) {
+                        this.players[playerId].credits = creditMap[uid];
+                    } else {
+                        this.players[playerId].credits = 0;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error refreshing credit balances:', error);
+        }
     }
     
     async saveGameResult(winnerSymbol, isDraw, gameDuration) {
@@ -960,11 +1097,20 @@ class TicTacToe {
             return;
         }
         
+        // Check credits before creating room (skip for admins)
+        if (session.userType !== 'admin') {
+            const creditCheck = await checkCredits(session.uid);
+            if (!creditCheck.hasCredits) {
+                alert(showCreditWarning(creditCheck.balance));
+                return;
+            }
+        }
+        
         try {
             // Generate unique room code
             const roomCode = this.generateRoomCode();
             
-            // Create room in database
+            // Create room in database (expires_at will be set automatically by trigger)
             const { data: room, error } = await supabase
                 .from('Game_Rooms')
                 .insert({
@@ -972,7 +1118,7 @@ class TicTacToe {
                     host_user_uid: session.uid,
                     game_type: 'tic_tac_toe'
                 })
-                .select('room_id, room_code')
+                .select('room_id, room_code, expires_at')
                 .single();
             
             if (error) {
@@ -986,9 +1132,9 @@ class TicTacToe {
             this.roomCode = room.room_code;
             this.isHost = true;
             this.isRemoteGame = true;
+            this.roomExpiresAt = room.expires_at;
             
             // Set up host player
-            const session = window.authStatus?.getSession();
             if (session) {
                 this.player1Id = session.uid.toString();
                 this.player1Name = `${session.firstName || 'Host'} ${session.lastName || ''}`.trim();
@@ -1011,6 +1157,9 @@ class TicTacToe {
             // Initialize board display
             this.initializeBoard();
             this.updateDisplay();
+            
+            // Start expiration check timer
+            this.startExpirationCheck();
             
             // Subscribe to guest joins
             this.subscribeToGuestJoins();
@@ -1068,6 +1217,51 @@ class TicTacToe {
     }
     
     async startRemoteGame() {
+        const session = window.authStatus?.getSession();
+        if (!session) return;
+        
+        // Check credits before starting (skip for admins)
+        if (session.userType !== 'admin') {
+            const creditCheck = await checkCredits(session.uid);
+            if (!creditCheck.hasCredits) {
+                // Show message to both players
+                const message = `Insufficient credits. Host has ${creditCheck.balance} credit(s) remaining. Room link has expired.`;
+                alert(message);
+                if (this.waitingForPlayer) {
+                    this.waitingForPlayer.classList.remove('hidden');
+                    const waitingText = this.waitingForPlayer.querySelector('p');
+                    if (waitingText) {
+                        waitingText.textContent = message;
+                    }
+                }
+                // Mark room as expired
+                await this.expireRoom();
+                return;
+            }
+            
+            // Deduct credit when game begins
+            const deductResult = await deductCredits(session.uid, 'tic_tac_toe');
+            if (!deductResult.success) {
+                const message = 'Unable to process payment. Room link has expired.';
+                alert(message);
+                if (this.waitingForPlayer) {
+                    this.waitingForPlayer.classList.remove('hidden');
+                    const waitingText = this.waitingForPlayer.querySelector('p');
+                    if (waitingText) {
+                        waitingText.textContent = message;
+                    }
+                }
+                await this.expireRoom();
+                return;
+            }
+        }
+        
+        // Mark game as started in database (prevents expiration)
+        await supabase
+            .from('Game_Rooms')
+            .update({ game_started: true })
+            .eq('room_id', this.roomId);
+        
         // Randomly choose who goes first
         const firstPlayerIsHost = Math.random() < 0.5;
         
@@ -1102,6 +1296,9 @@ class TicTacToe {
                 .update({ game_started_at: new Date().toISOString() })
                 .eq('session_id', this.remoteSessionId);
         }
+        
+        // Stop expiration check since game has started
+        this.stopExpirationCheck();
         
         // Initialize game state in database
         await this.initializeRemoteGameState();
@@ -1234,7 +1431,7 @@ class TicTacToe {
             // Get room by code
             const { data: room, error: roomError } = await supabase
                 .from('Game_Rooms')
-                .select('room_id, host_user_uid')
+                .select('room_id, host_user_uid, expires_at, game_started')
                 .eq('room_code', roomCode)
                 .eq('is_active', true)
                 .single();
@@ -1243,6 +1440,18 @@ class TicTacToe {
                 alert('Room not found or is no longer active.');
                 return;
             }
+            
+            // Check if room has expired
+            const now = new Date();
+            const expiresAt = new Date(room.expires_at);
+            
+            if (now > expiresAt && !room.game_started) {
+                alert('This room link has expired. Room links are valid for 15 minutes.');
+                window.location.href = window.location.pathname;
+                return;
+            }
+            
+            this.roomExpiresAt = room.expires_at;
             
             // Get IP address
             const ip = await this.getClientIP();
@@ -1278,6 +1487,9 @@ class TicTacToe {
             // Set up guest player
             this.player2Name = `${this.guestFirstName} ${this.guestLastName}`;
             this.player2Id = 'GUEST';
+            
+            // Start expiration check for guest too
+            this.startExpirationCheck();
             
             // Subscribe to game state
             this.subscribeToGameState();
@@ -1365,12 +1577,92 @@ class TicTacToe {
         window.location.href = window.location.pathname;
     }
     
+    startExpirationCheck() {
+        if (!this.roomExpiresAt) return;
+        
+        // Check expiration every 30 seconds
+        this.expirationCheckInterval = setInterval(async () => {
+            await this.checkRoomExpiration();
+        }, 30000);
+        
+        // Also check immediately
+        this.checkRoomExpiration();
+    }
+    
+    stopExpirationCheck() {
+        if (this.expirationCheckInterval) {
+            clearInterval(this.expirationCheckInterval);
+            this.expirationCheckInterval = null;
+        }
+    }
+    
+    async checkRoomExpiration() {
+        if (!this.roomId || !this.roomExpiresAt) return;
+        
+        // Check if room has expired
+        const now = new Date();
+        const expiresAt = new Date(this.roomExpiresAt);
+        
+        // Get current room state
+        const { data: room } = await supabase
+            .from('Game_Rooms')
+            .select('game_started, is_active')
+            .eq('room_id', this.roomId)
+            .single();
+        
+        // If game has started, stop checking expiration
+        if (room && room.game_started) {
+            this.stopExpirationCheck();
+            return;
+        }
+        
+        // If expired and game hasn't started
+        if (now > expiresAt) {
+            await this.expireRoom();
+        }
+    }
+    
+    async expireRoom() {
+        if (!this.roomId) return;
+        
+        // Mark room as inactive
+        await supabase
+            .from('Game_Rooms')
+            .update({ is_active: false })
+            .eq('room_id', this.roomId);
+        
+        // Stop expiration check
+        this.stopExpirationCheck();
+        
+        // Show expiration message
+        const message = 'Room link has expired. Room links are valid for 15 minutes.';
+        alert(message);
+        
+        if (this.waitingForPlayer) {
+            this.waitingForPlayer.classList.remove('hidden');
+            const waitingText = this.waitingForPlayer.querySelector('p');
+            if (waitingText) {
+                waitingText.textContent = message;
+            }
+        }
+        
+        // Disable game board
+        this.gameActive = false;
+        if (this.gameBoard) {
+            Array.from(this.gameBoard.children).forEach(cell => {
+                cell.classList.add('disabled');
+            });
+        }
+    }
+    
     resetRemoteGame() {
+        this.stopExpirationCheck();
         this.isRemoteGame = false;
         this.isHost = false;
         this.isGuest = false;
         this.roomId = null;
         this.roomCode = null;
+        this.roomExpiresAt = null;
         this.remoteSessionId = null;
         this.guestFirstName = null;
         this.guestLastName = null;
