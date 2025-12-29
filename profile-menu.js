@@ -61,6 +61,26 @@ async function createProfileMenu() {
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 👥 User Management
             </a>
+            <a href="morning-checklist.html" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+                text-align: right;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                ☀️ Morning Checklist
+            </a>
+            <a href="settings.html" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+                text-align: right;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                ⚙️ Settings
+            </a>
         `;
     } else {
         menuItems = `

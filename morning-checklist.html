@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morning Checklist - Smith Team Six</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .checklist-container {
+            max-width: 1400px;
+        }
+        
+        .checklist-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .user-checklist-box {
+            background: white;
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .user-checklist-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+        }
+        
+        .user-name {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #CC5500;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            margin-right: 12px;
+            accent-color: #DAA520;
+        }
+        
+        .checklist-item label {
+            font-size: 1.1rem;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+            user-select: none;
+        }
+        
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: #28a745;
+            text-decoration: line-through;
+        }
+        
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .date-selector label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .date-selector input[type="date"] {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .date-selector input[type="date"]:focus {
+            border-color: #DAA520;
+            outline: none;
+        }
+        
+        .no-users {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.hidden {
+            display: none;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container checklist-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Morning Checklist</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="checklist-header">
+                <div class="date-selector">
+                    <label for="checklistDate">Date:</label>
+                    <input type="date" id="checklistDate" value="">
+                </div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <button id="postChangesBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Post Changes
+                    </button>
+                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">
+                        Enter your admin code to post changes and award credits
+                    </p>
+                </div>
+            </div>
+            
+            <div id="checklistGrid" class="checklist-grid">
+                <div class="loading">Loading checklists...</div>
+            </div>
+            
+            <!-- Code Entry Modal -->
+            <div id="codeModal" class="modal hidden">
+                <div class="modal-content">
+                    <h2 style="margin-top: 0;">Enter Admin Code</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Enter your admin code to post checklist changes and award credits.</p>
+                    <input type="password" id="adminCodeInput" placeholder="Enter code" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1rem; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="submitCodeBtn" class="btn btn-primary" style="flex: 1;">Submit</button>
+                        <button id="cancelCodeBtn" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    </div>
+                    <div id="codeError" style="color: #dc3545; margin-top: 10px; display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="profile-menu.js"></script>
+    <script type="module" src="morning-checklist.js"></script>
+</body>
+</html>
+
