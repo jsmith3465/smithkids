@@ -37,6 +37,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
+                text-align: right;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Add Credits
             </a>
@@ -46,13 +47,14 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
+                text-align: right;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 ✅ Approve Workouts
             </a>
         `;
     } else {
         menuItems = `
-            <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #fff3cd;">
+            <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #fff3cd; text-align: right;">
                 <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Credit Balance</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: #CC5500;">${creditBalance !== null ? creditBalance : 0}</div>
             </div>
@@ -62,6 +64,7 @@ async function createProfileMenu() {
                 color: #333;
                 text-decoration: none;
                 transition: background 0.2s ease;
+                text-align: right;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💳 View Credit Balance
             </a>
@@ -101,7 +104,7 @@ async function createProfileMenu() {
                 z-index: 1000;
                 overflow: hidden;
             ">
-                <div style="padding: 15px; border-bottom: 1px solid #e0e0e0; background: #f8f9fa;">
+                <div style="padding: 15px; border-bottom: 1px solid #e0e0e0; background: #f8f9fa; text-align: right;">
                     <div style="font-weight: 600; color: #333;">${displayName}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 3px;">${session.username} ${isAdmin ? '(Admin)' : ''}</div>
                 </div>
@@ -112,6 +115,7 @@ async function createProfileMenu() {
                     color: #333;
                     text-decoration: none;
                     transition: background 0.2s ease;
+                    text-align: right;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                     📊 View Statistics
                 </a>
@@ -121,7 +125,7 @@ async function createProfileMenu() {
                     border: none;
                     background: white;
                     color: #dc3545;
-                    text-align: left;
+                    text-align: right;
                     cursor: pointer;
                     font-size: 1rem;
                     transition: background 0.2s ease;

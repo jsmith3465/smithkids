@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmithFamJam - Home</title>
+    <title>Smith Team Six - Home</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .landing-container {
@@ -115,7 +115,7 @@
     <div class="container landing-container">
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SmithFamJam</h1>
+                <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Smith Team Six</h1>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
                     <button id="logoutBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Logout</button>
@@ -141,22 +141,11 @@
             <div class="section-container" style="margin-top: 40px;">
                 <h2 class="section-title">⚔️ Warrior Kids</h2>
                 <div class="section-content">
-                    <!-- Workout Tracking Section (Standard Users Only) -->
-                    <div id="workoutSection" class="hidden" style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);">
-                        <h3 style="margin-bottom: 20px; color: #333;">💪 Record Your Workout</h3>
-                        <p style="color: #666; margin-bottom: 20px;">Earn 5 credits per approved workout! Record your workout and wait for admin approval.</p>
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="workoutType" placeholder="e.g., Running, Push-ups, Basketball..." style="
-                                flex: 1;
-                                min-width: 200px;
-                                padding: 12px;
-                                border: 2px solid #e0e0e0;
-                                border-radius: 10px;
-                                font-size: 1rem;
-                            ">
-                            <button id="recordWorkoutBtn" class="btn btn-primary" style="padding: 12px 30px;">Record Workout</button>
-                        </div>
-                        <div id="workoutMessage" style="margin-top: 15px; display: none;"></div>
+                    <!-- Workout Submission Link (Standard Users Only) -->
+                    <div id="workoutSection" class="hidden" style="text-align: center; padding: 20px;">
+                        <h3 style="margin-bottom: 15px; color: #333;">💪 Submit Your Workout</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Earn 5 credits per approved workout! Submit your workout details and wait for admin approval.</p>
+                        <a href="add-workout.html" class="btn btn-primary" style="padding: 12px 30px; text-decoration: none; display: inline-block;">Add Workout</a>
                     </div>
                 </div>
             </div>
