@@ -132,7 +132,7 @@ function initializeLanding() {
         // For Bible verses, make the reference a clickable link
         const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
         const referenceLink = document.createElement('a');
-        referenceLink.href = `bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
+        referenceLink.href = `pages/bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
         referenceLink.textContent = reference;
         referenceLink.style.color = '#CC5500';
         referenceLink.style.textDecoration = 'none';
