@@ -6,6 +6,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Global variables
+let launchTime = '0700'; // Default launch time
+let countdownInterval = null;
+let timeUpdateInterval = null;
+let codeEntered = false;
+let warning15Min = false;
+let warning10Min = false;
+let warning5Min = false;
+let launchAlarmPlayed = false;
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -48,6 +58,24 @@ async function checkAdminAccess() {
         return;
     }
     
+    // Check if admin has a code set
+    const { data: settings } = await supabase
+        .from('Admin_Settings')
+        .select('checklist_code, launch_time')
+        .eq('admin_uid', session.uid)
+        .single();
+    
+    if (!settings || !settings.checklist_code) {
+        alert('Please set your admin code in Settings before accessing the Morning Checklist page.');
+        window.location.href = 'settings.html';
+        return;
+    }
+    
+    // Load launch time
+    if (settings.launch_time) {
+        launchTime = settings.launch_time;
+    }
+    
     // Show main content
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
@@ -55,6 +83,12 @@ async function checkAdminAccess() {
     // Set today's date as default
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('checklistDate').value = today;
+    
+    // Initialize date/time display and countdown
+    updateDateTime();
+    updateLaunchTimeDisplay();
+    startCountdown();
+    startTimeUpdate();
     
     // Load checklists
     await loadChecklists(today);
@@ -69,6 +103,21 @@ async function checkAdminAccess() {
         showCodeModal();
     });
     
+    // Add launch time change button listener
+    document.getElementById('changeLaunchTimeBtn').addEventListener('click', () => {
+        showLaunchTimeModal();
+    });
+    
+    // Handle back link
+    document.getElementById('backLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!codeEntered) {
+            showExitCodeModal('index.html');
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+    
     // Add code modal listeners
     document.getElementById('submitCodeBtn').addEventListener('click', async () => {
         await submitCode();
@@ -78,26 +127,424 @@ async function checkAdminAccess() {
         hideCodeModal();
     });
     
-    // Allow Enter key to submit code
+    // Add exit code modal listeners
+    document.getElementById('submitExitCodeBtn').addEventListener('click', async () => {
+        await submitExitCode();
+    });
+    
+    document.getElementById('cancelExitBtn').addEventListener('click', () => {
+        hideExitCodeModal();
+    });
+    
+    // Add launch time modal listeners
+    document.getElementById('submitLaunchTimeBtn').addEventListener('click', async () => {
+        await submitLaunchTimeChange();
+    });
+    
+    document.getElementById('cancelLaunchTimeBtn').addEventListener('click', () => {
+        hideLaunchTimeModal();
+    });
+    
+    // Allow Enter key to submit codes
     document.getElementById('adminCodeInput').addEventListener('keypress', async (e) => {
         if (e.key === 'Enter') {
             await submitCode();
         }
     });
+    
+    document.getElementById('exitCodeInput').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            await submitExitCode();
+        }
+    });
+    
+    document.getElementById('launchTimeCodeInput').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            await submitLaunchTimeChange();
+        }
+    });
+    
+    // Prevent navigation without code
+    preventNavigation();
+}
+
+function updateDateTime() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    document.getElementById('currentDate').textContent = dateStr;
+    document.getElementById('currentTime').textContent = timeStr;
+}
+
+function startTimeUpdate() {
+    timeUpdateInterval = setInterval(() => {
+        updateDateTime();
+    }, 1000);
+}
+
+function updateLaunchTimeDisplay() {
+    const hours = launchTime.substring(0, 2);
+    const minutes = launchTime.substring(2, 4);
+    const time12 = new Date(`2000-01-01T${hours}:${minutes}:00`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    document.getElementById('launchTimeDisplay').textContent = `${time12} (${launchTime})`;
+}
+
+function startCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    countdownInterval = setInterval(() => {
+        updateCountdown();
+    }, 1000);
+    
+    updateCountdown(); // Update immediately
+}
+
+function updateCountdown() {
+    const now = new Date();
+    const hours = parseInt(launchTime.substring(0, 2));
+    const minutes = parseInt(launchTime.substring(2, 4));
+    
+    const launchDate = new Date();
+    launchDate.setHours(hours, minutes, 0, 0);
+    
+    // If launch time has passed today, set for tomorrow
+    if (launchDate < now) {
+        launchDate.setDate(launchDate.getDate() + 1);
+        // Reset warnings for new day
+        warning15Min = false;
+        warning10Min = false;
+        warning5Min = false;
+        launchAlarmPlayed = false;
+    }
+    
+    const diff = launchDate - now;
+    const totalSeconds = Math.floor(diff / 1000);
+    const hoursLeft = Math.floor(totalSeconds / 3600);
+    const minutesLeft = Math.floor((totalSeconds % 3600) / 60);
+    const secondsLeft = totalSeconds % 60;
+    
+    const countdownText = `${String(hoursLeft).padStart(2, '0')}:${String(minutesLeft).padStart(2, '0')}:${String(secondsLeft).padStart(2, '0')}`;
+    const countdownDisplay = document.getElementById('countdownText');
+    countdownDisplay.textContent = countdownText;
+    
+    // Color coding
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    countdownDisplay.className = '';
+    if (totalMinutes > 15) {
+        countdownDisplay.classList.add('countdown-green');
+    } else if (totalMinutes > 5) {
+        countdownDisplay.classList.add('countdown-yellow');
+    } else {
+        countdownDisplay.classList.add('countdown-red');
+    }
+    
+    // Audio warnings (only if countdown is positive)
+    if (totalSeconds > 0) {
+        if (totalMinutes === 15 && !warning15Min) {
+            warning15Min = true;
+            speakWarning('15 minutes');
+        } else if (totalMinutes === 10 && !warning10Min) {
+            warning10Min = true;
+            speakWarning('10 minutes');
+        } else if (totalMinutes === 5 && !warning5Min) {
+            warning5Min = true;
+            speakWarning('5 minutes');
+        }
+    }
+    
+    // Launch alarm (when countdown reaches zero)
+    if (totalSeconds <= 0 && totalSeconds > -60 && !launchAlarmPlayed) {
+        launchAlarmPlayed = true;
+        playLaunchAlarm();
+    }
+}
+
+function speakWarning(minutes) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(`${minutes} minute warning! ${minutes} minutes until launch!`);
+        utterance.rate = 0.9;
+        utterance.pitch = 0.8;
+        utterance.volume = 1.0;
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+function playLaunchAlarm() {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance('Launch! Launch! Launch!');
+        utterance.rate = 1.2;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        // Repeat 3 times
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, i * 1000);
+        }
+    }
+}
+
+function preventNavigation() {
+    // Intercept all link clicks
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link && link.href && !codeEntered) {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            if (href && href !== '#' && !href.startsWith('javascript:')) {
+                showExitCodeModal(href);
+            }
+        }
+    }, true);
+    
+    // Intercept browser back/forward
+    window.addEventListener('beforeunload', (e) => {
+        if (!codeEntered) {
+            e.preventDefault();
+            e.returnValue = 'You must enter your admin code to leave this page.';
+        }
+    });
+    
+    // Handle back button
+    window.addEventListener('popstate', (e) => {
+        if (!codeEntered) {
+            e.preventDefault();
+            window.history.pushState(null, '', window.location.href);
+            showExitCodeModal();
+        }
+    });
+    
+    // Push initial state
+    window.history.pushState(null, '', window.location.href);
+}
+
+let pendingNavigationUrl = null;
+
+function showExitCodeModal(url = null) {
+    pendingNavigationUrl = url;
+    document.getElementById('exitCodeModal').classList.remove('hidden');
+    document.getElementById('exitCodeInput').value = '';
+    document.getElementById('exitCodeInput').focus();
+    document.getElementById('exitCodeError').style.display = 'none';
+}
+
+function hideExitCodeModal() {
+    document.getElementById('exitCodeModal').classList.add('hidden');
+    document.getElementById('exitCodeInput').value = '';
+    pendingNavigationUrl = null;
+}
+
+async function submitExitCode() {
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    const enteredCode = document.getElementById('exitCodeInput').value.trim();
+    const codeError = document.getElementById('exitCodeError');
+    
+    if (!enteredCode) {
+        codeError.textContent = 'Please enter a code.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const { data: settings } = await supabase
+            .from('Admin_Settings')
+            .select('checklist_code')
+            .eq('admin_uid', session.uid)
+            .single();
+        
+        if (!settings || enteredCode !== settings.checklist_code) {
+            codeError.textContent = 'Incorrect code. Please try again.';
+            codeError.style.display = 'block';
+            return;
+        }
+        
+        // Code is correct, allow navigation
+        codeEntered = true;
+        hideExitCodeModal();
+        
+        // Cleanup intervals
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+        if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+        }
+        
+        if (pendingNavigationUrl) {
+            window.location.href = pendingNavigationUrl;
+        }
+        
+    } catch (error) {
+        console.error('Error verifying exit code:', error);
+        codeError.textContent = 'Error verifying code. Please try again.';
+        codeError.style.display = 'block';
+    }
+}
+
+function showLaunchTimeModal() {
+    document.getElementById('launchTimeModal').classList.remove('hidden');
+    document.getElementById('launchTimeCodeInput').value = '';
+    document.getElementById('launchTimeInput').value = launchTime;
+    document.getElementById('launchTimeInput').focus();
+    document.getElementById('launchTimeError').style.display = 'none';
+}
+
+function hideLaunchTimeModal() {
+    document.getElementById('launchTimeModal').classList.add('hidden');
+    document.getElementById('launchTimeCodeInput').value = '';
+    document.getElementById('launchTimeInput').value = '';
+    document.getElementById('launchTimeError').style.display = 'none';
+}
+
+async function submitLaunchTimeChange() {
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    const enteredCode = document.getElementById('launchTimeCodeInput').value.trim();
+    const newLaunchTime = document.getElementById('launchTimeInput').value.trim();
+    const codeError = document.getElementById('launchTimeError');
+    
+    if (!enteredCode) {
+        codeError.textContent = 'Please enter a code.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    if (!newLaunchTime || !/^\d{4}$/.test(newLaunchTime)) {
+        codeError.textContent = 'Please enter a valid time in military format (HHMM, e.g., 0700).';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    const hours = parseInt(newLaunchTime.substring(0, 2));
+    const minutes = parseInt(newLaunchTime.substring(2, 4));
+    
+    if (hours > 23 || minutes > 59) {
+        codeError.textContent = 'Invalid time. Hours must be 00-23 and minutes must be 00-59.';
+        codeError.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const { data: settings } = await supabase
+            .from('Admin_Settings')
+            .select('checklist_code, setting_id')
+            .eq('admin_uid', session.uid)
+            .single();
+        
+        if (!settings || enteredCode !== settings.checklist_code) {
+            codeError.textContent = 'Incorrect code. Please try again.';
+            codeError.style.display = 'block';
+            return;
+        }
+        
+        // Update launch time
+        const { error: updateError } = await supabase
+            .from('Admin_Settings')
+            .update({ 
+                launch_time: newLaunchTime,
+                updated_at: new Date().toISOString()
+            })
+            .eq('setting_id', settings.setting_id);
+        
+        if (updateError) throw updateError;
+        
+        launchTime = newLaunchTime;
+        updateLaunchTimeDisplay();
+        warning15Min = false;
+        warning10Min = false;
+        warning5Min = false;
+        launchAlarmPlayed = false;
+        
+        hideLaunchTimeModal();
+        alert('Launch time updated successfully!');
+        
+    } catch (error) {
+        console.error('Error updating launch time:', error);
+        codeError.textContent = 'Error updating launch time. Please try again.';
+        codeError.style.display = 'block';
+    }
 }
 
 // Store pending changes
 let pendingChanges = {};
 
-// Handle checklist changes (store locally, don't save yet)
-window.handleChecklistChange = function(userUid, item, checked, date) {
-    if (!pendingChanges[date]) {
-        pendingChanges[date] = {};
+// Handle checklist changes (save immediately to database)
+window.handleChecklistChange = async function(userUid, item, checked, date) {
+    try {
+        // Check if checklist entry exists for this user and date
+        const { data: existing, error: checkError } = await supabase
+            .from('Morning_Checklist')
+            .select('checklist_id, make_bed, clean_room, get_dressed, eat_breakfast, brush_teeth, comb_hair')
+            .eq('user_uid', userUid)
+            .eq('checklist_date', date)
+            .single();
+        
+        const updateData = {
+            user_uid: parseInt(userUid),
+            checklist_date: date,
+            [item]: checked,
+            updated_at: new Date().toISOString()
+        };
+        
+        if (existing) {
+            // Merge with existing data to preserve other items
+            updateData.make_bed = existing.make_bed || false;
+            updateData.clean_room = existing.clean_room || false;
+            updateData.get_dressed = existing.get_dressed || false;
+            updateData.eat_breakfast = existing.eat_breakfast || false;
+            updateData.brush_teeth = existing.brush_teeth || false;
+            updateData.comb_hair = existing.comb_hair || false;
+            // Override the changed item
+            updateData[item] = checked;
+            
+            // Update existing entry
+            const { error: updateError } = await supabase
+                .from('Morning_Checklist')
+                .update(updateData)
+                .eq('checklist_id', existing.checklist_id);
+            
+            if (updateError) throw updateError;
+        } else {
+            // Set defaults for all items
+            updateData.make_bed = item === 'make_bed' ? checked : false;
+            updateData.clean_room = item === 'clean_room' ? checked : false;
+            updateData.get_dressed = item === 'get_dressed' ? checked : false;
+            updateData.eat_breakfast = item === 'eat_breakfast' ? checked : false;
+            updateData.brush_teeth = item === 'brush_teeth' ? checked : false;
+            updateData.comb_hair = item === 'comb_hair' ? checked : false;
+            
+            // Create new entry
+            const { error: insertError } = await supabase
+                .from('Morning_Checklist')
+                .insert(updateData);
+            
+            if (insertError) throw insertError;
+        }
+        
+        // Also store in pendingChanges for the "Post Changes" functionality
+        if (!pendingChanges[date]) {
+            pendingChanges[date] = {};
+        }
+        if (!pendingChanges[date][userUid]) {
+            pendingChanges[date][userUid] = {};
+        }
+        pendingChanges[date][userUid][item] = checked;
+        
+    } catch (error) {
+        console.error('Error saving checklist item:', error);
+        // Revert checkbox on error
+        const checkbox = document.getElementById(`${item}_${userUid}`);
+        if (checkbox) {
+            checkbox.checked = !checked;
+        }
+        alert('Error saving checklist item. Please try again.');
     }
-    if (!pendingChanges[date][userUid]) {
-        pendingChanges[date][userUid] = {};
-    }
-    pendingChanges[date][userUid][item] = checked;
 };
 
 function showCodeModal() {
@@ -253,7 +700,7 @@ async function postChecklistChanges() {
         // Clear pending changes for this date
         delete pendingChanges[date];
         
-        // Reload checklists
+        // Reload checklists to refresh display
         await loadChecklists(date);
         
         // Count how many users got credits
@@ -272,7 +719,7 @@ async function postChecklistChanges() {
         if (creditsAwarded > 0) {
             alert(`Changes posted successfully! ${creditsAwarded} user(s) completed all items and received 10 credits each.`);
         } else {
-            alert('Changes posted successfully!');
+            alert('Changes posted successfully! All checklist data has been saved with timestamps.');
         }
         
     } catch (error) {

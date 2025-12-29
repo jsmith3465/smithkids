@@ -121,6 +121,23 @@
                     Save Code
                 </button>
             </div>
+            
+            <div class="settings-section">
+                <h2>Launch Time</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Set the launch time for the morning checklist countdown timer (default: 0700).
+                </p>
+                
+                <div class="input-group">
+                    <label for="launchTimeSetting">Launch Time (Military Format):</label>
+                    <input type="text" id="launchTimeSetting" placeholder="0700" maxlength="4" pattern="[0-9]{4}">
+                    <div class="help-text">Enter time in military format (HHMM), e.g., 0700 for 7:00 AM, 1300 for 1:00 PM</div>
+                </div>
+                
+                <button id="saveLaunchTimeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                    Save Launch Time
+                </button>
+            </div>
         </div>
     </div>
 

@@ -137,6 +137,18 @@
             width: 90%;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
+        
+        .countdown-green {
+            color: #28a745 !important;
+        }
+        
+        .countdown-yellow {
+            color: #ffc107 !important;
+        }
+        
+        .countdown-red {
+            color: #dc3545 !important;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +156,7 @@
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
+                    <a href="#" id="backLink" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
                     <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Morning Checklist</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -158,18 +170,29 @@
         </div>
 
         <div id="mainContent" class="hidden">
+            <!-- Date and Time Display -->
+            <div class="checklist-header" style="text-align: center;">
+                <div id="dateTimeDisplay" style="margin-bottom: 20px;">
+                    <div id="currentDate" style="font-size: 1.5rem; font-weight: 700; color: #CC5500; margin-bottom: 10px;"></div>
+                    <div id="currentTime" style="font-size: 2rem; font-weight: 700; color: #DAA520; font-family: 'Courier New', monospace;"></div>
+                </div>
+                
+                <!-- Launch Time and Countdown -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">Launch Time: <span id="launchTimeDisplay" style="font-weight: 700; color: #CC5500;"></span></div>
+                        <button id="changeLaunchTimeBtn" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">Change Launch Time</button>
+                    </div>
+                    <div id="countdownDisplay" style="font-size: 2.5rem; font-weight: 700; font-family: 'Courier New', monospace; padding: 20px; border-radius: 10px; background: #f8f9fa;">
+                        <div id="countdownText">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="checklist-header">
                 <div class="date-selector">
-                    <label for="checklistDate">Date:</label>
+                    <label for="checklistDate">View Date:</label>
                     <input type="date" id="checklistDate" value="">
-                </div>
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                    <button id="postChangesBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                        Post Changes
-                    </button>
-                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">
-                        Enter your admin code to post changes and award credits
-                    </p>
                 </div>
             </div>
             
@@ -177,17 +200,57 @@
                 <div class="loading">Loading checklists...</div>
             </div>
             
-            <!-- Code Entry Modal -->
+            <!-- Post Changes Button at Bottom -->
+            <div class="checklist-header" style="margin-top: 30px;">
+                <button id="postChangesBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                    Award Credits
+                </button>
+                <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">
+                    Checklist data is saved automatically. Enter your admin code to award credits to users who completed all items.
+                </p>
+            </div>
+            
+            <!-- Code Entry Modal for Awarding Credits -->
             <div id="codeModal" class="modal hidden">
                 <div class="modal-content">
                     <h2 style="margin-top: 0;">Enter Admin Code</h2>
-                    <p style="color: #666; margin-bottom: 20px;">Enter your admin code to post checklist changes and award credits.</p>
+                    <p style="color: #666; margin-bottom: 20px;">Enter your admin code to award credits to users who completed all items.</p>
                     <input type="password" id="adminCodeInput" placeholder="Enter code" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1rem; margin-bottom: 20px;">
                     <div style="display: flex; gap: 10px;">
                         <button id="submitCodeBtn" class="btn btn-primary" style="flex: 1;">Submit</button>
                         <button id="cancelCodeBtn" class="btn btn-secondary" style="flex: 1;">Cancel</button>
                     </div>
                     <div id="codeError" style="color: #dc3545; margin-top: 10px; display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Code Entry Modal for Navigation -->
+            <div id="exitCodeModal" class="modal hidden">
+                <div class="modal-content">
+                    <h2 style="margin-top: 0;">Enter Admin Code to Exit</h2>
+                    <p style="color: #666; margin-bottom: 20px;">You must enter your admin code to navigate away from this page.</p>
+                    <input type="password" id="exitCodeInput" placeholder="Enter code" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1rem; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="submitExitCodeBtn" class="btn btn-primary" style="flex: 1;">Submit</button>
+                        <button id="cancelExitBtn" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    </div>
+                    <div id="exitCodeError" style="color: #dc3545; margin-top: 10px; display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Launch Time Change Modal -->
+            <div id="launchTimeModal" class="modal hidden">
+                <div class="modal-content">
+                    <h2 style="margin-top: 0;">Change Launch Time</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Enter your admin code to change the launch time.</p>
+                    <input type="password" id="launchTimeCodeInput" placeholder="Enter code" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1rem; margin-bottom: 15px;">
+                    <label for="launchTimeInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Launch Time (Military Format):</label>
+                    <input type="text" id="launchTimeInput" placeholder="0700" maxlength="4" pattern="[0-9]{4}" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1rem; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="submitLaunchTimeBtn" class="btn btn-primary" style="flex: 1;">Save</button>
+                        <button id="cancelLaunchTimeBtn" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    </div>
+                    <div id="launchTimeError" style="color: #dc3545; margin-top: 10px; display: none;"></div>
                 </div>
             </div>
         </div>
