@@ -107,6 +107,93 @@
             color: #999;
             font-style: italic;
         }
+        
+        .high-scores-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .score-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #DAA520;
+        }
+        
+        .score-item-rank {
+            font-weight: 700;
+            color: #DAA520;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+        
+        .score-item-details {
+            flex: 1;
+        }
+        
+        .score-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .score-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .score-item-score {
+            font-weight: 700;
+            color: #CC5500;
+            font-size: 1.2rem;
+        }
+        
+        .game-history-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #DAA520;
+        }
+        
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .history-item-players {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .history-item-result {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .history-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +221,10 @@
                 <div id="snakeStats" class="snake-stats">
                     <div class="loading">Loading statistics...</div>
                 </div>
+                <div id="snakeHighScores" style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #333;">Top 10 High Scores</h3>
+                    <div id="snakeHighScoresList" class="loading">Loading high scores...</div>
+                </div>
             </div>
             
             <!-- Tic Tac Toe Statistics -->
@@ -141,6 +232,10 @@
                 <h2>⭕❌ Tic Tac Toe Statistics</h2>
                 <div id="tttStats">
                     <div class="loading">Loading statistics...</div>
+                </div>
+                <div id="tttGameHistory" style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #333;">Recent Game History</h3>
+                    <div id="tttGameHistoryList" class="loading">Loading game history...</div>
                 </div>
             </div>
         </div>

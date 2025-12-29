@@ -86,6 +86,29 @@
             font-size: 1rem;
             color: #666;
         }
+        
+        .section-container {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+        
+        .section-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -114,17 +137,45 @@
                 <div class="quote-author" id="quoteAuthor"></div>
             </div>
             
-            <div class="games-grid">
-                <a href="tic-tac-toe.html" class="game-card">
-                    <div class="game-card-icon">⭕❌</div>
-                    <div class="game-card-title">Tic Tac Toe</div>
-                    <div class="game-card-description">Classic 3-in-a-row game! Play against friends or challenge the computer.</div>
-                </a>
-                <a href="snake.html" class="game-card">
-                    <div class="game-card-icon">🐍</div>
-                    <div class="game-card-title">Snake Game</div>
-                    <div class="game-card-description">Navigate the snake to eat food and grow! Score increases as the game gets harder.</div>
-                </a>
+            <!-- Warrior Kids Section -->
+            <div class="section-container" style="margin-top: 40px;">
+                <h2 class="section-title">⚔️ Warrior Kids</h2>
+                <div class="section-content">
+                    <!-- Workout Tracking Section (Standard Users Only) -->
+                    <div id="workoutSection" class="hidden" style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);">
+                        <h3 style="margin-bottom: 20px; color: #333;">💪 Record Your Workout</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Earn 5 credits per approved workout! Record your workout and wait for admin approval.</p>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="workoutType" placeholder="e.g., Running, Push-ups, Basketball..." style="
+                                flex: 1;
+                                min-width: 200px;
+                                padding: 12px;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 10px;
+                                font-size: 1rem;
+                            ">
+                            <button id="recordWorkoutBtn" class="btn btn-primary" style="padding: 12px 30px;">Record Workout</button>
+                        </div>
+                        <div id="workoutMessage" style="margin-top: 15px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Games Section -->
+            <div class="section-container" style="margin-top: 40px;">
+                <h2 class="section-title">🎮 Games</h2>
+                <div class="games-grid">
+                    <a href="tic-tac-toe.html" class="game-card">
+                        <div class="game-card-icon">⭕❌</div>
+                        <div class="game-card-title">Tic Tac Toe</div>
+                        <div class="game-card-description">Classic 3-in-a-row game! Play against friends or challenge the computer.</div>
+                    </a>
+                    <a href="snake.html" class="game-card">
+                        <div class="game-card-icon">🐍</div>
+                        <div class="game-card-title">Snake Game</div>
+                        <div class="game-card-description">Navigate the snake to eat food and grow! Score increases as the game gets harder.</div>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -136,5 +187,6 @@
     <script type="module" src="auth.js"></script>
     <script type="module" src="profile-menu.js"></script>
     <script type="module" src="landing.js"></script>
+    <script type="module" src="workout-tracking.js"></script>
 </body>
 </html>

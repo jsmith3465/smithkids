@@ -39,7 +39,6 @@ class SnakeGame {
         this.scoreDisplay = document.getElementById('scoreDisplay');
         this.levelDisplay = document.getElementById('levelDisplay');
         this.lengthDisplay = document.getElementById('lengthDisplay');
-        this.highScoresList = document.getElementById('highScoresList');
         
         // Event listeners
         this.startBtn.addEventListener('click', () => this.startGame());
@@ -53,21 +52,20 @@ class SnakeGame {
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
         
         // Touch controls
-        this.controlButtons.querySelectorAll('.control-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const direction = btn.dataset.direction;
-                this.changeDirection(direction);
+        if (this.controlButtons) {
+            this.controlButtons.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const direction = btn.dataset.direction;
+                    this.changeDirection(direction);
+                });
             });
-        });
-        
-        // Load high scores
-        this.loadHighScores();
+        }
         
         // Draw initial state
         this.draw();
     }
     
-    async startGame() {
+    async startGame(initialDirection = null) {
         if (this.gameRunning) return;
         
         // Check credits before starting (skip for admins)
@@ -89,8 +87,27 @@ class SnakeGame {
         
         // Reset snake position and direction
         this.snake = [{ x: 10, y: 10 }];
-        this.dx = 1;
-        this.dy = 0;
+        
+        // Set direction based on parameter or default to right
+        if (initialDirection) {
+            if (initialDirection === 'up') {
+                this.dx = 0;
+                this.dy = -1;
+            } else if (initialDirection === 'down') {
+                this.dx = 0;
+                this.dy = 1;
+            } else if (initialDirection === 'left') {
+                this.dx = -1;
+                this.dy = 0;
+            } else if (initialDirection === 'right') {
+                this.dx = 1;
+                this.dy = 0;
+            }
+        } else {
+            this.dx = 1;
+            this.dy = 0;
+        }
+        
         this.score = 0;
         this.level = 1;
         this.speed = 150;
@@ -135,9 +152,32 @@ class SnakeGame {
     }
     
     handleKeyPress(e) {
+        const key = e.key;
+        
+        // If game is not running, arrow keys start the game
+        if (!this.gameRunning) {
+            if (key === 'ArrowUp') {
+                e.preventDefault();
+                this.startGame('up');
+                return;
+            } else if (key === 'ArrowDown') {
+                e.preventDefault();
+                this.startGame('down');
+                return;
+            } else if (key === 'ArrowLeft') {
+                e.preventDefault();
+                this.startGame('left');
+                return;
+            } else if (key === 'ArrowRight') {
+                e.preventDefault();
+                this.startGame('right');
+                return;
+            }
+        }
+        
+        // If game is paused, don't process movement
         if (!this.gameRunning || this.gamePaused) return;
         
-        const key = e.key;
         if (key === 'ArrowUp' || key === 'w' || key === 'W') {
             e.preventDefault();
             this.changeDirection('up');
@@ -290,9 +330,6 @@ class SnakeGame {
         document.getElementById('finalLength').textContent = this.snake.length;
         this.gameOverModal.classList.add('show');
         
-        // Reload high scores
-        this.loadHighScores();
-        
         // Hide controls
         this.startBtn.classList.remove('hidden');
         this.pauseBtn.classList.add('hidden');
@@ -325,74 +362,6 @@ class SnakeGame {
         }
     }
     
-    async loadHighScores() {
-        try {
-            // First, get the scores
-            const { data: scores, error: scoresError } = await supabase
-                .from('Snake_Scores')
-                .select('score_id, user_uid, score, level, snake_length, game_duration_seconds, created_at')
-                .order('score', { ascending: false })
-                .limit(10);
-            
-            if (scoresError) {
-                console.error('Error loading scores:', scoresError);
-                this.highScoresList.innerHTML = '<p style="text-align: center; color: #999;">Error loading scores</p>';
-                return;
-            }
-            
-            if (!scores || scores.length === 0) {
-                this.highScoresList.innerHTML = '<p style="text-align: center; color: #999;">No scores yet. Be the first!</p>';
-                return;
-            }
-            
-            // Get user UIDs
-            const userIds = [...new Set(scores.map(s => s.user_uid))];
-            
-            // Fetch user information
-            const { data: users, error: usersError } = await supabase
-                .from('Users')
-                .select('UID, First_Name, Last_Name, Username')
-                .in('UID', userIds);
-            
-            if (usersError) {
-                console.error('Error loading users:', usersError);
-            }
-            
-            // Create a map of user data
-            const userMap = {};
-            if (users) {
-                users.forEach(user => {
-                    userMap[user.UID] = user;
-                });
-            }
-            
-            this.highScoresList.innerHTML = '';
-            
-            scores.forEach((scoreData, index) => {
-                const user = userMap[scoreData.user_uid];
-                const displayName = (user && user.First_Name && user.Last_Name) 
-                    ? `${user.First_Name} ${user.Last_Name}` 
-                    : (user && user.Username) || 'Unknown';
-                
-                const scoreItem = document.createElement('div');
-                scoreItem.className = 'score-item';
-                scoreItem.innerHTML = `
-                    <div class="score-item-rank">#${index + 1}</div>
-                    <div class="score-item-details">
-                        <div class="score-item-name">${displayName}</div>
-                        <div style="font-size: 0.85rem; color: #666;">
-                            Level ${scoreData.level} • Length ${scoreData.snake_length} • ${scoreData.game_duration_seconds}s
-                        </div>
-                    </div>
-                    <div class="score-item-score">${scoreData.score}</div>
-                `;
-                this.highScoresList.appendChild(scoreItem);
-            });
-        } catch (error) {
-            console.error('Error loading scores:', error);
-            this.highScoresList.innerHTML = '<p style="text-align: center; color: #999;">Error loading scores</p>';
-        }
-    }
 }
 
 // Initialize the game when DOM is loaded and authenticated

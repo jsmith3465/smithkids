@@ -3,19 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Credits - SmithFamJam</title>
+    <title>Credits Management - SmithFamJam</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .credits-container {
-            max-width: 800px;
+            max-width: 1200px;
         }
         
-        .add-credits-form {
+        .credits-form {
             background: white;
             border-radius: 15px;
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+        }
+        
+        .balance-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #CC5500;
         }
         
         .user-selection {
@@ -82,6 +105,84 @@
             margin-bottom: 20px;
             display: none;
         }
+        
+        .credits-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .credits-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .credits-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .credits-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .credits-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .credits-table input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .transactions-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .transactions-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .transactions-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .transactions-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .transaction-credit {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .transaction-debit {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -90,7 +191,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <a href="index.html" style="text-decoration: none; color: #DAA520; font-weight: 600;">← Back to Home</a>
-                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Add Credits</h1>
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Credits Management</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Profile menu will be inserted here -->
@@ -103,23 +204,22 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <div id="adminCheck" style="text-align: center; padding: 40px; color: #dc3545;">
-                <p>Checking admin access...</p>
-            </div>
-            
+            <!-- Admin Content -->
             <div id="adminContent" class="hidden">
+                <div class="success-message" id="successMessage"></div>
+                <div class="error-message" id="errorMessage"></div>
+                
                 <!-- Quick Access Link Section -->
-                <div class="add-credits-form" style="margin-bottom: 30px;">
+                <div class="credits-form">
                     <h2 style="margin-bottom: 20px;">Quick Access Link</h2>
-                    <p style="color: #666; margin-bottom: 15px;">Share this link to add credits without logging in. This link is unique to your admin account.</p>
+                    <p style="color: #666; margin-bottom: 15px;">Bookmark this link for quick access to add credits without logging in. This link is unique to your admin account.</p>
                     <div id="quickLinkSection">
                         <div class="loading">Loading link...</div>
                     </div>
                 </div>
-                <div class="success-message" id="successMessage"></div>
-                <div class="error-message" id="errorMessage"></div>
                 
-                <div class="add-credits-form">
+                <!-- Add Credits Section -->
+                <div class="credits-form">
                     <h2 style="margin-bottom: 20px;">Add Credits to Users</h2>
                     
                     <div class="input-group">
@@ -140,6 +240,30 @@
                     
                     <button id="addCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
                 </div>
+                
+                <!-- View All Credits Section -->
+                <div class="credits-form">
+                    <h2 style="margin-bottom: 20px;">All Users Credit Balances</h2>
+                    <div id="allCreditsList">
+                        <div class="loading">Loading credit balances...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Standard User Content -->
+            <div id="standardContent" class="hidden">
+                <div class="balance-card">
+                    <div class="balance-label">Current Credit Balance</div>
+                    <div class="balance-amount" id="currentBalance">0</div>
+                </div>
+                
+                <div class="credits-form">
+                    <h2 style="margin-bottom: 20px;">Transaction History</h2>
+                    <p style="color: #666; margin-bottom: 15px;">See how and when you earned credits and how and when you spent them.</p>
+                    <div id="transactionsList">
+                        <div class="loading">Loading transactions...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -153,4 +277,3 @@
     <script type="module" src="add-credits.js"></script>
 </body>
 </html>
-

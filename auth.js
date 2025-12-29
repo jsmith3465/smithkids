@@ -17,7 +17,10 @@ function checkAuthentication() {
     
     if (!sessionData) {
         // No session, redirect to login
-        window.location.href = 'login.html';
+        console.log('No session data found');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 100);
         return false;
     }
 
@@ -26,21 +29,46 @@ function checkAuthentication() {
         
         // Verify session is valid
         if (!session.uid || !session.username) {
+            console.log('Invalid session data - missing uid or username');
             sessionStorage.removeItem('userSession');
-            window.location.href = 'login.html';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 100);
             return false;
         }
         
         // Check if session has expired (20 minutes)
         const now = Date.now();
-        const loginTime = new Date(session.loginTime).getTime();
+        let loginTime;
+        try {
+            if (session.loginTime) {
+                loginTime = new Date(session.loginTime).getTime();
+                // Check if date is valid
+                if (isNaN(loginTime)) {
+                    // If loginTime is invalid, use current time (give benefit of doubt)
+                    console.warn('Invalid loginTime, using current time');
+                    loginTime = now;
+                }
+            } else {
+                // No loginTime, use current time (for backward compatibility)
+                console.warn('No loginTime in session, using current time');
+                loginTime = now;
+            }
+        } catch (e) {
+            // If parsing fails, use current time (give benefit of doubt)
+            console.warn('Error parsing loginTime:', e);
+            loginTime = now;
+        }
         const elapsed = now - loginTime;
         
         if (elapsed > SESSION_TIMEOUT) {
             // Session expired
+            console.log('Session expired');
             sessionStorage.removeItem('userSession');
             alert('Your session has expired. Please log in again.');
-            window.location.href = 'login.html';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 100);
             return false;
         }
         
@@ -56,11 +84,14 @@ function checkAuthentication() {
         if (authCheck) authCheck.classList.add('hidden');
         if (mainContent) mainContent.classList.remove('hidden');
         
+        console.log('Authentication successful');
         return true;
     } catch (error) {
         console.error('Error parsing session:', error);
         sessionStorage.removeItem('userSession');
-        window.location.href = 'login.html';
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 100);
         return false;
     }
 }
@@ -89,10 +120,13 @@ function resetSessionTimeout() {
 // Display user information
 function displayUserInfo(session) {
     const userInfo = document.getElementById('userInfo');
-    const displayName = session.firstName && session.lastName 
-        ? `${session.firstName} ${session.lastName}` 
-        : session.username;
-    userInfo.textContent = `Welcome, ${displayName}`;
+    if (userInfo) {
+        const displayName = session.firstName && session.lastName 
+            ? `${session.firstName} ${session.lastName}` 
+            : session.username;
+        userInfo.textContent = `Welcome, ${displayName}`;
+    }
+    // Note: userInfo might not exist if profile menu replaces it
 }
 
 // Handle logout

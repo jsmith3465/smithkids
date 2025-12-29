@@ -65,6 +65,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            align-items: center;
             margin-top: 20px;
         }
         
@@ -169,54 +170,6 @@
             margin: 20px 0;
         }
         
-        .high-scores-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .high-scores-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .scores-list {
-            text-align: left;
-        }
-        
-        .score-item {
-            padding: 10px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .score-item-rank {
-            font-weight: 700;
-            color: #DAA520;
-            margin-right: 10px;
-        }
-        
-        .score-item-details {
-            flex: 1;
-        }
-        
-        .score-item-name {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .score-item-score {
-            font-weight: 700;
-            color: #CC5500;
-            font-size: 1.1rem;
-        }
     </style>
 </head>
 <body>
@@ -270,13 +223,6 @@
                     <button class="control-btn left" data-direction="left">←</button>
                     <button class="control-btn right" data-direction="right">→</button>
                     <button class="control-btn down" data-direction="down">↓</button>
-                </div>
-            </div>
-            
-            <div class="high-scores-section">
-                <h3>High Scores</h3>
-                <div id="highScoresList" class="scores-list">
-                    <p style="text-align: center; color: #999;">Loading scores...</p>
                 </div>
             </div>
         </div>

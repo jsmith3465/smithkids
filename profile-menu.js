@@ -40,6 +40,15 @@ async function createProfileMenu() {
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Add Credits
             </a>
+            <a href="approve-workouts.html" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                ✅ Approve Workouts
+            </a>
         `;
     } else {
         menuItems = `

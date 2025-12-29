@@ -8,24 +8,41 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Initialize statistics page
 document.addEventListener('DOMContentLoaded', () => {
-    const checkAuth = setInterval(() => {
-        if (window.authStatus && window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-            loadStatistics();
-        } else if (window.authStatus && !window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-        }
-    }, 100);
-    
+    // Wait a bit for auth.js to initialize
     setTimeout(() => {
-        clearInterval(checkAuth);
-    }, 5000);
+        const checkAuth = setInterval(() => {
+            if (window.authStatus) {
+                clearInterval(checkAuth);
+                if (window.authStatus.isAuthenticated) {
+                    loadStatistics();
+                } else {
+                    // Auth check will handle redirect, but show message if still checking
+                    const authCheck = document.getElementById('authCheck');
+                    if (authCheck) {
+                        authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
+                    }
+                }
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            clearInterval(checkAuth);
+            if (!window.authStatus) {
+                const authCheck = document.getElementById('authCheck');
+                if (authCheck) {
+                    authCheck.innerHTML = '<p style="color: #dc3545;">Authentication check timed out. Please refresh the page.</p>';
+                }
+            }
+        }, 5000);
+    }, 200);
 });
 
 async function loadStatistics() {
     await Promise.all([
         loadSnakeStatistics(),
-        loadTTTStatistics()
+        loadSnakeHighScores(),
+        loadTTTStatistics(),
+        loadTTTGameHistory()
     ]);
 }
 
@@ -109,6 +126,76 @@ async function loadSnakeStatistics() {
     } catch (error) {
         console.error('Error loading snake statistics:', error);
         snakeStatsDiv.innerHTML = '<div class="no-data">Error loading Snake statistics</div>';
+    }
+}
+
+async function loadSnakeHighScores() {
+    const highScoresList = document.getElementById('snakeHighScoresList');
+    if (!highScoresList) return;
+    
+    try {
+        // Get top 10 scores
+        const { data: scores, error: scoresError } = await supabase
+            .from('Snake_Scores')
+            .select('score_id, user_uid, score, level, snake_length, game_duration_seconds, created_at')
+            .order('score', { ascending: false })
+            .limit(10);
+        
+        if (scoresError) throw scoresError;
+        
+        if (!scores || scores.length === 0) {
+            highScoresList.innerHTML = '<div class="no-data">No scores yet. Be the first!</div>';
+            return;
+        }
+        
+        // Get user UIDs
+        const userIds = [...new Set(scores.map(s => s.user_uid))];
+        
+        // Fetch user information
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', userIds);
+        
+        if (usersError) throw usersError;
+        
+        // Create user map
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        // Build list
+        const listContainer = document.createElement('div');
+        listContainer.className = 'high-scores-list';
+        
+        scores.forEach((scoreData, index) => {
+            const user = userMap[scoreData.user_uid];
+            const displayName = (user && user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name}` 
+                : (user && user.Username) || 'Unknown';
+            
+            const scoreItem = document.createElement('div');
+            scoreItem.className = 'score-item';
+            scoreItem.innerHTML = `
+                <div class="score-item-rank">#${index + 1}</div>
+                <div class="score-item-details">
+                    <div class="score-item-name">${displayName}</div>
+                    <div class="score-item-meta">Level ${scoreData.level} • Length ${scoreData.snake_length} • ${scoreData.game_duration_seconds}s</div>
+                </div>
+                <div class="score-item-score">${scoreData.score}</div>
+            `;
+            listContainer.appendChild(scoreItem);
+        });
+        
+        highScoresList.innerHTML = '';
+        highScoresList.appendChild(listContainer);
+        
+    } catch (error) {
+        console.error('Error loading snake high scores:', error);
+        highScoresList.innerHTML = '<div class="no-data">Error loading high scores</div>';
     }
 }
 
@@ -262,6 +349,110 @@ async function loadTTTStatistics() {
     } catch (error) {
         console.error('Error loading TTT statistics:', error);
         tttStatsDiv.innerHTML = '<div class="no-data">Error loading Tic Tac Toe statistics</div>';
+    }
+}
+
+async function loadTTTGameHistory() {
+    const gameHistoryList = document.getElementById('tttGameHistoryList');
+    if (!gameHistoryList) return;
+    
+    try {
+        // Get recent game results
+        const { data: games, error: gamesError } = await supabase
+            .from('TTT_Game_Results')
+            .select('game_id, player1_uid, player2_uid, player1_symbol, player2_symbol, winner_uid, is_computer_player, is_draw, game_duration_seconds, created_at')
+            .order('created_at', { ascending: false })
+            .limit(50);
+        
+        if (gamesError) throw gamesError;
+        
+        if (!games || games.length === 0) {
+            gameHistoryList.innerHTML = '<div class="no-data">No games played yet. Start a game to see history!</div>';
+            return;
+        }
+        
+        // Get unique user UIDs
+        const userIds = new Set();
+        games.forEach(game => {
+            if (game.player1_uid) userIds.add(game.player1_uid);
+            if (game.player2_uid) userIds.add(game.player2_uid);
+        });
+        
+        // Fetch user information
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', Array.from(userIds));
+        
+        if (usersError) throw usersError;
+        
+        // Create user map
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        // Build history list
+        const listContainer = document.createElement('div');
+        listContainer.className = 'game-history-list';
+        
+        games.forEach(game => {
+            // Get player names
+            const p1Name = game.player1_uid 
+                ? getUserDisplayName(userMap[game.player1_uid])
+                : 'Computer 🤖';
+            const p2Name = game.player2_uid 
+                ? getUserDisplayName(userMap[game.player2_uid])
+                : 'Computer 🤖';
+            
+            // Determine result
+            let resultText = '';
+            let resultColor = '#666';
+            if (game.is_draw) {
+                resultText = 'Draw';
+                resultColor = '#856404';
+            } else if (game.winner_uid === null && game.is_computer_player) {
+                resultText = 'Computer Won';
+                resultColor = '#CC5500';
+            } else if (game.winner_uid) {
+                const winnerName = getUserDisplayName(userMap[game.winner_uid]);
+                resultText = `${winnerName} Won`;
+                resultColor = '#28a745';
+            } else {
+                resultText = 'Unknown';
+            }
+            
+            // Format date
+            const gameDate = new Date(game.created_at);
+            const dateStr = gameDate.toLocaleDateString() + ' ' + gameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `
+                <div class="history-item-header">
+                    <div class="history-item-players">
+                        ${p1Name} (${game.player1_symbol}) vs ${p2Name} (${game.player2_symbol})
+                    </div>
+                    <div class="history-item-result" style="color: ${resultColor};">
+                        ${resultText}
+                    </div>
+                </div>
+                <div class="history-item-meta">
+                    ${dateStr} • ${game.game_duration_seconds}s
+                </div>
+            `;
+            
+            listContainer.appendChild(historyItem);
+        });
+        
+        gameHistoryList.innerHTML = '';
+        gameHistoryList.appendChild(listContainer);
+        
+    } catch (error) {
+        console.error('Error loading TTT game history:', error);
+        gameHistoryList.innerHTML = '<div class="no-data">Error loading game history</div>';
     }
 }
 

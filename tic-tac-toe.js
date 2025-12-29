@@ -65,7 +65,6 @@ class TicTacToe {
         this.winLine = document.getElementById('winLine');
         this.line = document.getElementById('line');
         this.boardContainer = document.querySelector('.board-container');
-        this.gameHistoryList = document.getElementById('gameHistoryList');
         this.gameStartTime = null;
 
         // Event listeners
@@ -93,9 +92,6 @@ class TicTacToe {
         this.closeMemeBtn.addEventListener('click', () => this.hideMeme());
         this.newGameBtn.addEventListener('click', () => this.newGame());
         this.newPlayersBtn.addEventListener('click', () => this.newPlayers());
-        
-        // Load game history
-        this.loadGameHistory();
         
         // Winning memes
         this.winningMemeTemplates = [
@@ -661,8 +657,6 @@ class TicTacToe {
         this.newGameBtn.disabled = false;
         this.newGameBtn.classList.remove('btn-disabled');
         
-        // Reload game history
-        this.loadGameHistory();
     }
     
     showRandomMeme(winnerName) {
@@ -730,8 +724,6 @@ class TicTacToe {
         this.newGameBtn.disabled = false;
         this.newGameBtn.classList.remove('btn-disabled');
         
-        // Reload game history
-        this.loadGameHistory();
     }
 
     drawWinLine(pattern) {
@@ -856,120 +848,6 @@ class TicTacToe {
         }
     }
     
-    async loadGameHistory() {
-        if (!this.gameHistoryList) return;
-        
-        try {
-            // Get all game results
-            const { data: games, error: gamesError } = await supabase
-                .from('TTT_Game_Results')
-                .select('game_id, player1_uid, player2_uid, player1_symbol, player2_symbol, winner_uid, is_computer_player, is_draw, game_duration_seconds, created_at')
-                .order('created_at', { ascending: false })
-                .limit(50);
-            
-            if (gamesError) {
-                console.error('Error loading game history:', gamesError);
-                this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">Error loading game history</p>';
-                return;
-            }
-            
-            if (!games || games.length === 0) {
-                this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">No games played yet. Start a game to see history!</p>';
-                return;
-            }
-            
-            // Get unique user UIDs
-            const userIds = new Set();
-            games.forEach(game => {
-                if (game.player1_uid) userIds.add(game.player1_uid);
-                if (game.player2_uid) userIds.add(game.player2_uid);
-            });
-            
-            // Fetch user information
-            const { data: users, error: usersError } = await supabase
-                .from('Users')
-                .select('UID, First_Name, Last_Name, Username')
-                .in('UID', Array.from(userIds));
-            
-            if (usersError) {
-                console.error('Error loading users:', usersError);
-            }
-            
-            // Create user map
-            const userMap = {};
-            if (users) {
-                users.forEach(user => {
-                    userMap[user.UID] = user;
-                });
-            }
-            
-            // Build history display
-            this.gameHistoryList.innerHTML = '';
-            
-            games.forEach(game => {
-                const historyItem = document.createElement('div');
-                historyItem.style.cssText = 'padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #DAA520;';
-                
-                // Get player names
-                const p1Name = game.player1_uid 
-                    ? this.getUserName(userMap[game.player1_uid])
-                    : 'Computer 🤖';
-                const p2Name = game.player2_uid 
-                    ? this.getUserName(userMap[game.player2_uid])
-                    : 'Computer 🤖';
-                
-                // Determine result
-                let resultText = '';
-                let resultColor = '#666';
-                if (game.is_draw) {
-                    resultText = 'Draw';
-                    resultColor = '#856404';
-                } else if (game.winner_uid === null && game.is_computer_player) {
-                    resultText = 'Computer Won';
-                    resultColor = '#CC5500';
-                } else if (game.winner_uid) {
-                    const winnerName = this.getUserName(userMap[game.winner_uid]);
-                    resultText = `${winnerName} Won`;
-                    resultColor = '#28a745';
-                } else {
-                    resultText = 'Unknown';
-                }
-                
-                // Format date
-                const gameDate = new Date(game.created_at);
-                const dateStr = gameDate.toLocaleDateString() + ' ' + gameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                historyItem.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <div style="font-weight: 600; color: #333; margin-bottom: 5px;">
-                                ${p1Name} (${game.player1_symbol}) vs ${p2Name} (${game.player2_symbol})
-                            </div>
-                            <div style="font-size: 0.85rem; color: #666;">
-                                ${dateStr} • ${game.game_duration_seconds}s
-                            </div>
-                        </div>
-                        <div style="font-weight: 700; color: ${resultColor}; font-size: 1.1rem;">
-                            ${resultText}
-                        </div>
-                    </div>
-                `;
-                
-                this.gameHistoryList.appendChild(historyItem);
-            });
-        } catch (error) {
-            console.error('Error loading game history:', error);
-            this.gameHistoryList.innerHTML = '<p style="text-align: center; color: #999;">Error loading game history</p>';
-        }
-    }
-    
-    getUserName(user) {
-        if (!user) return 'Unknown';
-        if (user.First_Name && user.Last_Name) {
-            return `${user.First_Name} ${user.Last_Name}`;
-        }
-        return user.Username || 'Unknown';
-    }
 }
 
 // Initialize the game when DOM is loaded and authenticated

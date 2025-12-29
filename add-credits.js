@@ -8,41 +8,67 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
-    const checkAuth = setInterval(() => {
-        if (window.authStatus && window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-            checkAdminAccess();
-        } else if (window.authStatus && !window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-        }
-    }, 100);
-    
+    // Wait a bit for auth.js to initialize
     setTimeout(() => {
-        clearInterval(checkAuth);
-    }, 5000);
+        const checkAuth = setInterval(() => {
+            if (window.authStatus) {
+                clearInterval(checkAuth);
+                if (window.authStatus.isAuthenticated) {
+                    checkUserAccess();
+                } else {
+                    // Auth check will handle redirect
+                    const authCheck = document.getElementById('authCheck');
+                    if (authCheck) {
+                        authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
+                    }
+                }
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            clearInterval(checkAuth);
+            if (!window.authStatus) {
+                const authCheck = document.getElementById('authCheck');
+                if (authCheck) {
+                    authCheck.innerHTML = '<p style="color: #dc3545;">Authentication check timed out. Please refresh the page.</p>';
+                }
+            }
+        }, 5000);
+    }, 200);
 });
 
-async function checkAdminAccess() {
+async function checkUserAccess() {
     const session = window.authStatus?.getSession();
     if (!session) {
         window.location.href = 'login.html';
         return;
     }
     
-    if (session.userType !== 'admin') {
-        document.getElementById('adminCheck').innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
-        return;
+    document.getElementById('authCheck').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+    
+    if (session.userType === 'admin') {
+        // Show admin content
+        document.getElementById('adminCheck').classList.add('hidden');
+        document.getElementById('adminContent').classList.remove('hidden');
+        document.getElementById('standardContent').classList.add('hidden');
+        
+        await loadQuickAccessLink();
+        await loadAllUsers();
+        await loadAllCredits();
+        setupAdminEventListeners();
+    } else {
+        // Show standard user content
+        document.getElementById('adminCheck').classList.add('hidden');
+        document.getElementById('adminContent').classList.add('hidden');
+        document.getElementById('standardContent').classList.remove('hidden');
+        
+        await loadUserBalance();
+        await loadUserTransactions();
     }
-    
-    document.getElementById('adminCheck').classList.add('hidden');
-    document.getElementById('adminContent').classList.remove('hidden');
-    
-    await loadQuickAccessLink();
-    await loadStandardUsers();
-    setupEventListeners();
 }
 
-async function loadStandardUsers() {
+async function loadAllUsers() {
     const userCheckboxList = document.getElementById('userCheckboxList');
     
     try {
@@ -80,7 +106,272 @@ async function loadStandardUsers() {
     }
 }
 
-function setupEventListeners() {
+async function loadAllCredits() {
+    const allCreditsList = document.getElementById('allCreditsList');
+    
+    try {
+        // Get all users
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .order('First_Name', { ascending: true });
+        
+        if (usersError) throw usersError;
+        
+        if (!users || users.length === 0) {
+            allCreditsList.innerHTML = '<div class="no-data">No users found.</div>';
+            return;
+        }
+        
+        // Get all credit balances
+        const { data: credits, error: creditsError } = await supabase
+            .from('User_Credits')
+            .select('user_uid, balance');
+        
+        if (creditsError) throw creditsError;
+        
+        // Create credit map
+        const creditMap = {};
+        if (credits) {
+            credits.forEach(credit => {
+                creditMap[credit.user_uid] = credit.balance;
+            });
+        }
+        
+        // Build table
+        const table = document.createElement('table');
+        table.className = 'credits-table';
+        
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>User</th>
+            <th>Current Balance</th>
+            <th>Update Balance</th>
+            <th>Action</th>
+        `;
+        table.appendChild(headerRow);
+        
+        // User rows
+        users.forEach(user => {
+            const displayName = (user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name}` 
+                : user.Username;
+            
+            const currentBalance = creditMap[user.UID] || 0;
+            
+            const row = document.createElement('tr');
+            row.id = `creditRow_${user.UID}`;
+            row.innerHTML = `
+                <td>${displayName} (${user.Username})</td>
+                <td><strong>${currentBalance}</strong></td>
+                <td>
+                    <input type="number" id="updateBalance_${user.UID}" value="${currentBalance}" min="0" style="width: 80px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                </td>
+                <td>
+                    <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.9rem;" onclick="updateUserCredits(${user.UID})">Update</button>
+                </td>
+            `;
+            table.appendChild(row);
+        });
+        
+        allCreditsList.innerHTML = '';
+        allCreditsList.appendChild(table);
+        
+    } catch (error) {
+        console.error('Error loading all credits:', error);
+        allCreditsList.innerHTML = '<div class="no-data">Error loading credit balances.</div>';
+    }
+}
+
+// Make updateUserCredits available globally
+window.updateUserCredits = async function(userId) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const newBalanceInput = document.getElementById(`updateBalance_${userId}`);
+    const newBalance = parseInt(newBalanceInput.value);
+    
+    if (isNaN(newBalance) || newBalance < 0) {
+        showError('Please enter a valid balance (0 or greater).');
+        return;
+    }
+    
+    try {
+        // Get current balance
+        const { data: existingCredit, error: fetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userId)
+            .single();
+        
+        const oldBalance = existingCredit?.balance || 0;
+        const difference = newBalance - oldBalance;
+        
+        if (existingCredit) {
+            // Update existing balance
+            const { error: updateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (updateError) throw updateError;
+        } else {
+            // Create new credit record
+            const { error: insertError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: userId, balance: newBalance });
+            
+            if (insertError) throw insertError;
+        }
+        
+        // Record transaction if balance changed
+        if (difference !== 0) {
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session.uid,
+                    to_user_uid: userId,
+                    amount: Math.abs(difference),
+                    transaction_type: difference > 0 ? 'credit_added' : 'credit_adjusted',
+                    description: difference > 0 
+                        ? `Admin added ${difference} credits (balance update)`
+                        : `Admin adjusted balance by ${difference} credits`
+                });
+            
+            if (transError) throw transError;
+        }
+        
+        showSuccess(`Successfully updated balance to ${newBalance} credits.`);
+        await loadAllCredits();
+        
+    } catch (error) {
+        console.error('Error updating credits:', error);
+        showError('An error occurred while updating credits. Please try again.');
+    }
+};
+
+async function loadUserBalance() {
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('User_Credits')
+            .select('balance')
+            .eq('user_uid', session.uid)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error loading balance:', error);
+            return;
+        }
+        
+        const balance = data ? data.balance : 0;
+        document.getElementById('currentBalance').textContent = balance;
+    } catch (error) {
+        console.error('Error loading balance:', error);
+    }
+}
+
+async function loadUserTransactions() {
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    const transactionsList = document.getElementById('transactionsList');
+    
+    try {
+        // Get transactions for this user
+        const { data: transactions, error } = await supabase
+            .from('Credit_Transactions')
+            .select(`
+                transaction_id,
+                from_user_uid,
+                to_user_uid,
+                amount,
+                transaction_type,
+                game_type,
+                description,
+                created_at,
+                Users!Credit_Transactions_from_user_uid_fkey(First_Name, Last_Name, Username)
+            `)
+            .eq('to_user_uid', session.uid)
+            .order('created_at', { ascending: false })
+            .limit(100);
+        
+        if (error) throw error;
+        
+        if (!transactions || transactions.length === 0) {
+            transactionsList.innerHTML = '<div class="no-data">No transactions yet.</div>';
+            return;
+        }
+        
+        // Build table
+        const table = document.createElement('table');
+        table.className = 'transactions-table';
+        
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Date/Time</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Amount</th>
+        `;
+        table.appendChild(headerRow);
+        
+        // Transaction rows
+        transactions.forEach(trans => {
+            const row = document.createElement('tr');
+            
+            const date = new Date(trans.created_at);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let typeText = '';
+            let description = trans.description || '';
+            
+            if (trans.transaction_type === 'credit_added') {
+                typeText = 'Credit Earned';
+                const fromUser = trans.Users;
+                if (fromUser) {
+                    const fromName = (fromUser.First_Name && fromUser.Last_Name) 
+                        ? `${fromUser.First_Name} ${fromUser.Last_Name}` 
+                        : fromUser.Username;
+                    description = `Added by ${fromName}`;
+                }
+            } else if (trans.transaction_type === 'game_payment') {
+                typeText = 'Credit Spent';
+                const gameType = trans.game_type || 'game';
+                description = `Played ${gameType.replace('_', ' ')}`;
+            } else if (trans.transaction_type === 'credit_adjusted') {
+                typeText = 'Balance Adjusted';
+            }
+            
+            const amountClass = trans.transaction_type === 'credit_added' ? 'transaction-credit' : 'transaction-debit';
+            const amountSign = trans.transaction_type === 'credit_added' ? '+' : '-';
+            
+            row.innerHTML = `
+                <td>${dateStr}</td>
+                <td>${typeText}</td>
+                <td>${description}</td>
+                <td class="${amountClass}">${amountSign}${trans.amount}</td>
+            `;
+            table.appendChild(row);
+        });
+        
+        transactionsList.innerHTML = '';
+        transactionsList.appendChild(table);
+        
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+        transactionsList.innerHTML = '<div class="no-data">Error loading transactions.</div>';
+    }
+}
+
+function setupAdminEventListeners() {
     const selectAllBtn = document.getElementById('selectAllBtn');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const addCreditsBtn = document.getElementById('addCreditsBtn');
@@ -185,6 +476,9 @@ async function addCredits() {
         document.querySelectorAll('#userCheckboxList input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
         });
+        
+        // Reload all credits table
+        await loadAllCredits();
         
     } catch (error) {
         console.error('Error adding credits:', error);

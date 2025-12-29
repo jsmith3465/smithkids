@@ -23,11 +23,19 @@
             text-align: center;
             color: #333;
             font-size: 2rem;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+        
+        .security-notice {
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 30px;
+            line-height: 1.4;
         }
         
         .login-error {
@@ -59,6 +67,10 @@
     <div class="container login-container">
         <div class="login-form">
             <h1>Tic Tac Toe</h1>
+            <div class="security-notice">
+                <div style="font-weight: 600; color: #CC5500;">Top Secret</div>
+                <div>Security Clearance Required</div>
+            </div>
             <div id="loginError" class="login-error"></div>
             <div id="loginLoading" class="login-loading">Logging in...</div>
             <form id="loginForm">
