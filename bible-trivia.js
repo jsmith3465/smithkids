@@ -174,7 +174,7 @@ class BibleTrivia {
         this.selectedAnswer = null;
     }
     
-    selectAnswer(index) {
+    async selectAnswer(index) {
         if (this.selectedAnswer !== null) return; // Already answered
         
         this.selectedAnswer = index;
@@ -191,7 +191,8 @@ class BibleTrivia {
         options[index].classList.add('selected');
         
         // Check if correct
-        if (index === question.correct) {
+        const isCorrect = index === question.correct;
+        if (isCorrect) {
             options[index].classList.add('correct');
             this.score++;
             this.showFeedback(true, question);
@@ -200,6 +201,9 @@ class BibleTrivia {
             options[question.correct].classList.add('correct');
             this.showFeedback(false, question);
         }
+        
+        // Track this question answer
+        await this.trackQuestionAnswer(question, isCorrect);
         
         // Show next button
         if (this.currentQuestion === this.questions.length - 1) {
@@ -229,6 +233,11 @@ class BibleTrivia {
             const bibleUrl = `bible.html?book=${encodeURIComponent(ref.book)}&chapter=${ref.chapter}&verse=${ref.verse}`;
             bibleLink.href = bibleUrl;
             bibleLink.style.display = 'inline-block';
+            
+            // Track Bible link click when user clicks it
+            bibleLink.onclick = () => {
+                this.trackBibleLinkClick(ref);
+            };
         }
     }
     
@@ -333,6 +342,109 @@ class BibleTrivia {
             
         } catch (error) {
             console.error('Error awarding credits:', error);
+        }
+    }
+    
+    async trackQuestionAnswer(question, isCorrect) {
+        const session = window.authStatus?.getSession();
+        if (!session) return;
+        
+        try {
+            await supabase
+                .from('Bible_Trivia_Answers')
+                .insert({
+                    user_uid: session.uid,
+                    question_text: question.question,
+                    is_correct: isCorrect,
+                    bible_book: question.bibleRef.book,
+                    bible_chapter: question.bibleRef.chapter,
+                    bible_verse: question.bibleRef.verse,
+                    answered_at: new Date().toISOString()
+                });
+        } catch (error) {
+            // Table might not exist yet, that's okay
+            console.log('Could not track question answer (table may not exist):', error);
+        }
+    }
+    
+    async trackBibleLinkClick(bibleRef) {
+        const session = window.authStatus?.getSession();
+        if (!session) return;
+        
+        try {
+            // Track the click
+            await supabase
+                .from('Bible_Trivia_Link_Clicks')
+                .insert({
+                    user_uid: session.uid,
+                    bible_book: bibleRef.book,
+                    bible_chapter: bibleRef.chapter,
+                    bible_verse: bibleRef.verse,
+                    clicked_at: new Date().toISOString()
+                });
+            
+            // Easter egg: Award 5 credits for reading the Bible story
+            await this.awardBibleReadingCredits(5, bibleRef);
+        } catch (error) {
+            // Table might not exist yet, that's okay
+            console.log('Could not track Bible link click (table may not exist):', error);
+        }
+    }
+    
+    async awardBibleReadingCredits(amount, bibleRef) {
+        const session = window.authStatus?.getSession();
+        if (!session) return;
+        
+        try {
+            // Get current balance
+            const { data: existingCredit, error: fetchError } = await supabase
+                .from('User_Credits')
+                .select('credit_id, balance')
+                .eq('user_uid', session.uid)
+                .single();
+            
+            const oldBalance = existingCredit?.balance || 0;
+            const newBalance = oldBalance + amount;
+            
+            if (existingCredit) {
+                // Update existing balance
+                const { error: updateError } = await supabase
+                    .from('User_Credits')
+                    .update({ 
+                        balance: newBalance, 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (updateError) throw updateError;
+            } else {
+                // Create new credit record
+                const { error: insertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ 
+                        user_uid: session.uid, 
+                        balance: amount 
+                    });
+                
+                if (insertError) throw insertError;
+            }
+            
+            // Record transaction
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session.uid,
+                    to_user_uid: session.uid,
+                    amount: amount,
+                    transaction_type: 'credit_added',
+                    game_type: 'bible_trivia',
+                    description: `Easter Egg: Read Bible story (${bibleRef.book} ${bibleRef.chapter}:${bibleRef.verse})`
+                });
+            
+            if (transError) throw transError;
+            
+        } catch (error) {
+            console.error('Error awarding Bible reading credits:', error);
         }
     }
     

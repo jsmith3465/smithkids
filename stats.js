@@ -42,7 +42,8 @@ async function loadStatistics() {
         loadSnakeStatistics(),
         loadSnakeHighScores(),
         loadTTTStatistics(),
-        loadTTTGameHistory()
+        loadTTTGameHistory(),
+        loadBibleTriviaStatistics()
     ]);
 }
 
@@ -453,6 +454,137 @@ async function loadTTTGameHistory() {
     } catch (error) {
         console.error('Error loading TTT game history:', error);
         gameHistoryList.innerHTML = '<div class="no-data">Error loading game history</div>';
+    }
+}
+
+async function loadBibleTriviaStatistics() {
+    const bibleTriviaStatsDiv = document.getElementById('bibleTriviaStats');
+    if (!bibleTriviaStatsDiv) return;
+    
+    try {
+        // Get all question answers
+        const { data: answers, error: answersError } = await supabase
+            .from('Bible_Trivia_Answers')
+            .select('user_uid, is_correct, answered_at');
+        
+        if (answersError) {
+            // Table might not exist yet
+            console.log('Bible_Trivia_Answers table may not exist:', answersError);
+            bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
+            return;
+        }
+        
+        // Get all Bible link clicks
+        const { data: linkClicks, error: clicksError } = await supabase
+            .from('Bible_Trivia_Link_Clicks')
+            .select('user_uid, clicked_at');
+        
+        if (clicksError) {
+            console.log('Bible_Trivia_Link_Clicks table may not exist:', clicksError);
+        }
+        
+        if ((!answers || answers.length === 0) && (!linkClicks || linkClicks.length === 0)) {
+            bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
+            return;
+        }
+        
+        // Calculate statistics per user
+        const userStats = {};
+        
+        // Process answers
+        if (answers) {
+            answers.forEach(answer => {
+                if (!userStats[answer.user_uid]) {
+                    userStats[answer.user_uid] = {
+                        questionsAsked: 0,
+                        questionsCorrect: 0,
+                        bibleLinkClicks: 0
+                    };
+                }
+                userStats[answer.user_uid].questionsAsked++;
+                if (answer.is_correct) {
+                    userStats[answer.user_uid].questionsCorrect++;
+                }
+            });
+        }
+        
+        // Process Bible link clicks
+        if (linkClicks) {
+            linkClicks.forEach(click => {
+                if (!userStats[click.user_uid]) {
+                    userStats[click.user_uid] = {
+                        questionsAsked: 0,
+                        questionsCorrect: 0,
+                        bibleLinkClicks: 0
+                    };
+                }
+                userStats[click.user_uid].bibleLinkClicks++;
+            });
+        }
+        
+        // Get user information
+        const userIds = Object.keys(userStats).map(uid => parseInt(uid));
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', userIds);
+        
+        if (usersError) throw usersError;
+        
+        // Create user map
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        // Build table
+        const table = document.createElement('table');
+        table.className = 'ttt-stats-table';
+        
+        // Header row
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>User</th>
+            <th>Questions Asked</th>
+            <th>Questions Correct</th>
+            <th>Correct %</th>
+            <th>Bible Link Clicks</th>
+        `;
+        table.appendChild(headerRow);
+        
+        // Sort by questions asked (descending)
+        const sortedUsers = Object.entries(userStats).sort((a, b) => {
+            return b[1].questionsAsked - a[1].questionsAsked;
+        });
+        
+        // User rows
+        sortedUsers.forEach(([uid, stats]) => {
+            const user = userMap[uid];
+            if (!user) return;
+            
+            const correctPercentage = stats.questionsAsked > 0
+                ? ((stats.questionsCorrect / stats.questionsAsked) * 100).toFixed(1)
+                : '0.0';
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${getUserDisplayName(user)}</td>
+                <td>${stats.questionsAsked}</td>
+                <td>${stats.questionsCorrect}</td>
+                <td><strong>${correctPercentage}%</strong></td>
+                <td>${stats.bibleLinkClicks}</td>
+            `;
+            table.appendChild(row);
+        });
+        
+        bibleTriviaStatsDiv.innerHTML = '';
+        bibleTriviaStatsDiv.appendChild(table);
+        
+    } catch (error) {
+        console.error('Error loading Bible Trivia statistics:', error);
+        bibleTriviaStatsDiv.innerHTML = '<div class="no-data">Error loading Bible Trivia statistics</div>';
     }
 }
 

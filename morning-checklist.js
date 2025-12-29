@@ -510,6 +510,24 @@ window.handleChecklistChange = function(userUid, item, checked, date) {
     pendingChanges[useDate][userUid][item] = checked;
 };
 
+window.markAllDone = function(userUid, date) {
+    // Always use today's date
+    const today = new Date().toISOString().split('T')[0];
+    const useDate = date || today;
+    
+    // List of all 6 tasks
+    const tasks = ['make_bed', 'clean_room', 'get_dressed', 'eat_breakfast', 'brush_teeth', 'comb_hair'];
+    
+    // Check all checkboxes and update pending changes
+    tasks.forEach(task => {
+        const checkbox = document.getElementById(`${task}_${userUid}`);
+        if (checkbox) {
+            checkbox.checked = true;
+            handleChecklistChange(userUid, task, true, useDate);
+        }
+    });
+};
+
 function showCodeModal() {
     document.getElementById('codeModal').classList.remove('hidden');
     document.getElementById('adminCodeInput').value = '';
@@ -820,7 +838,10 @@ async function loadChecklists(date) {
             const userBox = document.createElement('div');
             userBox.className = 'user-checklist-box';
             userBox.innerHTML = `
-                <div class="user-name">${displayName}</div>
+                <div class="user-name">
+                    <span>${displayName}</span>
+                    <button class="all-done-btn" onclick="markAllDone(${user.UID}, '${useDate}')">All Done</button>
+                </div>
                 <div class="checklist-item">
                     <input type="checkbox" id="make_bed_${user.UID}" ${checklist.make_bed ? 'checked' : ''} 
                            onchange="handleChecklistChange(${user.UID}, 'make_bed', this.checked, '${useDate}')">

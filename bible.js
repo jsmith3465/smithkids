@@ -50,23 +50,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.authStatus.isAuthenticated) {
                     initializeBiblePage();
                 } else {
-                    const authCheck = document.getElementById('authCheck');
-                    if (authCheck) {
-                        authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
-                    }
+                    // Wait a bit longer - auth might still be initializing
+                    setTimeout(() => {
+                        if (window.authStatus && window.authStatus.isAuthenticated) {
+                            initializeBiblePage();
+                        } else {
+                            const authCheck = document.getElementById('authCheck');
+                            if (authCheck) {
+                                authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
+                                setTimeout(() => {
+                                    window.location.href = 'login.html';
+                                }, 2000);
+                            }
+                        }
+                    }, 1000);
                 }
             }
         }, 100);
         
         setTimeout(() => {
             clearInterval(checkAuth);
-            if (!window.authStatus) {
+            // Give it one more chance after timeout
+            if (window.authStatus && window.authStatus.isAuthenticated) {
+                initializeBiblePage();
+            } else if (!window.authStatus) {
                 const authCheck = document.getElementById('authCheck');
                 if (authCheck) {
                     authCheck.innerHTML = '<p style="color: #dc3545;">Authentication check timed out. Please refresh the page.</p>';
                 }
             }
-        }, 5000);
+        }, 8000); // Increased timeout to 8 seconds
     }, 200);
 });
 
