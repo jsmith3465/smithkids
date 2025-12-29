@@ -95,6 +95,22 @@ async function createProfileMenu() {
     const profileContainer = document.createElement('div');
     profileContainer.style.cssText = 'position: relative; display: flex; align-items: center; gap: 10px;';
     profileContainer.innerHTML = `
+        <a href="index.html" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #DAA520;
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        " onmouseenter="this.style.transform='scale(1.1)'; this.style.boxShadow='0 3px 10px rgba(218, 165, 32, 0.4)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏠</a>
         <div style="position: relative;">
             <button id="profileBtn" style="
                 width: 40px;
