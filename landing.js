@@ -71,61 +71,21 @@ function getTimeBasedGreeting() {
 
 // Get a random quote or Bible verse with 3:2 ratio (Bible verses : motivational quotes)
 // For every 5 messages: 3 Bible verses, 2 motivational quotes
+// Randomly selects each time the page is visited
 function getRandomQuote() {
-    // Use session storage to track selections and maintain ratio
-    const sessionData = sessionStorage.getItem('userSession');
-    let selectionCount = 0;
-    let bibleCount = 0;
-    let quoteCount = 0;
-    
-    // Get selection history from session storage
-    const selectionHistory = sessionStorage.getItem('quoteSelectionHistory');
-    if (selectionHistory) {
-        try {
-            const history = JSON.parse(selectionHistory);
-            selectionCount = history.count || 0;
-            bibleCount = history.bibleCount || 0;
-            quoteCount = history.quoteCount || 0;
-        } catch (e) {
-            // Reset if corrupted
-            selectionCount = 0;
-            bibleCount = 0;
-            quoteCount = 0;
-        }
-    }
-    
-    // Determine which type to select based on ratio
-    // Every 5 selections should be: 3 Bible, 2 quotes
-    const positionInCycle = selectionCount % 5;
-    let selectedType;
-    
-    if (positionInCycle < 3) {
-        // First 3 positions: Bible verses
-        selectedType = 'bible';
-    } else {
-        // Last 2 positions: Motivational quotes
-        selectedType = 'quote';
-    }
-    
-    // Select random item from the chosen type
+    // Randomly select type with 60% chance for Bible verses (3/5) and 40% for quotes (2/5)
+    const random = Math.random();
     let selectedItem;
-    if (selectedType === 'bible') {
+    
+    if (random < 0.6) {
+        // 60% chance: Select a random Bible verse
         const randomIndex = Math.floor(Math.random() * bibleVerses.length);
         selectedItem = bibleVerses[randomIndex];
-        bibleCount++;
     } else {
+        // 40% chance: Select a random motivational quote
         const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
         selectedItem = motivationalQuotes[randomIndex];
-        quoteCount++;
     }
-    
-    // Update selection history
-    selectionCount++;
-    sessionStorage.setItem('quoteSelectionHistory', JSON.stringify({
-        count: selectionCount,
-        bibleCount: bibleCount,
-        quoteCount: quoteCount
-    }));
     
     return selectedItem;
 }
