@@ -185,7 +185,10 @@ async function addUser() {
             .select('UID')
             .single();
         
-        if (insertError) throw insertError;
+        if (insertError) {
+            console.error('Insert error details:', insertError);
+            throw insertError;
+        }
         
         showSuccess(`User "${username}" added successfully!`);
         
@@ -201,7 +204,8 @@ async function addUser() {
         
     } catch (error) {
         console.error('Error adding user:', error);
-        showError('An error occurred while adding user. Please try again.');
+        const errorMessage = error.message || 'An error occurred while adding user. Please try again.';
+        showError(errorMessage);
     } finally {
         addUserBtn.disabled = false;
         addUserBtn.textContent = 'Add User';
