@@ -251,34 +251,40 @@ function updateCountdown() {
         }
     }
     
-    // Audio warnings (only if countdown is positive)
-    // Check for exact minute marks (15:00, 10:00, 5:00, 1:00)
+    // Audio warnings - check for exact minute marks
     // Use minutesLeft and secondsLeft to check for exact minute marks
-    if (totalSeconds > 0) {
-        // 15 minutes exactly (15:00)
-        if (minutesLeft === 15 && secondsLeft === 0 && !warning15Min) {
-            warning15Min = true;
-            playWarningAudio('../Media/15_min_warning.mp3', 1.0); // Maximum volume
-        } 
-        // 10 minutes exactly (10:00)
-        else if (minutesLeft === 10 && secondsLeft === 0 && !warning10Min) {
-            warning10Min = true;
-            playWarningAudio('../Media/10_min_warning.mp3', 1.0);
-        } 
-        // 5 minutes exactly (5:00)
-        else if (minutesLeft === 5 && secondsLeft === 0 && !warning5Min) {
-            warning5Min = true;
-            playWarningAudio('../Media/5_min_warning.mp3', 1.0);
-        }
-        // 1 minute exactly (1:00)
-        else if (minutesLeft === 1 && secondsLeft === 0 && !warning1Min) {
-            warning1Min = true;
-            playWarningAudio('../Media/1_min_warning.mp3', 1.0);
-        }
-    }
+    // Check in order from highest to lowest to ensure proper priority
     
+    // 15 minutes exactly (15:00)
+    if (minutesLeft === 15 && secondsLeft === 0 && totalSeconds > 0 && !warning15Min) {
+        warning15Min = true;
+        playWarningAudio('../Media/15_min_warning.mp3', 1.0); // Maximum volume
+    } 
+    // 10 minutes exactly (10:00)
+    else if (minutesLeft === 10 && secondsLeft === 0 && totalSeconds > 0 && !warning10Min) {
+        warning10Min = true;
+        playWarningAudio('../Media/10_min_warning.mp3', 1.0);
+    } 
+    // 5 minutes exactly (5:00)
+    else if (minutesLeft === 5 && secondsLeft === 0 && totalSeconds > 0 && !warning5Min) {
+        warning5Min = true;
+        playWarningAudio('../Media/5_min_warning.mp3', 1.0);
+    }
+    // 1 minute exactly (1:00)
+    else if (minutesLeft === 1 && secondsLeft === 0 && totalSeconds > 0 && !warning1Min) {
+        warning1Min = true;
+        playWarningAudio('../Media/1_min_warning.mp3', 1.0);
+    }
     // 0 minute warning (when countdown reaches exactly 0:00)
-    if (totalSeconds === 0 && !warning0Min) {
+    // Check multiple conditions to catch the exact moment:
+    // 1. When totalSeconds is exactly 0 (most precise)
+    // 2. When display shows 00:00:00 (catches timing edge cases)
+    // 3. When totalSeconds is between 0 and 1 (approaching 0, within 1 second window)
+    else if (!warning0Min && (
+        (totalSeconds === 0) ||
+        (countdownText === '00:00:00' && totalSeconds >= -1 && totalSeconds <= 1) ||
+        (minutesLeft === 0 && secondsLeft === 0 && totalSeconds >= 0 && totalSeconds <= 1)
+    )) {
         warning0Min = true;
         playWarningAudio('../Media/0_min_warning.mp3', 1.0);
     }
@@ -291,16 +297,31 @@ function playWarningAudio(audioPath, volume = 1.0) {
         const audio = new Audio(audioPath);
         audio.volume = volume;
         audio.preload = 'auto';
+        
+        // Add error handlers
+        audio.addEventListener('error', (e) => {
+            console.error('Audio loading error:', e);
+            console.error('Attempted path:', audioPath);
+            console.error('Audio error details:', audio.error);
+        });
+        
+        // Attempt to play
         const playPromise = audio.play();
         
         if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.error('Error playing warning audio:', error);
-                console.error('Attempted path:', audioPath);
-            });
+            playPromise
+                .then(() => {
+                    console.log('Successfully playing audio:', audioPath);
+                })
+                .catch(error => {
+                    console.error('Error playing warning audio:', error);
+                    console.error('Attempted path:', audioPath);
+                    console.error('This may be due to browser autoplay restrictions. User interaction may be required.');
+                });
         }
     } catch (error) {
         console.error('Error creating audio element:', error);
+        console.error('Attempted path:', audioPath);
     }
 }
 
@@ -857,35 +878,37 @@ async function loadChecklists(date) {
                     <span>${displayName}</span>
                     <button class="all-done-btn" onclick="markAllDone(${user.UID}, '${useDate}')">All Done</button>
                 </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="make_bed_${user.UID}" ${checklist.make_bed ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'make_bed', this.checked, '${useDate}')">
-                    <label for="make_bed_${user.UID}">Make Bed</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="clean_room_${user.UID}" ${checklist.clean_room ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'clean_room', this.checked, '${useDate}')">
-                    <label for="clean_room_${user.UID}">Clean Room</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="get_dressed_${user.UID}" ${checklist.get_dressed ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'get_dressed', this.checked, '${useDate}')">
-                    <label for="get_dressed_${user.UID}">Get Dressed</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="eat_breakfast_${user.UID}" ${checklist.eat_breakfast ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'eat_breakfast', this.checked, '${useDate}')">
-                    <label for="eat_breakfast_${user.UID}">Eat Breakfast</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="brush_teeth_${user.UID}" ${checklist.brush_teeth ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'brush_teeth', this.checked, '${useDate}')">
-                    <label for="brush_teeth_${user.UID}">Brush Teeth</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="comb_hair_${user.UID}" ${checklist.comb_hair ? 'checked' : ''} 
-                           onchange="handleChecklistChange(${user.UID}, 'comb_hair', this.checked, '${useDate}')">
-                    <label for="comb_hair_${user.UID}">Comb Hair</label>
+                <div class="checklist-items-container">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="make_bed_${user.UID}" ${checklist.make_bed ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'make_bed', this.checked, '${useDate}')">
+                        <label for="make_bed_${user.UID}">Make Bed</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="clean_room_${user.UID}" ${checklist.clean_room ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'clean_room', this.checked, '${useDate}')">
+                        <label for="clean_room_${user.UID}">Clean Room</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="get_dressed_${user.UID}" ${checklist.get_dressed ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'get_dressed', this.checked, '${useDate}')">
+                        <label for="get_dressed_${user.UID}">Get Dressed</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="eat_breakfast_${user.UID}" ${checklist.eat_breakfast ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'eat_breakfast', this.checked, '${useDate}')">
+                        <label for="eat_breakfast_${user.UID}">Eat Breakfast</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="brush_teeth_${user.UID}" ${checklist.brush_teeth ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'brush_teeth', this.checked, '${useDate}')">
+                        <label for="brush_teeth_${user.UID}">Brush Teeth</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="comb_hair_${user.UID}" ${checklist.comb_hair ? 'checked' : ''} 
+                               onchange="handleChecklistChange(${user.UID}, 'comb_hair', this.checked, '${useDate}')">
+                        <label for="comb_hair_${user.UID}">Comb Hair</label>
+                    </div>
                 </div>
             `;
             checklistGrid.appendChild(userBox);
