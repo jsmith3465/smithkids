@@ -251,29 +251,29 @@ function updateCountdown() {
         // 15 minutes exactly (15:00)
         if (minutesLeft === 15 && secondsLeft === 0 && !warning15Min) {
             warning15Min = true;
-            playWarningAudio('Media/15_min_warning.mp3', 1.0); // Maximum volume
+            playWarningAudio('../Media/15_min_warning.mp3', 1.0); // Maximum volume
         } 
         // 10 minutes exactly (10:00)
         else if (minutesLeft === 10 && secondsLeft === 0 && !warning10Min) {
             warning10Min = true;
-            playWarningAudio('Media/10_min_warning.mp3', 1.0);
+            playWarningAudio('../Media/10_min_warning.mp3', 1.0);
         } 
         // 5 minutes exactly (5:00)
         else if (minutesLeft === 5 && secondsLeft === 0 && !warning5Min) {
             warning5Min = true;
-            playWarningAudio('Media/5_min_warning.mp3', 1.0);
+            playWarningAudio('../Media/5_min_warning.mp3', 1.0);
         }
         // 1 minute exactly (1:00)
         else if (minutesLeft === 1 && secondsLeft === 0 && !warning1Min) {
             warning1Min = true;
-            playWarningAudio('Media/1_min_warning.mp3', 1.0);
+            playWarningAudio('../Media/1_min_warning.mp3', 1.0);
         }
     }
     
     // 0 minute warning (when countdown reaches exactly 0:00)
     if (totalSeconds === 0 && !warning0Min) {
         warning0Min = true;
-        playWarningAudio('Media/0_min_warning.mp3', 1.0);
+        playWarningAudio('../Media/0_min_warning.mp3', 1.0);
     }
     
     // Launch alarm (when countdown reaches zero)
