@@ -25,7 +25,6 @@ let warning10Min = false;
 let warning5Min = false;
 let warning1Min = false;
 let warning0Min = false;
-let launchAlarmPlayed = false;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
@@ -216,7 +215,6 @@ function updateCountdown() {
         warning5Min = false;
         warning1Min = false;
         warning0Min = false;
-        launchAlarmPlayed = false;
     }
     
     const diff = launchDate - now;
@@ -284,38 +282,25 @@ function updateCountdown() {
         warning0Min = true;
         playWarningAudio('../Media/0_min_warning.mp3', 1.0);
     }
-    
-    // Launch alarm (when countdown reaches zero)
-    if (totalSeconds <= 0 && totalSeconds > -60 && !launchAlarmPlayed) {
-        launchAlarmPlayed = true;
-        playLaunchAlarm();
-    }
 }
 
 function playWarningAudio(audioPath, volume = 1.0) {
     try {
+        // Audio paths are relative to the HTML page location
+        // Since morning-checklist.html is in pages/, ../Media/ is correct
         const audio = new Audio(audioPath);
         audio.volume = volume;
-        audio.play().catch(error => {
-            console.error('Error playing warning audio:', error);
-        });
+        audio.preload = 'auto';
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.error('Error playing warning audio:', error);
+                console.error('Attempted path:', audioPath);
+            });
+        }
     } catch (error) {
         console.error('Error creating audio element:', error);
-    }
-}
-
-function playLaunchAlarm() {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance('Launch! Launch! Launch!');
-        utterance.rate = 1.2;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        // Repeat 3 times
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
-                window.speechSynthesis.speak(utterance);
-            }, i * 1000);
-        }
     }
 }
 
@@ -510,7 +495,6 @@ async function submitLaunchTimeChange() {
         warning15Min = false;
         warning10Min = false;
         warning5Min = false;
-        launchAlarmPlayed = false;
         
         hideLaunchTimeModal();
         alert('Launch time updated successfully!');
