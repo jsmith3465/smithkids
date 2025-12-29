@@ -26,6 +26,14 @@ let warning5Min = false;
 let warning1Min = false;
 let warning0Min = false;
 
+// Audio elements - preloaded after user interaction
+let audio15Min = null;
+let audio10Min = null;
+let audio5Min = null;
+let audio1Min = null;
+let audio0Min = null;
+let audioInitialized = false;
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -93,6 +101,9 @@ async function checkAdminAccess() {
     // Set today's date as default (always use today)
     const today = new Date().toISOString().split('T')[0];
     
+    // Initialize audio after user interaction (page load counts as interaction)
+    initializeAudio();
+    
     // Initialize date/time display and countdown
     updateDateTime();
     updateLaunchTimeDisplay();
@@ -104,8 +115,13 @@ async function checkAdminAccess() {
     
     // Add post changes button listener
     document.getElementById('postChangesBtn').addEventListener('click', () => {
+        unlockAudio(); // Unlock audio on any click
         showCodeModal();
     });
+    
+    // Unlock audio on any user interaction (click, touch, etc.)
+    document.addEventListener('click', unlockAudio, { once: false });
+    document.addEventListener('touchstart', unlockAudio, { once: false });
     
     // Add launch time change button listener
     document.getElementById('changeLaunchTimeBtn').addEventListener('click', () => {
@@ -258,22 +274,22 @@ function updateCountdown() {
     // 15 minutes exactly (15:00)
     if (minutesLeft === 15 && secondsLeft === 0 && totalSeconds > 0 && !warning15Min) {
         warning15Min = true;
-        playWarningAudio('../Media/15_min_warning.mp3', 1.0); // Maximum volume
+        playWarningAudio(audio15Min, '15_min_warning');
     } 
     // 10 minutes exactly (10:00)
     else if (minutesLeft === 10 && secondsLeft === 0 && totalSeconds > 0 && !warning10Min) {
         warning10Min = true;
-        playWarningAudio('../Media/10_min_warning.mp3', 1.0);
+        playWarningAudio(audio10Min, '10_min_warning');
     } 
     // 5 minutes exactly (5:00)
     else if (minutesLeft === 5 && secondsLeft === 0 && totalSeconds > 0 && !warning5Min) {
         warning5Min = true;
-        playWarningAudio('../Media/5_min_warning.mp3', 1.0);
+        playWarningAudio(audio5Min, '5_min_warning');
     }
     // 1 minute exactly (1:00)
     else if (minutesLeft === 1 && secondsLeft === 0 && totalSeconds > 0 && !warning1Min) {
         warning1Min = true;
-        playWarningAudio('../Media/1_min_warning.mp3', 1.0);
+        playWarningAudio(audio1Min, '1_min_warning');
     }
     // 0 minute warning (when countdown reaches exactly 0:00)
     // Check multiple conditions to catch the exact moment:
@@ -286,42 +302,113 @@ function updateCountdown() {
         (minutesLeft === 0 && secondsLeft === 0 && totalSeconds >= 0 && totalSeconds <= 1)
     )) {
         warning0Min = true;
-        playWarningAudio('../Media/0_min_warning.mp3', 1.0);
+        playWarningAudio(audio0Min, '0_min_warning');
     }
 }
 
-function playWarningAudio(audioPath, volume = 1.0) {
+// Initialize audio elements after user interaction
+function initializeAudio() {
+    if (audioInitialized) return;
+    
     try {
-        // Audio paths are relative to the HTML page location
-        // Since morning-checklist.html is in pages/, ../Media/ is correct
-        const audio = new Audio(audioPath);
-        audio.volume = volume;
-        audio.preload = 'auto';
+        // Use absolute paths from site root - always use /Media/ for consistency
+        const basePath = '/Media/';
         
-        // Add error handlers
-        audio.addEventListener('error', (e) => {
-            console.error('Audio loading error:', e);
-            console.error('Attempted path:', audioPath);
-            console.error('Audio error details:', audio.error);
+        // Create and preload all audio elements
+        audio15Min = new Audio(basePath + '15_min_warning.mp3');
+        audio10Min = new Audio(basePath + '10_min_warning.mp3');
+        audio5Min = new Audio(basePath + '5_min_warning.mp3');
+        audio1Min = new Audio(basePath + '1_min_warning.mp3');
+        audio0Min = new Audio(basePath + '0_min_warning.mp3');
+        
+        // Set volume and preload
+        [audio15Min, audio10Min, audio5Min, audio1Min, audio0Min].forEach(audio => {
+            if (audio) {
+                audio.volume = 1.0;
+                audio.preload = 'auto';
+                
+                // Add error handlers
+                audio.addEventListener('error', (e) => {
+                    console.error('Audio loading error:', e);
+                    console.error('Audio error details:', audio.error);
+                    console.error('Audio src:', audio.src);
+                });
+                
+                // Add loaded event handler
+                audio.addEventListener('loadeddata', () => {
+                    console.log('Audio loaded:', audio.src);
+                });
+            }
         });
         
+        audioInitialized = true;
+        console.log('Audio elements initialized');
+        
+        // Try to unlock audio by playing and pausing (requires user interaction)
+        // This will fail silently if no user interaction has occurred yet
+        unlockAudio();
+    } catch (error) {
+        console.error('Error initializing audio:', error);
+    }
+}
+
+// Unlock audio by playing and immediately pausing (requires user interaction)
+function unlockAudio() {
+    if (!audioInitialized || !audio15Min) return;
+    
+    const audioElements = [audio15Min, audio10Min, audio5Min, audio1Min, audio0Min];
+    audioElements.forEach(audio => {
+        if (audio) {
+            try {
+                const unlockPromise = audio.play();
+                if (unlockPromise !== undefined) {
+                    unlockPromise
+                        .then(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            console.log('Audio unlocked:', audio.src);
+                        })
+                        .catch(error => {
+                            // Silently fail - this is expected if no user interaction yet
+                            // console.warn('Could not unlock audio (will need user interaction):', error);
+                        });
+                }
+            } catch (error) {
+                // Silently fail - this is expected if no user interaction yet
+            }
+        }
+    });
+}
+
+function playWarningAudio(audioElement, audioName) {
+    if (!audioElement) {
+        console.error('Audio element not available:', audioName);
+        return;
+    }
+    
+    try {
+        // Reset to beginning
+        audioElement.currentTime = 0;
+        
         // Attempt to play
-        const playPromise = audio.play();
+        const playPromise = audioElement.play();
         
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    console.log('Successfully playing audio:', audioPath);
+                    console.log('Successfully playing audio:', audioName);
                 })
                 .catch(error => {
                     console.error('Error playing warning audio:', error);
-                    console.error('Attempted path:', audioPath);
+                    console.error('Audio name:', audioName);
                     console.error('This may be due to browser autoplay restrictions. User interaction may be required.');
+                    // Try to unlock audio by attempting to play again
+                    initializeAudio();
                 });
         }
     } catch (error) {
-        console.error('Error creating audio element:', error);
-        console.error('Attempted path:', audioPath);
+        console.error('Error playing audio element:', error);
+        console.error('Audio name:', audioName);
     }
 }
 
