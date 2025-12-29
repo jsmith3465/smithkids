@@ -1,4 +1,14 @@
 // Profile menu component
+
+// Helper function to get correct path for pages
+function getPagePath(pageName) {
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+        return `pages/${pageName}`;
+    }
+    return pageName;
+}
+
 async function createProfileMenu() {
     const session = window.authStatus?.getSession();
     if (!session) return;
@@ -37,7 +47,7 @@ async function createProfileMenu() {
     
     if (isAdmin) {
         menuItems = `
-            <a href="add-credits.html" style="
+            <a href="${getPagePath('add-credits.html')}" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
@@ -48,7 +58,7 @@ async function createProfileMenu() {
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💰 Credit Management
             </a>
-            <a href="approvals.html" style="
+            <a href="${getPagePath('approvals.html')}" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
@@ -75,7 +85,7 @@ async function createProfileMenu() {
                     font-weight: 700;
                 ">${pendingApprovalsCount}</span>` : ''}
             </a>
-            <a href="morning-checklist.html" style="
+            <a href="${getPagePath('morning-checklist.html')}" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
@@ -93,7 +103,7 @@ async function createProfileMenu() {
                 <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Credit Balance</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: #CC5500;">${creditBalance !== null ? creditBalance : 0}</div>
             </div>
-            <a href="credit-balance.html" style="
+            <a href="${getPagePath('credit-balance.html')}" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
@@ -111,7 +121,7 @@ async function createProfileMenu() {
     const profileContainer = document.createElement('div');
     profileContainer.style.cssText = 'position: relative; display: flex; align-items: center; gap: 10px;';
     profileContainer.innerHTML = `
-        <a href="index.html" style="
+        <a href="${window.location.pathname.includes('pages/') ? '../index.html' : 'index.html'}" style="
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -162,7 +172,7 @@ async function createProfileMenu() {
                     <div style="font-size: 0.85rem; color: #666; margin-top: 3px;">${session.username} ${isAdmin ? '(Admin)' : ''}</div>
                 </div>
                 ${menuItems}
-                <a href="stats.html" style="
+                <a href="${getPagePath('stats.html')}" style="
                     display: block;
                     padding: 12px 15px;
                     color: #333;
@@ -174,7 +184,7 @@ async function createProfileMenu() {
                     📊 View Statistics
                 </a>
                 ${isAdmin ? `
-                <a href="settings.html" style="
+                <a href="${getPagePath('settings.html')}" style="
                     display: block;
                     padding: 12px 15px;
                     color: #333;

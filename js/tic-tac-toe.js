@@ -1259,7 +1259,7 @@ class TicTacToe {
             console.error('Error joining room as guest:', error);
             alert('Error joining room. Please try again.');
             sessionStorage.removeItem('guestSession');
-            window.location.href = getPagePath('guest-login.html')?room=' + roomCode;
+            window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
         }
     }
     
@@ -1888,7 +1888,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(checkAuth);
             // If room code exists but no guest session, redirect to guest login
             if (roomCode) {
-                `window.location.href = `../pages/guest-login.html?room=${roomCode}`;
+                window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
             }
         }
     }, 100);
@@ -1898,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!window.authStatus || !window.authStatus.isAuthenticated) {
             // If room code exists but no guest session, redirect to guest login
             if (roomCode) {
-                `window.location.href = `../pages/guest-login.html?room=${roomCode}`;
+                window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
             } else {
                 console.error('Authentication check timed out');
             }
