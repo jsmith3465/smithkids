@@ -1,4 +1,13 @@
 // Tic Tac Toe Game - Using Users from Database
+
+// Helper function to get correct path for pages
+function getPagePath(pageName) {
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+        return `pages/${pageName}`;
+    }
+    return pageName;
+}
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { checkCredits, deductCredits, showCreditWarning } from './credit-system.js';
 
@@ -1156,7 +1165,7 @@ class TicTacToe {
             if (roomError || !room) {
                 alert('Room not found or is no longer active.');
                 sessionStorage.removeItem('guestSession');
-                window.location.href = 'guest-login.html?room=' + roomCode;
+                window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
                 return;
             }
             
@@ -1167,7 +1176,7 @@ class TicTacToe {
             if (now > expiresAt && !room.game_started) {
                 alert('This room link has expired. Room links are valid for 15 minutes.');
                 sessionStorage.removeItem('guestSession');
-                window.location.href = 'guest-login.html?room=' + roomCode;
+                window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
                 return;
             }
             
@@ -1250,7 +1259,7 @@ class TicTacToe {
             console.error('Error joining room as guest:', error);
             alert('Error joining room. Please try again.');
             sessionStorage.removeItem('guestSession');
-            window.location.href = 'guest-login.html?room=' + roomCode;
+            window.location.href = getPagePath('guest-login.html')?room=' + roomCode;
         }
     }
     
@@ -1879,7 +1888,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(checkAuth);
             // If room code exists but no guest session, redirect to guest login
             if (roomCode) {
-                window.location.href = `guest-login.html?room=${roomCode}`;
+                `window.location.href = `../pages/guest-login.html?room=${roomCode}`;
             }
         }
     }, 100);
@@ -1889,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!window.authStatus || !window.authStatus.isAuthenticated) {
             // If room code exists but no guest session, redirect to guest login
             if (roomCode) {
-                window.location.href = `guest-login.html?room=${roomCode}`;
+                `window.location.href = `../pages/guest-login.html?room=${roomCode}`;
             } else {
                 console.error('Authentication check timed out');
             }

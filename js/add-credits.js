@@ -6,6 +6,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Helper function to get correct path for pages
+function getPagePath(pageName) {
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+        return `pages/${pageName}`;
+    }
+    return pageName;
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     // Wait a bit for auth.js to initialize
@@ -40,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkUserAccess() {
     const session = window.authStatus?.getSession();
     if (!session) {
-        window.location.href = 'login.html';
+        window.location.href = getPagePath('login.html');
         return;
     }
     

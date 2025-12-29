@@ -11,6 +11,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 minutes
 let sessionTimeoutId = null;
 
+// Helper function to get correct path for pages
+function getPagePath(pageName) {
+    const currentPath = window.location.pathname;
+    // If we're at root (index.html), use pages/ prefix
+    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+        return `pages/${pageName}`;
+    }
+    // If we're already in pages/, use relative path
+    return pageName;
+}
+
 // Check authentication status
 async function checkAuthentication() {
     const sessionData = sessionStorage.getItem('userSession');
@@ -25,7 +36,7 @@ async function checkAuthentication() {
             // Redirect to guest login instead of regular login
             console.log('No session data found, redirecting to guest login');
             setTimeout(() => {
-                window.location.href = `guest-login.html?room=${roomCode}`;
+                window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
             }, 100);
             return false;
         }
@@ -33,7 +44,7 @@ async function checkAuthentication() {
         // No session, redirect to login
         console.log('No session data found');
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = getPagePath('login.html');
         }, 100);
         return false;
     }
@@ -54,11 +65,11 @@ async function checkAuthentication() {
             if (isTicTacToePage && roomCode) {
                 // Redirect to guest login instead of regular login
                 setTimeout(() => {
-                    window.location.href = `guest-login.html?room=${roomCode}`;
+                    window.location.href = `${getPagePath('guest-login.html')}?room=${roomCode}`;
                 }, 100);
             } else {
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = getPagePath('login.html');
                 }, 100);
             }
             return false;
@@ -81,7 +92,7 @@ async function checkAuthentication() {
                 sessionStorage.removeItem('userSession');
                 alert('Your account has been suspended. Please speak to your Superior to have access reinstated.');
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = getPagePath('login.html');
                 }, 100);
                 return false;
             }
@@ -120,7 +131,7 @@ async function checkAuthentication() {
             sessionStorage.removeItem('userSession');
             alert('Your session has expired. Please log in again.');
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = getPagePath('login.html');
             }, 100);
             return false;
         }
@@ -143,7 +154,7 @@ async function checkAuthentication() {
         console.error('Error parsing session:', error);
         sessionStorage.removeItem('userSession');
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = getPagePath('login.html');
         }, 100);
         return false;
     }
@@ -160,7 +171,7 @@ function resetSessionTimeout() {
     sessionTimeoutId = setTimeout(() => {
         sessionStorage.removeItem('userSession');
         alert('Your session has expired due to inactivity. Please log in again.');
-        window.location.href = 'login.html';
+        window.location.href = getPagePath('login.html');
     }, SESSION_TIMEOUT);
     
     // Also reset on user activity
@@ -188,7 +199,7 @@ function handleLogout() {
         clearTimeout(sessionTimeoutId);
     }
     sessionStorage.removeItem('userSession');
-    window.location.href = 'login.html';
+    window.location.href = getPagePath('login.html');
 }
 
 // Export handleLogout for use in other scripts

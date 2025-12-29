@@ -1,4 +1,13 @@
 // Settings page for admins - Integrated with User Management
+
+// Helper function to get correct path for pages
+function getPagePath(pageName) {
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+        return `pages/${pageName}`;
+    }
+    return pageName;
+}
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
@@ -38,13 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkAdminAccess() {
     const session = window.authStatus?.getSession();
     if (!session) {
-        window.location.href = 'login.html';
+        window.location.href = getPagePath('login.html');
         return;
     }
     
     if (session.userType !== 'admin') {
         alert('Admin access required.');
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
         return;
     }
     

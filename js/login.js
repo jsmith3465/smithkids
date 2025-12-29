@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sessionData = sessionStorage.getItem('userSession');
     if (sessionData) {
         // User is already logged in, redirect to main page
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
         return;
     }
 
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('userSession', JSON.stringify(sessionData));
 
             // Redirect to main page
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         } catch (error) {
             console.error('Login error:', error);
             showError('An unexpected error occurred. Please try again.');

@@ -37,8 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('guestSession', JSON.stringify(guestInfo));
         
         // Redirect to Tic Tac Toe page with room code
-        // Use relative path - should work if files are in same directory
-        window.location.href = `tic-tac-toe.html?room=${roomCode}`;
+        // Helper function to get correct path for pages
+        function getPagePath(pageName) {
+            const currentPath = window.location.pathname;
+            if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
+                return `pages/${pageName}`;
+            }
+            return pageName;
+        }
+        window.location.href = `${getPagePath('tic-tac-toe.html')}?room=${roomCode}`;
     });
 });
 
