@@ -215,10 +215,10 @@
             
             <!-- Tab Navigation -->
             <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="general" id="generalTabBtn">General Settings</button>
+                <button class="settings-tab active" data-tab="general" id="generalTabBtn">Change Password</button>
                 <button class="settings-tab" data-tab="users" id="usersTabBtn">User Management</button>
                 <button class="settings-tab" data-tab="memory" id="memoryTabBtn">Monthly Memory Verse</button>
-                <button class="settings-tab" data-tab="password">Change Password</button>
+                <button class="settings-tab" data-tab="password">General Settings</button>
                 <!-- Future tabs can be added here -->
             </div>
             
@@ -252,7 +252,7 @@
                 </div>
             </div>
             
-            <!-- Change Password Tab -->
+            <!-- General Settings Tab -->
             <div id="passwordTab" class="tab-content">
                 <div class="settings-section">
                     <h2>Pin Code</h2>
@@ -349,10 +349,31 @@
                         Set a memory verse for a specific month. Users can memorize the verse and earn 30 credits upon approval.
                     </p>
                     
-                    <div class="input-group">
-                        <label for="memoryVerseMonth">Month and Year:</label>
-                        <input type="month" id="memoryVerseMonth" required>
-                        <div class="help-text">Select the month and year for this memory verse.</div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="memoryVerseMonth">Month:</label>
+                            <select id="memoryVerseMonth" required>
+                                <option value="">Select month...</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="memoryVerseYear">Year:</label>
+                            <select id="memoryVerseYear" required>
+                                <option value="">Select year...</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="form-row">

@@ -36,6 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
 });
 
+// Bible books list
+const bibleBooks = [
+    // Old Testament
+    "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
+    "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalm", "Proverbs",
+    "Ecclesiastes", "Song of Songs", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+    "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+    // New Testament
+    "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians",
+    "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon",
+    "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
+];
+
 async function checkUserAccess() {
     const session = window.authStatus?.getSession();
     if (!session) {
@@ -46,7 +59,197 @@ async function checkUserAccess() {
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
     
+    // Show "Add Memory Verse" button only for admins
+    const isAdmin = session.userType === 'admin';
+    const addBtn = document.getElementById('addMemoryVerseBtn');
+    if (addBtn) {
+        addBtn.style.display = isAdmin ? 'block' : 'none';
+        if (isAdmin) {
+            addBtn.addEventListener('click', () => {
+                showAddVerseModal();
+            });
+        }
+    }
+    
+    // Initialize modal
+    initializeModal();
+    
     await loadMemoryVerse();
+    await loadAllMemoryVerses();
+}
+
+function initializeModal() {
+    // Populate year dropdown
+    const yearSelect = document.getElementById('modalYear');
+    const currentYear = new Date().getFullYear();
+    for (let i = 0; i < 6; i++) {
+        const year = currentYear + i;
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+    
+    // Populate book dropdowns
+    const startBookSelect = document.getElementById('modalStartBook');
+    const endBookSelect = document.getElementById('modalEndBook');
+    bibleBooks.forEach(book => {
+        const option1 = document.createElement('option');
+        option1.value = book;
+        option1.textContent = book;
+        startBookSelect.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = book;
+        option2.textContent = book;
+        endBookSelect.appendChild(option2);
+    });
+    
+    // When starting book changes, update ending book
+    startBookSelect.addEventListener('change', () => {
+        endBookSelect.value = startBookSelect.value;
+    });
+    
+    // Close modal buttons
+    document.getElementById('closeModalBtn').addEventListener('click', closeAddVerseModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeAddVerseModal);
+    
+    // Add verse button
+    document.getElementById('addVerseBtn').addEventListener('click', async () => {
+        await addMemoryVerse();
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('addVerseModal').addEventListener('click', (e) => {
+        if (e.target.id === 'addVerseModal') {
+            closeAddVerseModal();
+        }
+    });
+}
+
+function showAddVerseModal() {
+    const modal = document.getElementById('addVerseModal');
+    modal.style.display = 'flex';
+    
+    // Clear form
+    document.getElementById('modalMonth').value = '';
+    document.getElementById('modalYear').value = '';
+    document.getElementById('modalStartBook').value = '';
+    document.getElementById('modalStartChapter').value = '';
+    document.getElementById('modalStartVerse').value = '';
+    document.getElementById('modalEndBook').value = '';
+    document.getElementById('modalEndChapter').value = '';
+    document.getElementById('modalEndVerse').value = '';
+}
+
+function closeAddVerseModal() {
+    document.getElementById('addVerseModal').style.display = 'none';
+}
+
+async function addMemoryVerse() {
+    const month = document.getElementById('modalMonth').value;
+    const year = document.getElementById('modalYear').value;
+    const startBook = document.getElementById('modalStartBook').value;
+    const startChapter = parseInt(document.getElementById('modalStartChapter').value);
+    const startVerse = parseInt(document.getElementById('modalStartVerse').value);
+    const endBook = document.getElementById('modalEndBook').value;
+    const endChapter = parseInt(document.getElementById('modalEndChapter').value);
+    const endVerse = parseInt(document.getElementById('modalEndVerse').value);
+    
+    if (!month || !year || !startBook || !startChapter || !startVerse || !endBook || !endChapter || !endVerse) {
+        alert('All fields are required.');
+        return;
+    }
+    
+    const monthYear = `${year}-${month}`;
+    const addBtn = document.getElementById('addVerseBtn');
+    addBtn.disabled = true;
+    addBtn.textContent = 'Adding...';
+    
+    try {
+        // Check if verse already exists for this month
+        const { data: existing, error: checkError } = await supabase
+            .from('Monthly_Memory_Verses')
+            .select('id')
+            .eq('month_year', monthYear)
+            .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') throw checkError;
+        
+        if (existing) {
+            alert('A memory verse already exists for this month. Please update it from the Settings page.');
+            addBtn.disabled = false;
+            addBtn.textContent = 'Add';
+            return;
+        }
+        
+        // Insert new verse
+        const { error: insertError } = await supabase
+            .from('Monthly_Memory_Verses')
+            .insert({
+                month_year: monthYear,
+                start_book: startBook,
+                start_chapter: startChapter,
+                start_verse: startVerse,
+                end_book: endBook,
+                end_chapter: endChapter,
+                end_verse: endVerse
+            });
+        
+        if (insertError) throw insertError;
+        
+        // Close modal and refresh table
+        closeAddVerseModal();
+        await loadAllMemoryVerses();
+        await loadMemoryVerse(); // Also refresh current month display
+        
+    } catch (error) {
+        console.error('Error adding memory verse:', error);
+        alert('Error adding memory verse. Please try again.');
+    } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = 'Add';
+    }
+}
+
+async function loadAllMemoryVerses() {
+    const tableContainer = document.getElementById('versesTableContainer');
+    
+    try {
+        const { data: verses, error } = await supabase
+            .from('Monthly_Memory_Verses')
+            .select('*')
+            .order('month_year', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!verses || verses.length === 0) {
+            tableContainer.innerHTML = '<div class="no-users">No memory verses set yet.</div>';
+            return;
+        }
+        
+        let html = '<table class="users-table" style="margin-top: 0;"><thead><tr>';
+        html += '<th>Month/Year</th><th>Verse Reference</th></tr></thead><tbody>';
+        
+        verses.forEach(verse => {
+            const monthYear = new Date(verse.month_year + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const reference = verse.start_book === verse.end_book 
+                ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
+                : `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`;
+            
+            html += `<tr>
+                <td>${monthYear}</td>
+                <td>${reference}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading memory verses:', error);
+        tableContainer.innerHTML = '<div class="no-users">Error loading memory verses.</div>';
+    }
 }
 
 async function loadMemoryVerse() {

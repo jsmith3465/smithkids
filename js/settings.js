@@ -668,6 +668,17 @@ const chapterCounts = {
 function initializeMemoryVerseForm() {
     const startBookSelect = document.getElementById('startBook');
     const endBookSelect = document.getElementById('endBook');
+    const yearSelect = document.getElementById('memoryVerseYear');
+    
+    // Populate year dropdown (current year and next 5 years)
+    const currentYear = new Date().getFullYear();
+    for (let i = 0; i < 6; i++) {
+        const year = currentYear + i;
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
     
     // Populate book dropdowns
     bibleBooks.forEach(book => {
@@ -747,6 +758,9 @@ async function loadMemoryVerses() {
                 ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
                 : `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`;
             
+            // Parse month_year to populate form when editing (if needed in future)
+            const [year, month] = verse.month_year.split('-');
+            
             html += `<tr>
                 <td>${monthYear}</td>
                 <td>${reference}</td>
@@ -769,7 +783,8 @@ async function loadMemoryVerses() {
 
 // Save Memory Verse
 async function saveMemoryVerse() {
-    const monthYear = document.getElementById('memoryVerseMonth').value;
+    const month = document.getElementById('memoryVerseMonth').value;
+    const year = document.getElementById('memoryVerseYear').value;
     const startBook = document.getElementById('startBook').value;
     const startChapter = parseInt(document.getElementById('startChapter').value);
     const startVerse = parseInt(document.getElementById('startVerse').value);
@@ -777,10 +792,13 @@ async function saveMemoryVerse() {
     const endChapter = parseInt(document.getElementById('endChapter').value);
     const endVerse = parseInt(document.getElementById('endVerse').value);
     
-    if (!monthYear || !startBook || !startChapter || !startVerse || !endBook || !endChapter || !endVerse) {
+    if (!month || !year || !startBook || !startChapter || !startVerse || !endBook || !endChapter || !endVerse) {
         showError('All fields are required.');
         return;
     }
+    
+    // Combine month and year into YYYY-MM format
+    const monthYear = `${year}-${month}`;
     
     const saveBtn = document.getElementById('saveMemoryVerseBtn');
     saveBtn.disabled = true;
@@ -832,6 +850,7 @@ async function saveMemoryVerse() {
         
         // Clear form
         document.getElementById('memoryVerseMonth').value = '';
+        document.getElementById('memoryVerseYear').value = '';
         document.getElementById('startBook').value = '';
         document.getElementById('startChapter').value = '';
         document.getElementById('startVerse').value = '';

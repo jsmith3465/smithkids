@@ -25,6 +25,46 @@ body {
     max-width: 600px;
     padding: 40px;
     animation: slideIn 0.5s ease-out;
+    text-align: center;
+}
+
+/* Left-align form elements, tables, and other structured content */
+.container .input-group,
+.container .form-row,
+.container table,
+.container .users-table,
+.container .credits-table,
+.container .transactions-table,
+.container .stats-table,
+.container .add-user-form,
+.container .settings-section,
+.container .credits-form,
+.container .approval-item,
+.container .approval-info,
+.container .approval-details,
+.container .approval-controls,
+.container .approval-actions,
+.container ul,
+.container ol,
+.container .user-checkbox-list,
+.container .no-users,
+.container .no-approvals,
+.container .no-workouts {
+    text-align: left;
+}
+
+/* Center-align labels but keep inputs left-aligned */
+.container .input-group label {
+    text-align: center;
+}
+
+/* Center-align table headers */
+.container table th,
+.container .users-table th,
+.container .credits-table th,
+.container .transactions-table th,
+.container .stats-table th {
+    text-align: center;
 }
 
 @keyframes slideIn {

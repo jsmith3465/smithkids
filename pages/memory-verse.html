@@ -17,8 +17,96 @@
         </div>
 
         <div id="mainContent" class="hidden">
+            <!-- Current Month Verse Display -->
             <div id="verseContainer" style="text-align: center; padding: 40px 20px;">
                 <div class="loading">Loading memory verse...</div>
+            </div>
+            
+            <!-- All Memory Verses Table -->
+            <div style="margin-top: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">All Memory Verses</h2>
+                    <button id="addMemoryVerseBtn" class="btn btn-primary" style="display: none;">Add Memory Verse</button>
+                </div>
+                <div id="versesTableContainer">
+                    <div class="loading">Loading memory verses...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Memory Verse Modal -->
+    <div id="addVerseModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Add Memory Verse</h2>
+                <button id="closeModalBtn" class="btn btn-secondary" style="padding: 5px 15px;">✕</button>
+            </div>
+            
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="modalMonth">Month:</label>
+                    <select id="modalMonth" required>
+                        <option value="">Select month...</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="modalYear">Year:</label>
+                    <select id="modalYear" required>
+                        <option value="">Select year...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="modalStartBook">Starting Book:</label>
+                    <select id="modalStartBook" required>
+                        <option value="">Select a book...</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="modalStartChapter">Starting Chapter:</label>
+                    <input type="number" id="modalStartChapter" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="modalStartVerse">Starting Verse:</label>
+                    <input type="number" id="modalStartVerse" min="1" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="modalEndBook">Ending Book:</label>
+                    <select id="modalEndBook" required>
+                        <option value="">Select a book...</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="modalEndChapter">Ending Chapter:</label>
+                    <input type="number" id="modalEndChapter" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="modalEndVerse">Ending Verse:</label>
+                    <input type="number" id="modalEndVerse" min="1" required>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button id="cancelModalBtn" class="btn btn-secondary">Cancel</button>
+                <button id="addVerseBtn" class="btn btn-primary">Add</button>
             </div>
         </div>
     </div>
