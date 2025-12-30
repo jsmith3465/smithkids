@@ -144,6 +144,9 @@ class HangmanGame {
         
         // Initial display
         this.updateDisplay();
+        
+        // Automatically start the game when page loads
+        this.startNewGame();
     }
     
     createAlphabetButtons() {
