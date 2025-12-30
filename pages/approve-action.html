@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Approval - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .action-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .loading {
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #28a745;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #dc3545;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .info-box p {
+            margin: 10px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="action-container">
+        <h1 style="background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Processing Approval</h1>
+        
+        <div id="loading" class="loading">
+            Processing your request...
+        </div>
+        
+        <div id="result" style="display: none;">
+            <!-- Result will be shown here -->
+        </div>
+    </div>
+
+    <script type="module" src="../js/approve-action.js"></script>
+</body>
+</html>
+
