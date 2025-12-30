@@ -3204,8 +3204,8 @@ class BibleTrivia {
             const percentageCorrect = (this.score / 10) * 100;
             
             // Save detailed game result
-            await supabase
-                .from('Bible_Trivia_Results')
+            const { error: saveError } = await supabase
+                .from('bible_trivia_results')
                 .insert({
                     user_uid: session.uid,
                     score: this.score,
@@ -3219,9 +3219,14 @@ class BibleTrivia {
                     hard_questions: this.answersByDifficulty.hard.total,
                     hard_correct: this.answersByDifficulty.hard.correct
                 });
+            
+            if (saveError) {
+                console.error('Error saving Bible Trivia game result:', saveError);
+            } else {
+                console.log('Bible Trivia game result saved successfully');
+            }
         } catch (error) {
-            // Table might not exist yet, that's okay
-            console.log('Could not save game result (table may not exist):', error);
+            console.error('Error saving game result:', error);
         }
     }
     

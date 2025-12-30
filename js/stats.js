@@ -314,13 +314,13 @@ async function loadBibleTriviaStatistics() {
     try {
         // Fetch game results with detailed difficulty tracking
         const { data: results, error: resultsError } = await supabase
-            .from('Bible_Trivia_Results')
+            .from('bible_trivia_results')
             .select('user_uid, score, total_questions, percentage_correct, easy_questions, easy_correct, moderate_questions, moderate_correct, hard_questions, hard_correct, created_at')
             .order('created_at', { ascending: false });
         
         if (resultsError) {
-            console.log('Bible_Trivia_Results table may not exist:', resultsError);
-            bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
+            console.error('Error loading Bible Trivia results:', resultsError);
+            bibleTriviaStatsDiv.innerHTML = `<div class="no-data">Error loading Bible Trivia statistics: ${resultsError.message}</div>`;
             return;
         }
         
