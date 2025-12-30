@@ -187,18 +187,25 @@ async function loadFruitsOfSpirit(userUid) {
                 height: 25px;
                 overflow: hidden;
                 position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             ">
                 <div style="
                     background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
                     height: 100%;
                     width: ${(earnedCount / 9) * 100}%;
                     transition: width 0.5s ease;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                "></div>
+                <div style="
+                    position: absolute;
+                    color: #333;
                     font-weight: 600;
                     font-size: 0.9rem;
+                    z-index: 1;
                 ">${Math.round((earnedCount / 9) * 100)}%</div>
             </div>
         </div>
