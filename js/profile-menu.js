@@ -278,7 +278,7 @@ async function getCreditBalance(userUid) {
     }
 }
 
-// Get pending approvals count (workouts + chores)
+// Get pending approvals count (workouts + chores + memory verses)
 async function getPendingApprovalsCount() {
     try {
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
@@ -306,7 +306,17 @@ async function getPendingApprovalsCount() {
             console.error('Error fetching chores count:', choresError);
         }
         
-        return (workoutsCount || 0) + (choresCount || 0);
+        // Count pending memory verse submissions
+        const { count: memoryVersesCount, error: memoryVersesError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'pending');
+        
+        if (memoryVersesError) {
+            console.error('Error fetching memory verses count:', memoryVersesError);
+        }
+        
+        return (workoutsCount || 0) + (choresCount || 0) + (memoryVersesCount || 0);
     } catch (error) {
         console.error('Error fetching pending approvals count:', error);
         return 0;

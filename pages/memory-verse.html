@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Memory Bible Verse - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📖 Monthly Memory Bible Verse</h1>
+        </header>
+
+        <div id="authCheck">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div id="verseContainer" style="text-align: center; padding: 40px 20px;">
+                <div class="loading">Loading memory verse...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/memory-verse.js"></script>
+</body>
+</html>
+

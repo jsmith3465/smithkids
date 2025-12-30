@@ -113,6 +113,9 @@ async function checkAdminAccess() {
     // Load checklists for today
     await loadChecklists(today);
     
+    // Load and display monthly memory verse
+    await loadMemoryVerse();
+    
     // Add post changes button listener
     document.getElementById('postChangesBtn').addEventListener('click', () => {
         unlockAudio(); // Unlock audio on any click
@@ -1020,6 +1023,45 @@ async function loadChecklists(date) {
     } catch (error) {
         console.error('Error loading checklists:', error);
         checklistGrid.innerHTML = '<div class="no-users">Error loading checklists. Please try again.</div>';
+    }
+}
+
+// Load and display monthly memory verse
+async function loadMemoryVerse() {
+    const memoryVerseDisplay = document.getElementById('memoryVerseDisplay');
+    const memoryVerseText = document.getElementById('memoryVerseText');
+    
+    if (!memoryVerseDisplay || !memoryVerseText) return;
+    
+    try {
+        // Get current month/year in YYYY-MM format
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { data: verse, error } = await supabase
+            .from('Monthly_Memory_Verses')
+            .select('*')
+            .eq('month_year', currentMonth)
+            .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        if (verse) {
+            // Format the verse reference
+            const reference = verse.start_book === verse.end_book 
+                ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
+                : `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`;
+            
+            memoryVerseText.textContent = reference;
+            memoryVerseDisplay.style.display = 'block';
+        } else {
+            memoryVerseDisplay.style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Error loading memory verse:', error);
+        // Don't hide on error - might be a table that doesn't exist yet
+        // memoryVerseDisplay.style.display = 'none';
     }
 }
 

@@ -567,6 +567,11 @@ function switchTab(tabName) {
     
     if (selectedTab) selectedTab.classList.add('active');
     if (selectedContent) selectedContent.classList.add('active');
+    
+    // Load data for the selected tab if needed
+    if (tabName === 'balances') {
+        loadAllCredits();
+    }
 }
 
 async function addCredits() {

@@ -100,7 +100,30 @@ async function loadUnapprovedItems() {
         
         if (choresError) throw choresError;
         
-        if ((!workouts || workouts.length === 0) && (!chores || chores.length === 0)) {
+        // Get all pending memory verse submissions
+        const { data: memoryVerses, error: memoryVersesError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .select(`
+                id,
+                user_uid,
+                month_year,
+                submitted_at,
+                Monthly_Memory_Verses!Memory_Verse_Submissions_verse_id_fkey(
+                    start_book,
+                    start_chapter,
+                    start_verse,
+                    end_book,
+                    end_chapter,
+                    end_verse
+                ),
+                Users!Memory_Verse_Submissions_user_uid_fkey(UID, First_Name, Last_Name, Username)
+            `)
+            .eq('status', 'pending')
+            .order('submitted_at', { ascending: true });
+        
+        if (memoryVersesError) throw memoryVersesError;
+        
+        if ((!workouts || workouts.length === 0) && (!chores || chores.length === 0) && (!memoryVerses || memoryVerses.length === 0)) {
             approvalsList.innerHTML = '<div class="no-approvals">No pending approvals. Great job!</div>';
             return;
         }
@@ -183,6 +206,52 @@ async function loadUnapprovedItems() {
             });
         }
         
+        // Add memory verse submissions
+        if (memoryVerses && memoryVerses.length > 0) {
+            memoryVerses.forEach(submission => {
+                const user = submission.Users;
+                const verse = submission.Monthly_Memory_Verses;
+                const displayName = (user.First_Name && user.Last_Name)
+                    ? `${user.First_Name} ${user.Last_Name}`
+                    : user.Username || 'Unknown User';
+                
+                const reference = verse && verse.start_book === verse.end_book 
+                    ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
+                    : verse ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`
+                    : 'Unknown Verse';
+                
+                const submittedDate = new Date(submission.submitted_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const approvalItem = document.createElement('div');
+                approvalItem.className = 'approval-item';
+                approvalItem.innerHTML = `
+                    <div class="approval-info">
+                        <div class="approval-header">
+                            <strong>${displayName}</strong>
+                            <span class="approval-type memory-verse">📖 Memory Verse</span>
+                        </div>
+                        <div class="approval-details">
+                            <p><strong>Verse:</strong> ${reference}</p>
+                            <p><strong>Month:</strong> ${new Date(submission.month_year + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                            <p><strong>Submitted:</strong> ${submittedDate}</p>
+                            <p><strong>Credits:</strong> 30</p>
+                        </div>
+                    </div>
+                    <div class="approval-actions">
+                        <button class="btn btn-primary btn-small" onclick="approveMemoryVerse(${submission.id}, '${submission.user_uid}')">Approve</button>
+                        <button class="btn btn-secondary btn-small" onclick="rejectMemoryVerse(${submission.id})">Reject</button>
+                    </div>
+                `;
+                approvalsList.appendChild(approvalItem);
+            });
+        }
+        
     } catch (error) {
         console.error('Error loading approvals:', error);
         approvalsList.innerHTML = '<div class="no-approvals">Error loading approvals. Please try again.</div>';
@@ -196,6 +265,100 @@ window.validateCreditsInput = function(input) {
         input.value = 1;
     } else if (value > 100) {
         input.value = 100;
+    }
+};
+
+// Approve memory verse submission
+window.approveMemoryVerse = async function(submissionId, userUid) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    try {
+        // Update submission status to approved
+        const { error: updateError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .update({ status: 'approved', approved_at: new Date().toISOString() })
+            .eq('id', submissionId);
+        
+        if (updateError) throw updateError;
+        
+        // Award 30 credits to the user
+        const { data: userData, error: userError } = await supabase
+            .from('Users')
+            .select('Credits')
+            .eq('UID', userUid)
+            .single();
+        
+        if (userError) throw userError;
+        
+        const newCredits = (userData.Credits || 0) + 30;
+        
+        const { error: creditsError } = await supabase
+            .from('Users')
+            .update({ Credits: newCredits })
+            .eq('UID', userUid);
+        
+        if (creditsError) throw creditsError;
+        
+        // Record transaction
+        const { error: transactionError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                user_uid: userUid,
+                amount: 30,
+                transaction_type: 'memory_verse',
+                description: 'Memory verse memorized and approved',
+                admin_uid: session.uid
+            });
+        
+        if (transactionError) {
+            console.error('Error recording transaction:', transactionError);
+            // Don't fail the approval if transaction recording fails
+        }
+        
+        showSuccess('Memory verse approved! User received 30 credits.');
+        
+        // Reload approvals list
+        await loadUnapprovedItems();
+        
+    } catch (error) {
+        console.error('Error approving memory verse:', error);
+        showError('Error approving memory verse. Please try again.');
+    }
+};
+
+// Reject memory verse submission
+window.rejectMemoryVerse = async function(submissionId) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to reject this memory verse submission? The user will be able to resubmit.')) {
+        return;
+    }
+    
+    try {
+        // Delete the submission so user can resubmit
+        const { error: deleteError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .delete()
+            .eq('id', submissionId);
+        
+        if (deleteError) throw deleteError;
+        
+        showSuccess('Memory verse submission rejected. User can resubmit.');
+        
+        // Reload approvals list
+        await loadUnapprovedItems();
+        
+    } catch (error) {
+        console.error('Error rejecting memory verse:', error);
+        showError('Error rejecting memory verse. Please try again.');
     }
 };
 

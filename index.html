@@ -145,6 +145,10 @@
             color: #333;
             transition: all 0.3s ease;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
         
         .game-card:hover {
@@ -176,8 +180,9 @@
             font-weight: 600;
             padding: 8px 12px;
             border-radius: 6px;
-            margin-top: 10px;
+            margin-top: auto;
             display: inline-block;
+            text-align: center;
         }
         
         .game-card-credits.cost {
@@ -264,6 +269,13 @@
             <div class="section-container" style="margin-top: 40px;">
                 <h2 class="section-title">⚔️ Warrior Kids</h2>
                 <div class="section-content">
+                    <!-- Memory Verse Link -->
+                    <div style="text-align: center; padding: 20px; margin-bottom: 20px;">
+                        <a href="pages/memory-verse.html" class="btn btn-primary" style="display: inline-block; padding: 15px 30px; font-size: 1.1rem; text-decoration: none;">
+                            📖 Monthly Memory Bible Verse
+                        </a>
+                        <p style="color: #666; margin-top: 10px; font-size: 0.9rem;">Memorize the monthly verse and earn 30 credits! You can gain 30 credits by memorizing the verse.</p>
+                    </div>
                     <!-- Workout Submission Link -->
                     <div id="workoutSection" style="text-align: center; padding: 20px;">
                         <h3 style="margin-bottom: 15px; color: #333;">💪 Submit Chores & Workouts</h3>

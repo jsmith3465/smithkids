@@ -59,6 +59,7 @@ async function checkAdminAccess() {
     if (session.userType !== 'admin') {
         document.getElementById('generalTabBtn').style.display = 'none';
         document.getElementById('usersTabBtn').style.display = 'none';
+        document.getElementById('memoryTabBtn').style.display = 'none';
     }
     
     // Initialize tabs
@@ -81,6 +82,11 @@ async function checkAdminAccess() {
         
         // Add user management listeners
         setupUserManagementListeners();
+        
+        // Add memory verse listeners
+        document.getElementById('saveMemoryVerseBtn').addEventListener('click', async () => {
+            await saveMemoryVerse();
+        });
     }
     
     // Add password change listener (for all users)
@@ -115,6 +121,9 @@ function switchTab(tabName) {
     // Load data for the selected tab if needed
     if (tabName === 'users') {
         loadAllUsers();
+    } else if (tabName === 'memory') {
+        loadMemoryVerses();
+        initializeMemoryVerseForm();
     }
 }
 
@@ -623,3 +632,244 @@ function hideMessage(elementId) {
         element.style.display = 'none';
     }
 }
+
+// Bible books list (same as in bible.js)
+const bibleBooks = [
+    // Old Testament
+    "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
+    "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalm", "Proverbs",
+    "Ecclesiastes", "Song of Songs", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+    "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+    // New Testament
+    "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians",
+    "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon",
+    "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
+];
+
+// Chapter counts for each book
+const chapterCounts = {
+    "Genesis": 50, "Exodus": 40, "Leviticus": 27, "Numbers": 36, "Deuteronomy": 34,
+    "Joshua": 24, "Judges": 21, "Ruth": 4, "1 Samuel": 31, "2 Samuel": 24,
+    "1 Kings": 22, "2 Kings": 25, "1 Chronicles": 29, "2 Chronicles": 36, "Ezra": 10,
+    "Nehemiah": 13, "Esther": 10, "Job": 42, "Psalm": 150, "Proverbs": 31,
+    "Ecclesiastes": 12, "Song of Songs": 8, "Isaiah": 66, "Jeremiah": 52, "Lamentations": 5,
+    "Ezekiel": 48, "Daniel": 12, "Hosea": 14, "Joel": 3, "Amos": 9,
+    "Obadiah": 1, "Jonah": 4, "Micah": 7, "Nahum": 3, "Habakkuk": 3,
+    "Zephaniah": 3, "Haggai": 2, "Zechariah": 14, "Malachi": 4,
+    "Matthew": 28, "Mark": 16, "Luke": 24, "John": 21, "Acts": 28,
+    "Romans": 16, "1 Corinthians": 16, "2 Corinthians": 13, "Galatians": 6, "Ephesians": 6,
+    "Philippians": 4, "Colossians": 4, "1 Thessalonians": 5, "2 Thessalonians": 3, "1 Timothy": 6,
+    "2 Timothy": 4, "Titus": 3, "Philemon": 1, "Hebrews": 13, "James": 5,
+    "1 Peter": 5, "2 Peter": 3, "1 John": 5, "2 John": 1, "3 John": 1,
+    "Jude": 1, "Revelation": 22
+};
+
+// Initialize Memory Verse Form
+function initializeMemoryVerseForm() {
+    const startBookSelect = document.getElementById('startBook');
+    const endBookSelect = document.getElementById('endBook');
+    
+    // Populate book dropdowns
+    bibleBooks.forEach(book => {
+        const option1 = document.createElement('option');
+        option1.value = book;
+        option1.textContent = book;
+        startBookSelect.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = book;
+        option2.textContent = book;
+        endBookSelect.appendChild(option2);
+    });
+    
+    // When starting book changes, update ending book
+    startBookSelect.addEventListener('change', () => {
+        endBookSelect.value = startBookSelect.value;
+        updateEndVerse();
+    });
+    
+    // When starting verse changes, update ending verse
+    document.getElementById('startChapter').addEventListener('change', () => {
+        const startChapter = parseInt(document.getElementById('startChapter').value);
+        const endChapter = document.getElementById('endChapter');
+        if (endChapter.value === '' || parseInt(endChapter.value) < startChapter) {
+            endChapter.value = startChapter;
+        }
+        updateEndVerse();
+    });
+    
+    document.getElementById('startVerse').addEventListener('change', updateEndVerse);
+}
+
+function updateEndVerse() {
+    const startBook = document.getElementById('startBook').value;
+    const startChapter = parseInt(document.getElementById('startChapter').value);
+    const startVerse = parseInt(document.getElementById('startVerse').value);
+    const endChapter = document.getElementById('endChapter');
+    const endVerse = document.getElementById('endVerse');
+    
+    if (startBook && startChapter && startVerse) {
+        // Set ending chapter to same as starting if not set
+        if (!endChapter.value || parseInt(endChapter.value) < startChapter) {
+            endChapter.value = startChapter;
+        }
+        
+        // Set ending verse to starting verse (default, user can change if needed)
+        if (!endVerse.value || parseInt(endVerse.value) < startVerse) {
+            endVerse.value = startVerse;
+        }
+    }
+}
+
+// Load Memory Verses
+async function loadMemoryVerses() {
+    const memoryVersesList = document.getElementById('memoryVersesList');
+    
+    try {
+        const { data: verses, error } = await supabase
+            .from('Monthly_Memory_Verses')
+            .select('*')
+            .order('month_year', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!verses || verses.length === 0) {
+            memoryVersesList.innerHTML = '<div class="no-users">No memory verses set yet.</div>';
+            return;
+        }
+        
+        let html = '<table class="users-table" style="margin-top: 0;"><thead><tr>';
+        html += '<th>Month/Year</th><th>Verse Reference</th><th>Actions</th></tr></thead><tbody>';
+        
+        verses.forEach(verse => {
+            const monthYear = new Date(verse.month_year + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const reference = verse.start_book === verse.end_book 
+                ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
+                : `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`;
+            
+            html += `<tr>
+                <td>${monthYear}</td>
+                <td>${reference}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-small btn-delete" onclick="deleteMemoryVerse('${verse.id}')">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        memoryVersesList.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading memory verses:', error);
+        memoryVersesList.innerHTML = '<div class="no-users">Error loading memory verses.</div>';
+    }
+}
+
+// Save Memory Verse
+async function saveMemoryVerse() {
+    const monthYear = document.getElementById('memoryVerseMonth').value;
+    const startBook = document.getElementById('startBook').value;
+    const startChapter = parseInt(document.getElementById('startChapter').value);
+    const startVerse = parseInt(document.getElementById('startVerse').value);
+    const endBook = document.getElementById('endBook').value;
+    const endChapter = parseInt(document.getElementById('endChapter').value);
+    const endVerse = parseInt(document.getElementById('endVerse').value);
+    
+    if (!monthYear || !startBook || !startChapter || !startVerse || !endBook || !endChapter || !endVerse) {
+        showError('All fields are required.');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('saveMemoryVerseBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    
+    try {
+        // Check if verse already exists for this month
+        const { data: existing, error: checkError } = await supabase
+            .from('Monthly_Memory_Verses')
+            .select('id')
+            .eq('month_year', monthYear)
+            .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') throw checkError;
+        
+        if (existing) {
+            // Update existing
+            const { error: updateError } = await supabase
+                .from('Monthly_Memory_Verses')
+                .update({
+                    start_book: startBook,
+                    start_chapter: startChapter,
+                    start_verse: startVerse,
+                    end_book: endBook,
+                    end_chapter: endChapter,
+                    end_verse: endVerse
+                })
+                .eq('id', existing.id);
+            
+            if (updateError) throw updateError;
+            showSuccess('Memory verse updated successfully!');
+        } else {
+            // Insert new
+            const { error: insertError } = await supabase
+                .from('Monthly_Memory_Verses')
+                .insert({
+                    month_year: monthYear,
+                    start_book: startBook,
+                    start_chapter: startChapter,
+                    start_verse: startVerse,
+                    end_book: endBook,
+                    end_chapter: endChapter,
+                    end_verse: endVerse
+                });
+            
+            if (insertError) throw insertError;
+            showSuccess('Memory verse saved successfully!');
+        }
+        
+        // Clear form
+        document.getElementById('memoryVerseMonth').value = '';
+        document.getElementById('startBook').value = '';
+        document.getElementById('startChapter').value = '';
+        document.getElementById('startVerse').value = '';
+        document.getElementById('endBook').value = '';
+        document.getElementById('endChapter').value = '';
+        document.getElementById('endVerse').value = '';
+        
+        // Reload list
+        await loadMemoryVerses();
+        
+    } catch (error) {
+        console.error('Error saving memory verse:', error);
+        showError('Error saving memory verse. Please try again.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Memory Verse';
+    }
+}
+
+// Delete Memory Verse
+window.deleteMemoryVerse = async function(verseId) {
+    if (!confirm('Are you sure you want to delete this memory verse?')) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('Monthly_Memory_Verses')
+            .delete()
+            .eq('id', verseId);
+        
+        if (error) throw error;
+        
+        showSuccess('Memory verse deleted successfully.');
+        await loadMemoryVerses();
+        
+    } catch (error) {
+        console.error('Error deleting memory verse:', error);
+        showError('Error deleting memory verse. Please try again.');
+    }
+};
