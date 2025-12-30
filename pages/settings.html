@@ -220,7 +220,7 @@
                 <button class="settings-tab" data-tab="general" id="generalTabBtn">Change Password</button>
                 <button class="settings-tab" data-tab="users" id="usersTabBtn">User Management</button>
                 <button class="settings-tab" data-tab="memory" id="memoryTabBtn">Monthly Memory Verse</button>
-                <!-- Future tabs can be added here -->
+                <button class="settings-tab" data-tab="fruit" id="fruitTabBtn">Fruit of the Spirit</button>
             </div>
             
             <!-- General Settings Tab (Pin Code and Launch Time) -->
@@ -351,6 +351,43 @@
                     </div>
                     <button id="showAddMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; margin-top: 20px;">
                         Add Memory Verse
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Fruit of the Spirit Tab -->
+            <div id="fruitTab" class="tab-content">
+                <div class="settings-section">
+                    <h2>Award Fruit of the Spirit Badge</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Select a user and award them a Fruit of the Spirit badge. The user will receive 50 credits automatically, and the transaction will be tracked in their credit history.
+                    </p>
+                    
+                    <div class="input-group">
+                        <label for="fruitUserSelect">Select User:</label>
+                        <select id="fruitUserSelect" required>
+                            <option value="">Select a user...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="fruitBadgeSelect">Select Fruit of the Spirit Badge:</label>
+                        <select id="fruitBadgeSelect" required>
+                            <option value="">Select a badge...</option>
+                            <option value="love">❤️ Love</option>
+                            <option value="joy">😊 Joy</option>
+                            <option value="peace">🕊️ Peace</option>
+                            <option value="patience">⏳ Patience</option>
+                            <option value="kindness">🤝 Kindness</option>
+                            <option value="goodness">✨ Goodness</option>
+                            <option value="faithfulness">🙏 Faithfulness</option>
+                            <option value="gentleness">🌸 Gentleness</option>
+                            <option value="self_control">🎯 Self-Control</option>
+                        </select>
+                    </div>
+                    
+                    <button id="awardFruitBadgeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Award Badge
                     </button>
                 </div>
             </div>

@@ -61,6 +61,7 @@ async function checkAdminAccess() {
         document.getElementById('generalTabBtn').style.display = 'block'; // Change Password is visible to all
         document.getElementById('usersTabBtn').style.display = 'none';
         document.getElementById('memoryTabBtn').style.display = 'none';
+        document.getElementById('fruitTabBtn').style.display = 'none';
     }
     
     // Initialize tabs
@@ -88,6 +89,14 @@ async function checkAdminAccess() {
         document.getElementById('saveMemoryVerseBtn').addEventListener('click', async () => {
             await saveMemoryVerse();
         });
+        
+        // Add fruit of the spirit listeners
+        document.getElementById('awardFruitBadgeBtn').addEventListener('click', async () => {
+            await awardFruitBadge();
+        });
+        
+        // Load users for Fruit of the Spirit tab
+        await loadUsersForFruitBadge();
         
         // Set General Settings as default active tab for admin
         switchTab('password');
@@ -975,3 +984,92 @@ window.deleteMemoryVerse = async function(verseId) {
         showError('Error deleting memory verse. Please try again.');
     }
 };
+
+// Load users for Fruit of the Spirit badge dropdown
+async function loadUsersForFruitBadge() {
+    const userSelect = document.getElementById('fruitUserSelect');
+    if (!userSelect) return;
+    
+    try {
+        const { data: users, error } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .order('First_Name', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Clear existing options (except the first "Select a user" option)
+        userSelect.innerHTML = '<option value="">Select a user...</option>';
+        
+        if (users) {
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.UID;
+                const displayName = (user.First_Name && user.Last_Name) 
+                    ? `${user.First_Name} ${user.Last_Name}` 
+                    : user.Username || 'Unknown';
+                option.textContent = displayName;
+                userSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading users for fruit badge:', error);
+        showError('Error loading users. Please refresh the page.');
+    }
+}
+
+// Award Fruit of the Spirit badge to a user
+async function awardFruitBadge() {
+    const userId = document.getElementById('fruitUserSelect').value;
+    const badgeType = document.getElementById('fruitBadgeSelect').value;
+    const awardBtn = document.getElementById('awardFruitBadgeBtn');
+    
+    if (!userId || !badgeType) {
+        showError('Please select both a user and a badge.');
+        return;
+    }
+    
+    awardBtn.disabled = true;
+    awardBtn.textContent = 'Awarding Badge...';
+    
+    try {
+        // Import the awardBadge function from badge-utils
+        const { awardBadge } = await import('./badge-utils.js');
+        
+        // Award the badge (this will also award 50 credits and record the transaction)
+        const success = await awardBadge(parseInt(userId), badgeType);
+        
+        if (success) {
+            const badgeNames = {
+                'love': 'Love',
+                'joy': 'Joy',
+                'peace': 'Peace',
+                'patience': 'Patience',
+                'kindness': 'Kindness',
+                'goodness': 'Goodness',
+                'faithfulness': 'Faithfulness',
+                'gentleness': 'Gentleness',
+                'self_control': 'Self-Control'
+            };
+            
+            const badgeName = badgeNames[badgeType] || badgeType;
+            const userSelect = document.getElementById('fruitUserSelect');
+            const selectedOption = userSelect.options[userSelect.selectedIndex];
+            const userName = selectedOption.textContent;
+            
+            showSuccess(`Successfully awarded ${badgeName} badge to ${userName}. User received 50 credits.`);
+            
+            // Reset form
+            document.getElementById('fruitUserSelect').value = '';
+            document.getElementById('fruitBadgeSelect').value = '';
+        } else {
+            showError('Badge could not be awarded. The user may already have this badge.');
+        }
+    } catch (error) {
+        console.error('Error awarding fruit badge:', error);
+        showError('Error awarding badge. Please try again.');
+    } finally {
+        awardBtn.disabled = false;
+        awardBtn.textContent = 'Award Badge';
+    }
+}
