@@ -26,16 +26,22 @@ body {
     padding: 40px;
     animation: slideIn 0.5s ease-out;
     text-align: center;
+    margin: 0 auto;
 }
 
-/* Left-align form elements, tables, and other structured content */
-.container .input-group,
-.container .form-row,
+/* Center tables and block elements, but left-align their content */
 .container table,
 .container .users-table,
 .container .credits-table,
 .container .transactions-table,
-.container .stats-table,
+.container .stats-table {
+    margin: 0 auto;
+    text-align: left;
+}
+
+/* Left-align form elements and other structured content */
+.container .input-group,
+.container .form-row,
 .container .add-user-form,
 .container .settings-section,
 .container .credits-form,
