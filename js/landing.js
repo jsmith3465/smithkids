@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
 });
 
-function initializeLanding() {
+async function initializeLanding() {
     const session = window.authStatus.getSession();
     if (!session) return;
     
