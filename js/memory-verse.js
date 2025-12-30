@@ -303,19 +303,19 @@ async function loadMemoryVerse() {
                 ${hasApprovedSubmission ? `
                     <div style="background: #d4edda; border: 2px solid #28a745; color: #155724; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <h3 style="margin: 0 0 10px 0;">✅ Approved!</h3>
-                        <p style="margin: 0;">You have successfully memorized this verse and received 30 credits!</p>
+                        <p style="margin: 0;">You have successfully memorized this verse and received 50 credits!</p>
                     </div>
                 ` : hasPendingSubmission ? `
                     <div style="background: #fff3cd; border: 2px solid #ffc107; color: #856404; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <h3 style="margin: 0 0 10px 0;">⏳ Pending Approval</h3>
-                        <p style="margin: 0;">Your submission is waiting for admin approval. Once approved, you'll receive 30 credits!</p>
+                        <p style="margin: 0;">Your submission is waiting for admin approval. Once approved, you'll receive 50 credits!</p>
                     </div>
                     <button id="memorizedBtn" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.2rem; max-width: 400px; margin: 0 auto; display: block;" disabled>
-                        I have it memorized! (30 credits) - Already Submitted
+                        I have it memorized! (50 credits) - Already Submitted
                     </button>
                 ` : `
                     <button id="memorizedBtn" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.2rem; max-width: 400px; margin: 0 auto; display: block;">
-                        I have it memorized! (30 credits)
+                        I have it memorized! (50 credits)
                     </button>
                 `}
             </div>
@@ -379,7 +379,7 @@ async function submitMemoryVerse(monthYear, verseId) {
         console.error('Error submitting memory verse:', error);
         alert('Error submitting memory verse. Please try again.');
         btn.disabled = false;
-        btn.textContent = 'I have it memorized! (30 credits)';
+        btn.textContent = 'I have it memorized! (50 credits)';
     }
 }
 

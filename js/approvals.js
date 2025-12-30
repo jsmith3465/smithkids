@@ -241,7 +241,7 @@ async function loadUnapprovedItems() {
                             <p><strong>Verse:</strong> ${reference}</p>
                             <p><strong>Month:</strong> ${new Date(submission.month_year + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
                             <p><strong>Submitted:</strong> ${submittedDate}</p>
-                            <p><strong>Credits:</strong> 30</p>
+                            <p><strong>Credits:</strong> 50</p>
                         </div>
                     </div>
                     <div class="approval-actions">
@@ -286,33 +286,46 @@ window.approveMemoryVerse = async function(submissionId, userUid) {
         
         if (updateError) throw updateError;
         
-        // Award 30 credits to the user
-        const { data: userData, error: userError } = await supabase
-            .from('Users')
-            .select('Credits')
-            .eq('UID', userUid)
+        // Award 50 credits to the user using User_Credits table
+        const { data: existingCredit, error: creditFetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userUid)
             .single();
         
-        if (userError) throw userError;
+        if (creditFetchError && creditFetchError.code !== 'PGRST116') {
+            throw creditFetchError;
+        }
         
-        const newCredits = (userData.Credits || 0) + 30;
+        const newBalance = (existingCredit?.balance || 0) + 50;
         
-        const { error: creditsError } = await supabase
-            .from('Users')
-            .update({ Credits: newCredits })
-            .eq('UID', userUid);
-        
-        if (creditsError) throw creditsError;
+        if (existingCredit) {
+            // Update existing balance
+            const { error: balanceUpdateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (balanceUpdateError) throw balanceUpdateError;
+        } else {
+            // Create new credit record
+            const { error: balanceInsertError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: userUid, balance: 50 });
+            
+            if (balanceInsertError) throw balanceInsertError;
+        }
         
         // Record transaction
         const { error: transactionError } = await supabase
             .from('Credit_Transactions')
             .insert({
-                user_uid: userUid,
-                amount: 30,
-                transaction_type: 'memory_verse',
-                description: 'Memory verse memorized and approved',
-                admin_uid: session.uid
+                from_user_uid: session.uid,
+                to_user_uid: userUid,
+                amount: 50,
+                transaction_type: 'credit_added',
+                game_type: 'memory_verse',
+                description: 'Memory verse memorized and approved'
             });
         
         if (transactionError) {
@@ -320,7 +333,7 @@ window.approveMemoryVerse = async function(submissionId, userUid) {
             // Don't fail the approval if transaction recording fails
         }
         
-        showSuccess('Memory verse approved! User received 30 credits.');
+        showSuccess('Memory verse approved! User received 50 credits.');
         
         // Reload approvals list and approved memory verses list
         await loadUnapprovedItems();
