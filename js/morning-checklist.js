@@ -1033,9 +1033,10 @@ async function loadChecklists(date) {
 // Load and display monthly memory verse
 async function loadMemoryVerse() {
     const memoryVerseDisplay = document.getElementById('memoryVerseDisplay');
+    const memoryVerseReference = document.getElementById('memoryVerseReference');
     const memoryVerseText = document.getElementById('memoryVerseText');
     
-    if (!memoryVerseDisplay || !memoryVerseText) return;
+    if (!memoryVerseDisplay || !memoryVerseReference || !memoryVerseText) return;
     
     try {
         // Get current month/year in YYYY-MM format
@@ -1056,8 +1057,12 @@ async function loadMemoryVerse() {
                 ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
                 : `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`;
             
-            memoryVerseText.textContent = reference;
+            // Display the reference
+            memoryVerseReference.textContent = reference;
             memoryVerseDisplay.style.display = 'block';
+            
+            // Fetch and display the verse text
+            await fetchVerseText(verse, memoryVerseText);
         } else {
             memoryVerseDisplay.style.display = 'none';
         }
@@ -1066,6 +1071,103 @@ async function loadMemoryVerse() {
         console.error('Error loading memory verse:', error);
         // Don't hide on error - might be a table that doesn't exist yet
         // memoryVerseDisplay.style.display = 'none';
+    }
+}
+
+// Function to fetch Bible verse text from API
+async function fetchVerseText(verse, textElement) {
+    try {
+        // Format book name for API (handle special cases)
+        let bookName = verse.start_book;
+        
+        // Handle book name variations for the API
+        const bookNameMap = {
+            '1 Samuel': '1_samuel',
+            '2 Samuel': '2_samuel',
+            '1 Kings': '1_kings',
+            '2 Kings': '2_kings',
+            '1 Chronicles': '1_chronicles',
+            '2 Chronicles': '2_chronicles',
+            '1 Corinthians': '1_corinthians',
+            '2 Corinthians': '2_corinthians',
+            '1 Thessalonians': '1_thessalonians',
+            '2 Thessalonians': '2_thessalonians',
+            '1 Timothy': '1_timothy',
+            '2 Timothy': '2_timothy',
+            '1 Peter': '1_peter',
+            '2 Peter': '2_peter',
+            '1 John': '1_john',
+            '2 John': '2_john',
+            '3 John': '3_john',
+            'Song of Songs': 'song_of_songs'
+        };
+        
+        // Convert book name to API format
+        if (bookNameMap[bookName]) {
+            bookName = bookNameMap[bookName];
+        } else {
+            // Convert to lowercase and replace spaces with underscores
+            bookName = bookName.toLowerCase().replace(/\s+/g, '_');
+        }
+        
+        // Build API URL
+        let verseRef;
+        if (verse.start_book === verse.end_book && verse.start_chapter === verse.end_chapter) {
+            // Same book and chapter - single verse or range
+            if (verse.start_verse === verse.end_verse) {
+                // Single verse
+                verseRef = `${verse.start_chapter}:${verse.start_verse}`;
+            } else {
+                // Verse range
+                verseRef = `${verse.start_chapter}:${verse.start_verse}-${verse.end_verse}`;
+            }
+        } else {
+            // Different chapters - fetch first verse only (API limitation)
+            verseRef = `${verse.start_chapter}:${verse.start_verse}`;
+        }
+        
+        // Build API URL - bible-api.com expects format like "john 3:16" or "john+3:16"
+        const apiUrl = `https://bible-api.com/${bookName}+${verseRef}`;
+        
+        // Fetch verse text with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch(apiUrl, { 
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Display the verse text
+        if (data.text) {
+            // Clean up the text (remove verse numbers if present)
+            let verseText = data.text.trim();
+            // Remove verse number markers like "[1]" or "1 " at the start of each verse
+            verseText = verseText.replace(/\[\d+\]\s*/g, '').replace(/\d+\s+/g, '');
+            // Clean up extra whitespace
+            verseText = verseText.replace(/\s+/g, ' ').trim();
+            textElement.textContent = `"${verseText}"`;
+        } else {
+            textElement.textContent = 'Verse text unavailable';
+        }
+        
+    } catch (error) {
+        console.error('Error fetching verse text:', error);
+        if (error.name === 'AbortError') {
+            textElement.textContent = 'Request timed out';
+        } else {
+            textElement.textContent = 'Unable to load verse text';
+        }
     }
 }
 
