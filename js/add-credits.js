@@ -122,6 +122,7 @@ async function loadManagerOverview() {
 
 // Store original values for comparison
 let creditTrackingData = {};
+let allCreditManagerData = []; // Store all data for sorting
 
 async function loadCreditTrackingTable() {
     const container = document.getElementById('creditTrackingTableContainer');
@@ -153,29 +154,20 @@ async function loadCreditTrackingTable() {
             };
         });
         
-        // Create table - show all entries in order
-        const table = document.createElement('table');
-        table.className = 'credits-table';
-        table.style.marginTop = '0';
+        // Store all data for sorting
+        allCreditManagerData = creditManagerData;
         
-        // Header
-        const headerRow = document.createElement('tr');
-        headerRow.innerHTML = `
-            <th style="text-align: left;">App Name</th>
-            <th>Transaction Type</th>
-            <th>Credit Amount</th>
-            <th>Actions</th>
-        `;
-        table.appendChild(headerRow);
+        // Render table with current sort
+        renderCreditManagerTable(container, creditManagerData);
         
-        // Data rows - show all entries
-        creditManagerData.forEach(item => {
-            const row = createCreditManagerRow(item);
-            table.appendChild(row);
-        });
-        
-        container.innerHTML = '';
-        container.appendChild(table);
+        // Setup sort event listener
+        const sortSelect = document.getElementById('sortCategory');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                const sortedData = sortCreditManagerData(this.value);
+                renderCreditManagerTable(container, sortedData);
+            });
+        }
         
         // Show save button
         saveBtn.style.display = 'inline-block';
@@ -185,6 +177,106 @@ async function loadCreditTrackingTable() {
         container.innerHTML = '<div class="no-data">Error loading credit manager data. Please try again.</div>';
         saveBtn.style.display = 'none';
     }
+}
+
+// Categorize and sort credit manager data
+function sortCreditManagerData(sortBy) {
+    if (!allCreditManagerData || allCreditManagerData.length === 0) {
+        return [];
+    }
+    
+    // Define categories
+    const fruitNames = [
+        'Love', 'Joy', 'Peace', 'Patience', 'Kindness', 
+        'Goodness', 'Faithfulness', 'Gentleness', 'Self-Control'
+    ];
+    
+    const badgeNames = [
+        'Trivia Master',
+        'Memory Verse Champion',
+        'Workout Warrior',
+        'Chore Champion',
+        'Early Bird',
+        'All Fruits of the Spirit'
+    ];
+    
+    const gameNames = [
+        'Tic Tac Toe',
+        'Snake Game',
+        'Hangman',
+        'Galaga',
+        'Breakout',
+        'Bible Trivia'
+    ];
+    
+    if (sortBy === 'all') {
+        return [...allCreditManagerData].sort((a, b) => {
+            // Sort by category first, then by name
+            const aCategory = getCategory(a.app_name, fruitNames, badgeNames, gameNames);
+            const bCategory = getCategory(b.app_name, fruitNames, badgeNames, gameNames);
+            if (aCategory !== bCategory) {
+                return aCategory.localeCompare(bCategory);
+            }
+            return a.app_name.localeCompare(b.app_name);
+        });
+    }
+    
+    const filtered = allCreditManagerData.filter(item => {
+        if (sortBy === 'fruit') {
+            return fruitNames.includes(item.app_name);
+        } else if (sortBy === 'badge') {
+            return badgeNames.includes(item.app_name);
+        } else if (sortBy === 'game') {
+            return gameNames.includes(item.app_name);
+        } else if (sortBy === 'app') {
+            return !fruitNames.includes(item.app_name) && 
+                   !badgeNames.includes(item.app_name) && 
+                   !gameNames.includes(item.app_name);
+        }
+        return true;
+    });
+    
+    return filtered.sort((a, b) => a.app_name.localeCompare(b.app_name));
+}
+
+// Get category for an app name
+function getCategory(appName, fruitNames, badgeNames, gameNames) {
+    if (fruitNames.includes(appName)) return '1_fruit';
+    if (badgeNames.includes(appName)) return '2_badge';
+    if (gameNames.includes(appName)) return '3_game';
+    return '4_app';
+}
+
+// Render the credit manager table
+function renderCreditManagerTable(container, data) {
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="no-data">No items found for this category.</div>';
+        return;
+    }
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'credits-table';
+    table.style.marginTop = '0';
+    
+    // Header
+    const headerRow = document.createElement('tr');
+    headerRow.innerHTML = `
+        <th style="text-align: left;">App Name</th>
+        <th>Transaction Type</th>
+        <th>Credit Amount</th>
+        <th>Actions</th>
+    `;
+    table.appendChild(headerRow);
+    
+    // Data rows
+    data.forEach(item => {
+        const row = createCreditManagerRow(item);
+        table.appendChild(row);
+    });
+    
+    container.innerHTML = '';
+    container.appendChild(table);
 }
 
 function createCreditManagerRow(item) {
