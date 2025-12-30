@@ -349,7 +349,7 @@ async function submitMemoryVerse(monthYear, verseId) {
     
     try {
         // Create submission
-        const { error: insertError } = await supabase
+        const { data: submissionData, error: insertError } = await supabase
             .from('Memory_Verse_Submissions')
             .insert({
                 user_uid: session.uid,
@@ -357,9 +357,28 @@ async function submitMemoryVerse(monthYear, verseId) {
                 verse_id: verseId,
                 status: 'pending',
                 submitted_at: new Date().toISOString()
-            });
+            })
+            .select('id')
+            .single();
         
         if (insertError) throw insertError;
+        
+        // Create unified approval entry
+        const { error: approvalError } = await supabase
+            .from('unified_approvals')
+            .insert({
+                approval_type: 'memory_verse',
+                source_id: submissionData.id,
+                user_uid: session.uid,
+                credits_amount: 50,
+                status: 'pending',
+                description: 'Memory Verse Submission'
+            });
+        
+        if (approvalError) {
+            console.error('Error creating unified approval:', approvalError);
+            // Don't fail the submission if approval creation fails
+        }
         
         // Reload the page to show pending status
         await loadMemoryVerse();

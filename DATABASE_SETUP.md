@@ -86,10 +86,36 @@ CREATE TABLE breakout_scores (
 );
 ```
 
+## Unified_Approvals Table
+
+Create this table for unified approval tracking of workouts, chores, and memory verses:
+
+```sql
+CREATE TABLE Unified_Approvals (
+    approval_id SERIAL PRIMARY KEY,
+    approval_type TEXT NOT NULL CHECK (approval_type IN ('workout', 'chore', 'memory_verse')),
+    source_id INTEGER NOT NULL,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
+    credits_amount INTEGER NOT NULL DEFAULT 10,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    approved_at TIMESTAMP WITH TIME ZONE,
+    approved_by_uid BIGINT REFERENCES "Users"("UID")
+);
+
+CREATE INDEX idx_unified_approvals_status ON Unified_Approvals(status);
+CREATE INDEX idx_unified_approvals_user ON Unified_Approvals(user_uid);
+CREATE INDEX idx_unified_approvals_type_source ON Unified_Approvals(approval_type, source_id);
+```
+
 ## Notes
 
 - The `month_year` field should be in format 'YYYY-MM' (e.g., '2025-01' for January 2025)
 - Make sure Row Level Security (RLS) policies are set appropriately for your use case
 - The `status` field in Memory_Verse_Submissions can be 'pending', 'approved', or 'rejected'
 - All game score tables track who played, when they played, and their score
+- The Unified_Approvals table consolidates all pending approvals (workouts, chores, memory verses) into one table for easier management
+- When a workout, chore, or memory verse is created, an entry is automatically created in Unified_Approvals
+- The `source_id` field references the original table's ID (workout_id, chore_id, or memory_verse_submission id)
 

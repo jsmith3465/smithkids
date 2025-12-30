@@ -278,7 +278,7 @@ async function getCreditBalance(userUid) {
     }
 }
 
-// Get pending approvals count (workouts + chores + memory verses)
+// Get pending approvals count from unified table
 async function getPendingApprovalsCount() {
     try {
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
@@ -286,37 +286,18 @@ async function getPendingApprovalsCount() {
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Count unapproved workouts
-        const { count: workoutsCount, error: workoutsError } = await supabase
-            .from('Workouts')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_approved', false);
-        
-        if (workoutsError) {
-            console.error('Error fetching workouts count:', workoutsError);
-        }
-        
-        // Count unapproved chores
-        const { count: choresCount, error: choresError } = await supabase
-            .from('Chores')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_approved', false);
-        
-        if (choresError) {
-            console.error('Error fetching chores count:', choresError);
-        }
-        
-        // Count pending memory verse submissions
-        const { count: memoryVersesCount, error: memoryVersesError } = await supabase
-            .from('Memory_Verse_Submissions')
+        // Count all pending approvals from unified table
+        const { count, error } = await supabase
+            .from('unified_approvals')
             .select('*', { count: 'exact', head: true })
             .eq('status', 'pending');
         
-        if (memoryVersesError) {
-            console.error('Error fetching memory verses count:', memoryVersesError);
+        if (error) {
+            console.error('Error fetching pending approvals count:', error);
+            return 0;
         }
         
-        return (workoutsCount || 0) + (choresCount || 0) + (memoryVersesCount || 0);
+        return count || 0;
     } catch (error) {
         console.error('Error fetching pending approvals count:', error);
         return 0;

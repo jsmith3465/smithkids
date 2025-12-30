@@ -114,16 +114,35 @@ async function submitChore() {
     submitBtn.textContent = 'Submitting...';
     
     try {
-        const { error } = await supabase
+        const { data: choreData, error } = await supabase
             .from('Chores')
             .insert({
                 user_uid: session.uid,
                 chore_type: choreType,
                 credits_amount: 10,
                 is_approved: false
-            });
+            })
+            .select('chore_id')
+            .single();
         
         if (error) throw error;
+        
+        // Create unified approval entry
+        const { error: approvalError } = await supabase
+            .from('unified_approvals')
+            .insert({
+                approval_type: 'chore',
+                source_id: choreData.chore_id,
+                user_uid: session.uid,
+                credits_amount: 10,
+                status: 'pending',
+                description: choreType
+            });
+        
+        if (approvalError) {
+            console.error('Error creating unified approval:', approvalError);
+            // Don't fail the chore submission if approval creation fails
+        }
         
         showSuccess('Chore submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
         

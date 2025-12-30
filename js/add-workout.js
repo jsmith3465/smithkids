@@ -107,16 +107,35 @@ async function submitWorkout() {
         // Combine workout type and description for the workout_type field
         const fullWorkoutInfo = `${workoutType} - ${workoutDescription}`;
         
-        const { error } = await supabase
+        const { data: workoutData, error } = await supabase
             .from('Workouts')
             .insert({
                 user_uid: session.uid,
                 workout_type: fullWorkoutInfo,
                 credits_amount: 10,
                 is_approved: false
-            });
+            })
+            .select('workout_id')
+            .single();
         
         if (error) throw error;
+        
+        // Create unified approval entry
+        const { error: approvalError } = await supabase
+            .from('unified_approvals')
+            .insert({
+                approval_type: 'workout',
+                source_id: workoutData.workout_id,
+                user_uid: session.uid,
+                credits_amount: 10,
+                status: 'pending',
+                description: fullWorkoutInfo
+            });
+        
+        if (approvalError) {
+            console.error('Error creating unified approval:', approvalError);
+            // Don't fail the workout submission if approval creation fails
+        }
         
         showSuccess('Workout submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
         
