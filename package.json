@@ -1,0 +1,28 @@
+{
+  "name": "smithkids",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build-css": "tailwindcss -i ./style.css -o ./style.css --watch",
+    "build-css-prod": "tailwindcss -i ./style.css -o ./style.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsmith3465/smithkids.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jsmith3465/smithkids/issues"
+  },
+  "homepage": "https://github.com/jsmith3465/smithkids#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19"
+  }
+}
