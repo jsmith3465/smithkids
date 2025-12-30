@@ -155,6 +155,7 @@ async function loadPendingApprovals() {
                            max="100"
                            onchange="validateCreditsInput(this)">
                     <button class="btn btn-primary" onclick="approveItem(${approval.approval_id}, '${approval.approval_type}', ${approval.source_id})">Approve</button>
+                    <button class="btn btn-secondary" style="background: #dc3545;" onclick="denyItem(${approval.approval_id}, '${approval.approval_type}', ${approval.source_id})">Deny</button>
                 </div>
             `;
             approvalsList.appendChild(approvalItem);
@@ -498,10 +499,210 @@ async function approveAllItems() {
     }
 }
 
+// Deny a single item
+window.denyItem = async function(approvalId, approvalType, sourceId) {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to deny this request? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        // Update unified approval status to rejected
+        const { error: updateError } = await supabase
+            .from('unified_approvals')
+            .update({
+                status: 'rejected',
+                approved_by_uid: session.uid,
+                approved_at: new Date().toISOString()
+            })
+            .eq('approval_id', approvalId);
+        
+        if (updateError) throw updateError;
+        
+        // Update the source table based on type
+        if (approvalType === 'workout') {
+            const { error: workoutError } = await supabase
+                .from('Workouts')
+                .update({
+                    is_approved: false,
+                    approved_by_uid: session.uid,
+                    approved_at: new Date().toISOString()
+                })
+                .eq('workout_id', sourceId);
+            
+            if (workoutError) throw workoutError;
+        } else if (approvalType === 'chore') {
+            const { error: choreError } = await supabase
+                .from('Chores')
+                .update({
+                    is_approved: false,
+                    approved_by_uid: session.uid,
+                    approved_at: new Date().toISOString()
+                })
+                .eq('chore_id', sourceId);
+            
+            if (choreError) throw choreError;
+        } else if (approvalType === 'memory_verse') {
+            const { error: verseError } = await supabase
+                .from('Memory_Verse_Submissions')
+                .update({
+                    status: 'rejected',
+                    approved_at: new Date().toISOString()
+                })
+                .eq('id', sourceId);
+            
+            if (verseError) throw verseError;
+        }
+        
+        showSuccess(`${approvalType === 'workout' ? 'Workout' : approvalType === 'chore' ? 'Chore' : 'Memory Verse'} denied.`);
+        
+        // Remove item from list
+        const approvalItem = document.getElementById(`approval_${approvalId}`);
+        if (approvalItem) {
+            approvalItem.remove();
+        }
+        
+        // Reload if no items left
+        const remainingItems = document.querySelectorAll('.approval-item').length;
+        if (remainingItems === 0) {
+            await loadPendingApprovals();
+        }
+        
+        // Update profile menu counter
+        if (window.createProfileMenu) {
+            setTimeout(() => window.createProfileMenu(), 500);
+        }
+        
+    } catch (error) {
+        console.error('Error denying item:', error);
+        showError('An error occurred while denying item. Please try again.');
+    }
+};
+
+// Deny all items
+async function denyAllItems() {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to deny ALL pending requests? This action cannot be undone.')) {
+        return;
+    }
+    
+    const denyAllBtn = document.getElementById('denyAllBtn');
+    denyAllBtn.disabled = true;
+    denyAllBtn.textContent = 'Denying...';
+    
+    try {
+        // Get all pending approvals
+        const { data: approvals, error: approvalsError } = await supabase
+            .from('unified_approvals')
+            .select('approval_id, approval_type, source_id')
+            .eq('status', 'pending');
+        
+        if (approvalsError) throw approvalsError;
+        
+        if (!approvals || approvals.length === 0) {
+            showError('No items to deny.');
+            denyAllBtn.disabled = false;
+            denyAllBtn.textContent = 'Deny All';
+            return;
+        }
+        
+        // Update all approvals to rejected
+        const approvalIds = approvals.map(a => a.approval_id);
+        const { error: updateError } = await supabase
+            .from('unified_approvals')
+            .update({
+                status: 'rejected',
+                approved_by_uid: session.uid,
+                approved_at: new Date().toISOString()
+            })
+            .in('approval_id', approvalIds);
+        
+        if (updateError) throw updateError;
+        
+        // Update source tables
+        const workouts = approvals.filter(a => a.approval_type === 'workout');
+        const chores = approvals.filter(a => a.approval_type === 'chore');
+        const memoryVerses = approvals.filter(a => a.approval_type === 'memory_verse');
+        
+        if (workouts.length > 0) {
+            const workoutIds = workouts.map(w => w.source_id);
+            const { error: workoutError } = await supabase
+                .from('Workouts')
+                .update({
+                    is_approved: false,
+                    approved_by_uid: session.uid,
+                    approved_at: new Date().toISOString()
+                })
+                .in('workout_id', workoutIds);
+            
+            if (workoutError) throw workoutError;
+        }
+        
+        if (chores.length > 0) {
+            const choreIds = chores.map(c => c.source_id);
+            const { error: choreError } = await supabase
+                .from('Chores')
+                .update({
+                    is_approved: false,
+                    approved_by_uid: session.uid,
+                    approved_at: new Date().toISOString()
+                })
+                .in('chore_id', choreIds);
+            
+            if (choreError) throw choreError;
+        }
+        
+        if (memoryVerses.length > 0) {
+            const verseIds = memoryVerses.map(v => v.source_id);
+            const { error: verseError } = await supabase
+                .from('Memory_Verse_Submissions')
+                .update({
+                    status: 'rejected',
+                    approved_at: new Date().toISOString()
+                })
+                .in('id', verseIds);
+            
+            if (verseError) throw verseError;
+        }
+        
+        showSuccess(`Successfully denied ${approvals.length} item(s).`);
+        
+        // Reload approvals list
+        await loadPendingApprovals();
+        
+        // Update profile menu counter
+        if (window.createProfileMenu) {
+            setTimeout(() => window.createProfileMenu(), 500);
+        }
+        
+    } catch (error) {
+        console.error('Error denying all items:', error);
+        showError('An error occurred while denying items. Please try again.');
+    } finally {
+        denyAllBtn.disabled = false;
+        denyAllBtn.textContent = 'Deny All';
+    }
+}
+
 function setupEventListeners() {
     const approveAllBtn = document.getElementById('approveAllBtn');
     if (approveAllBtn) {
         approveAllBtn.addEventListener('click', approveAllItems);
+    }
+    
+    const denyAllBtn = document.getElementById('denyAllBtn');
+    if (denyAllBtn) {
+        denyAllBtn.addEventListener('click', denyAllItems);
     }
 }
 
