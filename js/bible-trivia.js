@@ -3190,9 +3190,22 @@ class BibleTrivia {
     
     async saveGameResult() {
         const session = window.authStatus?.getSession();
-        if (!session) return;
+        if (!session || !session.uid) {
+            console.error('No user session found - cannot save Bible Trivia game result');
+            return;
+        }
         
         try {
+            // Ensure answersByDifficulty is initialized
+            if (!this.answersByDifficulty) {
+                console.error('answersByDifficulty not initialized');
+                this.answersByDifficulty = {
+                    easy: { total: 0, correct: 0 },
+                    moderate: { total: 0, correct: 0 },
+                    hard: { total: 0, correct: 0 }
+                };
+            }
+            
             // Calculate credits earned
             const creditsEarned = this.score < 3 ? 0 : 
                                 (this.score >= 3 && this.score <= 4) ? 1 :
@@ -3203,33 +3216,40 @@ class BibleTrivia {
             // Calculate percentage correct
             const percentageCorrect = (this.score / 10) * 100;
             
+            const gameData = {
+                user_uid: session.uid,
+                score: this.score,
+                total_questions: 10,
+                credits_earned: creditsEarned,
+                percentage_correct: percentageCorrect,
+                easy_questions: this.answersByDifficulty.easy?.total || 0,
+                easy_correct: this.answersByDifficulty.easy?.correct || 0,
+                moderate_questions: this.answersByDifficulty.moderate?.total || 0,
+                moderate_correct: this.answersByDifficulty.moderate?.correct || 0,
+                hard_questions: this.answersByDifficulty.hard?.total || 0,
+                hard_correct: this.answersByDifficulty.hard?.correct || 0
+            };
+            
+            console.log('Attempting to save Bible Trivia game result:', gameData);
+            
             // Save detailed game result
-            const { error: saveError } = await supabase
+            const { data: savedData, error: saveError } = await supabase
                 .from('bible_trivia_results')
-                .insert({
-                    user_uid: session.uid,
-                    score: this.score,
-                    total_questions: 10,
-                    credits_earned: creditsEarned,
-                    percentage_correct: percentageCorrect,
-                    easy_questions: this.answersByDifficulty.easy.total,
-                    easy_correct: this.answersByDifficulty.easy.correct,
-                    moderate_questions: this.answersByDifficulty.moderate.total,
-                    moderate_correct: this.answersByDifficulty.moderate.correct,
-                    hard_questions: this.answersByDifficulty.hard.total,
-                    hard_correct: this.answersByDifficulty.hard.correct
-                });
+                .insert(gameData)
+                .select();
             
             if (saveError) {
                 console.error('Error saving Bible Trivia game result:', saveError);
+                console.error('Game data attempted:', gameData);
             } else {
-                console.log('Bible Trivia game result saved successfully');
+                console.log('Bible Trivia game result saved successfully:', savedData);
                 
                 // Update user stats table
                 await this.updateUserStats(session.uid);
             }
         } catch (error) {
             console.error('Error saving game result:', error);
+            console.error('Error details:', error.message, error.stack);
         }
     }
     

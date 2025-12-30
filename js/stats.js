@@ -402,7 +402,14 @@ async function loadTTTStatistics() {
 async function loadBibleTriviaStatistics() {
     const bibleTriviaStatsDiv = document.getElementById('bibleTriviaStats');
     
+    if (!bibleTriviaStatsDiv) {
+        console.error('bibleTriviaStats div not found');
+        return;
+    }
+    
     try {
+        console.log('Loading Bible Trivia statistics...');
+        
         // Fetch game results with detailed difficulty tracking
         const { data: results, error: resultsError } = await supabase
             .from('bible_trivia_results')
@@ -415,8 +422,10 @@ async function loadBibleTriviaStatistics() {
             return;
         }
         
+        console.log('Bible Trivia results fetched:', results?.length || 0, 'games');
+        
         if (!results || results.length === 0) {
-            bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
+            bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!<br><small>If you have played games, check the browser console (F12) for errors when finishing a game.</small></div>';
             return;
         }
         
@@ -515,7 +524,7 @@ async function loadBibleTriviaStatistics() {
         
     } catch (error) {
         console.error('Error loading Bible Trivia statistics:', error);
-        bibleTriviaStatsDiv.innerHTML = '<div class="no-data">Error loading Bible Trivia statistics</div>';
+        bibleTriviaStatsDiv.innerHTML = `<div class="no-data">Error loading Bible Trivia statistics: ${error.message}<br><small>Check the browser console (F12) for more details.</small></div>`;
     }
 }
 
