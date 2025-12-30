@@ -339,6 +339,165 @@ GROUP BY u.UID, u.First_Name, u.Last_Name
 ORDER BY wins DESC;
 ```
 
+## Game_Application_Credit_Tracking Table
+
+Create this table for tracking total credits earned and spent per game/application:
+
+```sql
+CREATE TABLE IF NOT EXISTS Game_Application_Credit_Tracking (
+    tracking_id SERIAL PRIMARY KEY,
+    game_app_type TEXT NOT NULL UNIQUE,
+    game_app_name TEXT NOT NULL,
+    total_credits_earned INTEGER NOT NULL DEFAULT 0,
+    total_credits_spent INTEGER NOT NULL DEFAULT 0,
+    total_transactions INTEGER NOT NULL DEFAULT 0,
+    last_transaction_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_game_app_tracking_type ON Game_Application_Credit_Tracking(game_app_type);
+CREATE INDEX IF NOT EXISTS idx_game_app_tracking_updated ON Game_Application_Credit_Tracking(updated_at);
+```
+
+### Table Structure Details:
+
+- **tracking_id**: Primary key, auto-incrementing unique identifier
+- **game_app_type**: Unique identifier for the game/application (e.g., 'bible_trivia', 'hangman', 'galaga', 'breakout', 'snake', 'tic_tac_toe', 'workout', 'chore', 'memory_verse', 'badge', etc.)
+- **game_app_name**: Human-readable name of the game/application (e.g., 'Bible Trivia', 'Hangman', 'Galaga', etc.)
+- **total_credits_earned**: Total number of credits earned by users from this game/application (sum of all credit_added transactions)
+- **total_credits_spent**: Total number of credits spent by users on this game/application (sum of all game_payment transactions)
+- **total_transactions**: Total number of credit transactions (both earned and spent) for this game/application
+- **last_transaction_at**: Timestamp of the most recent transaction for this game/application
+- **created_at**: Timestamp of when the tracking record was first created
+- **updated_at**: Timestamp of when the tracking record was last updated
+
+### Notes:
+
+- This table provides aggregated credit statistics per game/application
+- The table should be updated whenever a credit transaction occurs in the `Credit_Transactions` table
+- Use a database trigger or application logic to automatically update this table when transactions are recorded
+- The `game_app_type` should match the `game_type` field used in the `Credit_Transactions` table
+- For applications that don't have a game_type (like workouts, chores), use a consistent naming convention
+
+### Example Queries:
+
+**Get all games/applications with their credit totals:**
+```sql
+SELECT 
+    game_app_name,
+    total_credits_earned,
+    total_credits_spent,
+    (total_credits_earned - total_credits_spent) as net_credits,
+    total_transactions,
+    last_transaction_at
+FROM Game_Application_Credit_Tracking
+ORDER BY total_transactions DESC;
+```
+
+**Get games/applications that generate the most credits:**
+```sql
+SELECT game_app_name, total_credits_earned
+FROM Game_Application_Credit_Tracking
+WHERE total_credits_earned > 0
+ORDER BY total_credits_earned DESC;
+```
+
+**Get games/applications that cost the most credits:**
+```sql
+SELECT game_app_name, total_credits_spent
+FROM Game_Application_Credit_Tracking
+WHERE total_credits_spent > 0
+ORDER BY total_credits_spent DESC;
+```
+
+**Get net credits (earned - spent) per game/application:**
+```sql
+SELECT 
+    game_app_name,
+    total_credits_earned,
+    total_credits_spent,
+    (total_credits_earned - total_credits_spent) as net_credits
+FROM Game_Application_Credit_Tracking
+ORDER BY net_credits DESC;
+```
+
+### Database Trigger (Optional):
+
+To automatically update this table when transactions occur, you can create a trigger:
+
+```sql
+-- Function to update game/application credit tracking
+CREATE OR REPLACE FUNCTION update_game_app_credit_tracking()
+RETURNS TRIGGER AS $$
+DECLARE
+    app_type TEXT;
+    app_name TEXT;
+    credit_amount INTEGER;
+    is_credit BOOLEAN;
+BEGIN
+    -- Determine game/app type and name
+    app_type := COALESCE(NEW.game_type, NEW.transaction_type);
+    
+    -- Map transaction types to application names
+    CASE app_type
+        WHEN 'bible_trivia' THEN app_name := 'Bible Trivia';
+        WHEN 'hangman' THEN app_name := 'Hangman';
+        WHEN 'galaga' THEN app_name := 'Galaga';
+        WHEN 'breakout' THEN app_name := 'Breakout';
+        WHEN 'snake' THEN app_name := 'Snake';
+        WHEN 'tic_tac_toe' THEN app_name := 'Tic Tac Toe';
+        WHEN 'workout' THEN app_name := 'Workout';
+        WHEN 'chore' THEN app_name := 'Chore';
+        WHEN 'memory_verse' THEN app_name := 'Memory Verse';
+        WHEN 'badge' THEN app_name := 'Badge';
+        ELSE app_name := INITCAP(REPLACE(app_type, '_', ' '));
+    END CASE;
+    
+    -- Determine if this is a credit (earned) or debit (spent)
+    is_credit := (NEW.transaction_type = 'credit_added');
+    credit_amount := NEW.amount;
+    
+    -- Insert or update the tracking record
+    INSERT INTO Game_Application_Credit_Tracking (
+        game_app_type,
+        game_app_name,
+        total_credits_earned,
+        total_credits_spent,
+        total_transactions,
+        last_transaction_at,
+        updated_at
+    )
+    VALUES (
+        app_type,
+        app_name,
+        CASE WHEN is_credit THEN credit_amount ELSE 0 END,
+        CASE WHEN NOT is_credit THEN credit_amount ELSE 0 END,
+        1,
+        NEW.created_at,
+        NOW()
+    )
+    ON CONFLICT (game_app_type) DO UPDATE SET
+        total_credits_earned = Game_Application_Credit_Tracking.total_credits_earned + 
+            CASE WHEN is_credit THEN credit_amount ELSE 0 END,
+        total_credits_spent = Game_Application_Credit_Tracking.total_credits_spent + 
+            CASE WHEN NOT is_credit THEN credit_amount ELSE 0 END,
+        total_transactions = Game_Application_Credit_Tracking.total_transactions + 1,
+        last_transaction_at = NEW.created_at,
+        updated_at = NOW();
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger on Credit_Transactions table
+CREATE TRIGGER trigger_update_game_app_credit_tracking
+AFTER INSERT ON Credit_Transactions
+FOR EACH ROW
+EXECUTE FUNCTION update_game_app_credit_tracking();
+```
+
 ## Notes
 
 - The `month_year` field should be in format 'YYYY-MM' (e.g., '2025-01' for January 2025)
@@ -352,4 +511,5 @@ ORDER BY wins DESC;
 - The Bible_Trivia_Results table tracks detailed statistics for each game, including breakdown by difficulty level
 - The Bible_Trivia_User_Stats table tracks aggregated statistics per user for fast access to total games played and question totals by difficulty
 - The ttt_player_results table tracks individual player results (win/loss/draw) for each Tic Tac Toe game played
+- The Game_Application_Credit_Tracking table provides aggregated credit statistics per game/application, tracking both credits earned and credits spent
 

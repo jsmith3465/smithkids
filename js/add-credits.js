@@ -65,6 +65,7 @@ async function checkUserAccess() {
         await loadAllUsers();
         await loadAllCredits();
         await loadHistoryUsers();
+        await loadManagerOverview();
         setupAdminEventListeners();
     } else {
         // Show standard user content
@@ -111,6 +112,267 @@ async function loadAllUsers() {
     } catch (error) {
         console.error('Error loading users:', error);
         userCheckboxList.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading users.</p>';
+    }
+}
+
+async function loadManagerOverview() {
+    try {
+        // Get total standard users count
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID')
+            .eq('user_type', 'standard');
+        
+        if (usersError) throw usersError;
+        const totalUsers = users?.length || 0;
+        
+        // Get all credit balances
+        const { data: credits, error: creditsError } = await supabase
+            .from('User_Credits')
+            .select('balance');
+        
+        if (creditsError) throw creditsError;
+        
+        // Calculate totals
+        let totalCredits = 0;
+        let userCount = 0;
+        
+        if (credits && credits.length > 0) {
+            credits.forEach(credit => {
+                totalCredits += credit.balance || 0;
+                userCount++;
+            });
+        }
+        
+        const averageBalance = userCount > 0 ? Math.round(totalCredits / userCount) : 0;
+        
+        // Update display
+        document.getElementById('totalUsersCount').textContent = totalUsers;
+        document.getElementById('totalCreditsCount').textContent = totalCredits.toLocaleString();
+        document.getElementById('averageBalance').textContent = averageBalance.toLocaleString();
+        
+        // Load credit tracking table
+        await loadCreditTrackingTable();
+        
+    } catch (error) {
+        console.error('Error loading manager overview:', error);
+        document.getElementById('totalUsersCount').textContent = 'Error';
+        document.getElementById('totalCreditsCount').textContent = 'Error';
+        document.getElementById('averageBalance').textContent = 'Error';
+    }
+}
+
+// Store original values for comparison
+let creditTrackingData = {};
+
+async function loadCreditTrackingTable() {
+    const container = document.getElementById('creditTrackingTableContainer');
+    const saveBtn = document.getElementById('saveCreditTrackingBtn');
+    
+    try {
+        // Get all game/application credit tracking data
+        const { data: trackingData, error } = await supabase
+            .from('Game_Application_Credit_Tracking')
+            .select('*')
+            .order('game_app_name', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (!trackingData || trackingData.length === 0) {
+            container.innerHTML = '<div class="no-data">No credit tracking data found. The table may need to be initialized.</div>';
+            return;
+        }
+        
+        // Store original data
+        creditTrackingData = {};
+        trackingData.forEach(item => {
+            creditTrackingData[item.tracking_id] = {
+                earned: item.total_credits_earned,
+                spent: item.total_credits_spent
+            };
+        });
+        
+        // Create table
+        const table = document.createElement('table');
+        table.className = 'credits-table';
+        table.style.marginTop = '0';
+        
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Game/Application</th>
+            <th>Credits Earned</th>
+            <th>Credits Spent</th>
+            <th>Net Credits</th>
+            <th>Total Transactions</th>
+            <th>Last Transaction</th>
+            <th>Actions</th>
+        `;
+        table.appendChild(headerRow);
+        
+        // Data rows
+        trackingData.forEach(item => {
+            const row = document.createElement('tr');
+            row.dataset.trackingId = item.tracking_id;
+            
+            const netCredits = item.total_credits_earned - item.total_credits_spent;
+            const netClass = netCredits >= 0 ? 'transaction-credit' : 'transaction-debit';
+            
+            const lastTransaction = item.last_transaction_at 
+                ? new Date(item.last_transaction_at).toLocaleDateString()
+                : 'Never';
+            
+            row.innerHTML = `
+                <td><strong>${item.game_app_name}</strong><br><small style="color: #666;">${item.game_app_type}</small></td>
+                <td>
+                    <input type="number" 
+                           class="credit-edit-input" 
+                           data-field="earned" 
+                           data-id="${item.tracking_id}"
+                           value="${item.total_credits_earned}" 
+                           min="0" 
+                           style="width: 100px; padding: 5px; border: 2px solid #e0e0e0; border-radius: 5px; text-align: center;">
+                </td>
+                <td>
+                    <input type="number" 
+                           class="credit-edit-input" 
+                           data-field="spent" 
+                           data-id="${item.tracking_id}"
+                           value="${item.total_credits_spent}" 
+                           min="0" 
+                           style="width: 100px; padding: 5px; border: 2px solid #e0e0e0; border-radius: 5px; text-align: center;">
+                </td>
+                <td class="${netClass}" style="font-weight: 600;">${netCredits >= 0 ? '+' : ''}${netCredits.toLocaleString()}</td>
+                <td>${item.total_transactions.toLocaleString()}</td>
+                <td style="font-size: 0.9rem; color: #666;">${lastTransaction}</td>
+                <td>
+                    <button class="btn btn-small btn-secondary" onclick="resetRow(${item.tracking_id})" style="padding: 5px 10px; font-size: 0.85rem;">Reset</button>
+                </td>
+            `;
+            table.appendChild(row);
+        });
+        
+        container.innerHTML = '';
+        container.appendChild(table);
+        
+        // Show save button
+        saveBtn.style.display = 'inline-block';
+        
+        // Add event listeners to inputs for real-time net calculation
+        document.querySelectorAll('.credit-edit-input').forEach(input => {
+            input.addEventListener('input', function() {
+                updateNetCredits(this);
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error loading credit tracking table:', error);
+        container.innerHTML = '<div class="no-data">Error loading credit tracking data. Please try again.</div>';
+    }
+}
+
+function updateNetCredits(input) {
+    const row = input.closest('tr');
+    const earnedInput = row.querySelector('input[data-field="earned"]');
+    const spentInput = row.querySelector('input[data-field="spent"]');
+    const netCell = row.querySelector('td:nth-child(4)');
+    
+    const earned = parseInt(earnedInput.value) || 0;
+    const spent = parseInt(spentInput.value) || 0;
+    const net = earned - spent;
+    
+    netCell.className = net >= 0 ? 'transaction-credit' : 'transaction-debit';
+    netCell.style.fontWeight = '600';
+    netCell.textContent = `${net >= 0 ? '+' : ''}${net.toLocaleString()}`;
+}
+
+// Make resetRow available globally
+window.resetRow = function(trackingId) {
+    const row = document.querySelector(`tr[data-tracking-id="${trackingId}"]`);
+    if (!row) return;
+    
+    const original = creditTrackingData[trackingId];
+    if (!original) return;
+    
+    const earnedInput = row.querySelector('input[data-field="earned"]');
+    const spentInput = row.querySelector('input[data-field="spent"]');
+    
+    earnedInput.value = original.earned;
+    spentInput.value = original.spent;
+    
+    updateNetCredits(earnedInput);
+};
+
+async function saveCreditTrackingChanges() {
+    const saveBtn = document.getElementById('saveCreditTrackingBtn');
+    const session = window.authStatus?.getSession();
+    
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    
+    try {
+        const rows = document.querySelectorAll('#creditTrackingTableContainer tr[data-tracking-id]');
+        const updates = [];
+        
+        for (const row of rows) {
+            const trackingId = parseInt(row.dataset.trackingId);
+            const earnedInput = row.querySelector('input[data-field="earned"]');
+            const spentInput = row.querySelector('input[data-field="spent"]');
+            
+            const earned = parseInt(earnedInput.value) || 0;
+            const spent = parseInt(spentInput.value) || 0;
+            
+            // Check if values changed
+            const original = creditTrackingData[trackingId];
+            if (original && original.earned === earned && original.spent === spent) {
+                continue; // No changes
+            }
+            
+            updates.push({
+                tracking_id: trackingId,
+                total_credits_earned: earned,
+                total_credits_spent: spent,
+                updated_at: new Date().toISOString()
+            });
+        }
+        
+        if (updates.length === 0) {
+            showSuccess('No changes to save.');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+            return;
+        }
+        
+        // Update each record
+        for (const update of updates) {
+            const { error } = await supabase
+                .from('Game_Application_Credit_Tracking')
+                .update({
+                    total_credits_earned: update.total_credits_earned,
+                    total_credits_spent: update.total_credits_spent,
+                    updated_at: update.updated_at
+                })
+                .eq('tracking_id', update.tracking_id);
+            
+            if (error) throw error;
+        }
+        
+        // Reload data to refresh
+        await loadCreditTrackingTable();
+        
+        showSuccess(`Successfully updated ${updates.length} record(s).`);
+        
+    } catch (error) {
+        console.error('Error saving credit tracking changes:', error);
+        showError('Error saving changes. Please try again.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
     }
 }
 
@@ -540,6 +802,67 @@ function setupAdminEventListeners() {
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const addCreditsBtn = document.getElementById('addCreditsBtn');
     const historyUserSelect = document.getElementById('historyUserSelect');
+    const saveCreditTrackingBtn = document.getElementById('saveCreditTrackingBtn');
+    
+    // Credit tracking save button
+    if (saveCreditTrackingBtn) {
+        saveCreditTrackingBtn.addEventListener('click', saveCreditTrackingChanges);
+    }
+    
+    // Add credit tracking button
+    const addCreditTrackingBtn = document.getElementById('addCreditTrackingBtn');
+    if (addCreditTrackingBtn) {
+        addCreditTrackingBtn.addEventListener('click', () => {
+            const modal = document.getElementById('addCreditTrackingModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    const addCreditTrackingModal = document.getElementById('addCreditTrackingModal');
+    if (addCreditTrackingModal) {
+        addCreditTrackingModal.addEventListener('click', (e) => {
+            if (e.target === addCreditTrackingModal) {
+                closeAddCreditTrackingModal();
+            }
+        });
+    }
+    
+    // Credit tracking type selection
+    const creditTrackingType = document.getElementById('creditTrackingType');
+    if (creditTrackingType) {
+        creditTrackingType.addEventListener('change', function() {
+            const customTypeGroup = document.getElementById('customTypeGroup');
+            const customNameGroup = document.getElementById('customNameGroup');
+            const customType = document.getElementById('customType');
+            const customName = document.getElementById('customName');
+            
+            if (this.value === 'custom') {
+                customTypeGroup.style.display = 'block';
+                customNameGroup.style.display = 'block';
+                customType.required = true;
+                customName.required = true;
+            } else {
+                customTypeGroup.style.display = 'none';
+                customNameGroup.style.display = 'none';
+                customType.required = false;
+                customName.required = false;
+                customType.value = '';
+                customName.value = '';
+            }
+        });
+    }
+    
+    // Add credit tracking form submission
+    const addCreditTrackingForm = document.getElementById('addCreditTrackingForm');
+    if (addCreditTrackingForm) {
+        addCreditTrackingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addNewCreditTrackingEntry();
+        });
+    }
     
     selectAllBtn.addEventListener('click', () => {
         document.querySelectorAll('#userCheckboxList input[type="checkbox"]').forEach(cb => {
@@ -583,7 +906,9 @@ function switchTab(tabName) {
     if (selectedContent) selectedContent.classList.add('active');
     
     // Load data for the selected tab if needed
-    if (tabName === 'balances') {
+    if (tabName === 'manager') {
+        loadManagerOverview();
+    } else if (tabName === 'balances') {
         loadAllCredits();
     } else if (tabName === 'history') {
         // Reset history view when switching to tab
@@ -591,6 +916,9 @@ function switchTab(tabName) {
         document.getElementById('userHistorySection').style.display = 'none';
     }
 }
+
+// Make switchTab available globally for onclick handlers
+window.switchTab = switchTab;
 
 async function addCredits() {
     const creditAmount = parseInt(document.getElementById('creditAmount').value);
@@ -1023,3 +1351,130 @@ async function loadUserCreditHistory(userId) {
     }
 }
 
+
+// Close add credit tracking modal
+window.closeAddCreditTrackingModal = function() {
+    const modal = document.getElementById('addCreditTrackingModal');
+    if (modal) {
+        modal.style.display = 'none';
+        const form = document.getElementById('addCreditTrackingForm');
+        if (form) form.reset();
+        const customTypeGroup = document.getElementById('customTypeGroup');
+        const customNameGroup = document.getElementById('customNameGroup');
+        if (customTypeGroup) customTypeGroup.style.display = 'none';
+        if (customNameGroup) customNameGroup.style.display = 'none';
+    }
+};
+
+// Add new credit tracking entry
+async function addNewCreditTrackingEntry() {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const typeSelect = document.getElementById('creditTrackingType');
+    const customType = document.getElementById('customType');
+    const customName = document.getElementById('customName');
+    const initialEarned = parseInt(document.getElementById('initialCreditsEarned').value) || 0;
+    const initialSpent = parseInt(document.getElementById('initialCreditsSpent').value) || 0;
+    
+    if (!typeSelect || !typeSelect.value) {
+        showError('Please select a game/application/link.');
+        return;
+    }
+    
+    let gameAppType = '';
+    let gameAppName = '';
+    
+    if (typeSelect.value === 'custom') {
+        gameAppType = customType.value.trim().toLowerCase();
+        gameAppName = customName.value.trim();
+        
+        if (!gameAppType || !gameAppName) {
+            showError('Please enter both custom type and name.');
+            return;
+        }
+        
+        // Validate custom type format (lowercase, underscores only)
+        if (!/^[a-z_]+$/.test(gameAppType)) {
+            showError('Custom type must contain only lowercase letters and underscores.');
+            return;
+        }
+    } else {
+        gameAppType = typeSelect.value;
+        
+        // Map types to display names
+        const typeNameMap = {
+            'tic_tac_toe': 'Tic Tac Toe',
+            'snake': 'Snake Game',
+            'bible_trivia': 'Bible Trivia',
+            'hangman': 'Hangman',
+            'galaga': 'Galaga',
+            'breakout': 'Breakout',
+            'workout': 'Workout',
+            'chore': 'Chore',
+            'memory_verse': 'Memory Verse',
+            'badge': 'Badge',
+            'bible_verse_bonus': 'Bible Verse Bonus',
+            'bible_reader': 'Bible Reader',
+            'stats': 'Statistics Page',
+            'settings': 'Settings Page',
+            'credit_balance': 'Credit Balance Page',
+            'approvals': 'Approvals Page',
+            'badges': 'Badges Page',
+            'fruit_of_spirit': 'Fruit of the Spirit Page',
+            'morning_checklist': 'Morning Checklist'
+        };
+        
+        gameAppName = typeNameMap[gameAppType] || gameAppType.split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+    
+    try {
+        // Check if entry already exists
+        const { data: existing, error: checkError } = await supabase
+            .from('Game_Application_Credit_Tracking')
+            .select('tracking_id')
+            .eq('game_app_type', gameAppType)
+            .maybeSingle();
+        
+        if (existing) {
+            showError(`An entry for "${gameAppName}" (${gameAppType}) already exists.`);
+            return;
+        }
+        
+        // Insert new entry
+        const { error: insertError } = await supabase
+            .from('Game_Application_Credit_Tracking')
+            .insert({
+                game_app_type: gameAppType,
+                game_app_name: gameAppName,
+                total_credits_earned: initialEarned,
+                total_credits_spent: initialSpent,
+                total_transactions: 0,
+                last_transaction_at: null
+            });
+        
+        if (insertError) {
+            if (insertError.code === '23505') { // Unique constraint violation
+                showError(`An entry with type "${gameAppType}" already exists.`);
+            } else {
+                throw insertError;
+            }
+            return;
+        }
+        
+        showSuccess(`Successfully added "${gameAppName}" to credit tracking.`);
+        closeAddCreditTrackingModal();
+        
+        // Reload the table
+        await loadCreditTrackingTable();
+        
+    } catch (error) {
+        console.error('Error adding credit tracking entry:', error);
+        showError('Error adding entry. Please try again.');
+    }
+}
