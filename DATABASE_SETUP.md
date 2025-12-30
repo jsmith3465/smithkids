@@ -105,6 +105,25 @@ CREATE INDEX idx_tetris_scores_user ON tetris_scores(user_uid);
 CREATE INDEX idx_tetris_scores_created ON tetris_scores(created_at);
 ```
 
+## pacman_scores Table
+
+Create this table for tracking Pac-Man game scores:
+
+```sql
+CREATE TABLE pacman_scores (
+    score_id SERIAL PRIMARY KEY,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
+    score INTEGER NOT NULL,
+    level INTEGER NOT NULL DEFAULT 1,
+    dots_eaten INTEGER NOT NULL DEFAULT 0,
+    game_duration_seconds INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_pacman_scores_user ON pacman_scores(user_uid);
+CREATE INDEX idx_pacman_scores_created ON pacman_scores(created_at);
+```
+
 ## Unified_Approvals Table
 
 Create this table for unified approval tracking of workouts, chores, and memory verses:

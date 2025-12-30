@@ -254,6 +254,13 @@ async function updateCreditDisplays() {
         if (tetrisEl) {
             tetrisEl.textContent = `💰 Costs ${tetrisCost} credit${tetrisCost !== 1 ? 's' : ''} to play`;
         }
+        
+        // Update Pac-Man
+        const pacmanCost = await getCreditAmount('Pac-Man', 'debit', 3);
+        const pacmanEl = document.querySelector('a[href="pages/pacman.html"] .game-card-credits');
+        if (pacmanEl) {
+            pacmanEl.textContent = `💰 Costs ${pacmanCost} credit${pacmanCost !== 1 ? 's' : ''} to play`;
+        }
     } catch (error) {
         console.error('Error updating credit displays:', error);
     }

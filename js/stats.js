@@ -93,6 +93,9 @@ async function loadStatistics(tabName) {
         case 'tetris':
             await loadTetrisStatistics();
             break;
+        case 'pacman':
+            await loadPacmanStatistics();
+            break;
     }
 }
 
@@ -864,6 +867,7 @@ async function loadTetrisStatistics() {
             });
         }
         
+        // Aggregate user statistics
         const userStats = {};
         scores.forEach(score => {
             if (!userStats[score.user_uid]) {
@@ -873,7 +877,9 @@ async function loadTetrisStatistics() {
                     highestScore: 0,
                     highestLevel: 0,
                     totalLinesCleared: 0,
-                    totalTime: 0
+                    totalTime: 0,
+                    avgLinesPerGame: 0,
+                    avgScorePerLine: 0
                 };
             }
             userStats[score.user_uid].gamesPlayed++;
@@ -888,8 +894,16 @@ async function loadTetrisStatistics() {
             userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
         });
         
-        let html = '<table class="stats-table">';
-        html += '<thead><tr><th>Player</th><th>Games Played</th><th>Highest Score</th><th>Highest Level</th><th>Total Lines</th><th>Avg Score</th><th>Total Time</th></tr></thead>';
+        // Calculate additional metrics
+        Object.keys(userStats).forEach(uid => {
+            const stats = userStats[uid];
+            stats.avgLinesPerGame = stats.gamesPlayed > 0 ? Math.round(stats.totalLinesCleared / stats.gamesPlayed) : 0;
+            stats.avgScorePerLine = stats.totalLinesCleared > 0 ? Math.round(stats.totalScore / stats.totalLinesCleared) : 0;
+        });
+        
+        let html = '<h3 style="margin-bottom: 20px; color: #333;">Player Statistics</h3>';
+        html += '<table class="stats-table">';
+        html += '<thead><tr><th>Player</th><th>Games</th><th>Highest Score</th><th>Highest Level</th><th>Total Lines</th><th>Avg Score</th><th>Avg Lines/Game</th><th>Total Time</th></tr></thead>';
         html += '<tbody>';
         
         const sortedUsers = Object.keys(userStats).sort((a, b) => 
@@ -913,7 +927,41 @@ async function loadTetrisStatistics() {
                 <td>${stats.highestLevel}</td>
                 <td>${stats.totalLinesCleared}</td>
                 <td>${avgScore.toLocaleString()}</td>
+                <td>${stats.avgLinesPerGame}</td>
                 <td>${timeStr}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        
+        // Add recent games section
+        html += '<h3 style="margin-top: 40px; margin-bottom: 20px; color: #333;">Recent Games (Top 20)</h3>';
+        html += '<table class="stats-table">';
+        html += '<thead><tr><th>Player</th><th>Score</th><th>Level</th><th>Lines</th><th>Duration</th><th>Date</th></tr></thead>';
+        html += '<tbody>';
+        
+        const recentGames = scores.slice(0, 20);
+        recentGames.forEach(score => {
+            const user = userMap[score.user_uid];
+            const userName = getUserDisplayName(user);
+            const gameMinutes = Math.floor((score.game_duration_seconds || 0) / 60);
+            const gameSeconds = (score.game_duration_seconds || 0) % 60;
+            const gameTimeStr = gameMinutes > 0 ? `${gameMinutes}m ${gameSeconds}s` : `${gameSeconds}s`;
+            const gameDate = new Date(score.created_at).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            html += `<tr>
+                <td>${userName}</td>
+                <td>${score.score.toLocaleString()}</td>
+                <td>${score.level}</td>
+                <td>${score.lines_cleared || 0}</td>
+                <td>${gameTimeStr}</td>
+                <td>${gameDate}</td>
             </tr>`;
         });
         
@@ -922,6 +970,98 @@ async function loadTetrisStatistics() {
     } catch (error) {
         console.error('Error loading Tetris statistics:', error);
         tetrisStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
+    }
+}
+
+async function loadPacmanStatistics() {
+    const pacmanStatsDiv = document.getElementById('pacmanStats');
+    
+    try {
+        const { data: scores, error: scoresError } = await supabase
+            .from('pacman_scores')
+            .select('user_uid, score, level, dots_eaten, game_duration_seconds, created_at')
+            .order('score', { ascending: false });
+        
+        if (scoresError) throw scoresError;
+        
+        if (!scores || scores.length === 0) {
+            pacmanStatsDiv.innerHTML = '<div class="no-data">No Pac-Man game data available yet. Play the game to see statistics!</div>';
+            return;
+        }
+        
+        const userIds = [...new Set(scores.map(s => s.user_uid))];
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', userIds);
+        
+        if (usersError) throw usersError;
+        
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        const userStats = {};
+        scores.forEach(score => {
+            if (!userStats[score.user_uid]) {
+                userStats[score.user_uid] = {
+                    gamesPlayed: 0,
+                    totalScore: 0,
+                    highestScore: 0,
+                    highestLevel: 0,
+                    totalDotsEaten: 0,
+                    totalTime: 0
+                };
+            }
+            userStats[score.user_uid].gamesPlayed++;
+            userStats[score.user_uid].totalScore += score.score;
+            if (score.score > userStats[score.user_uid].highestScore) {
+                userStats[score.user_uid].highestScore = score.score;
+            }
+            if (score.level > userStats[score.user_uid].highestLevel) {
+                userStats[score.user_uid].highestLevel = score.level;
+            }
+            userStats[score.user_uid].totalDotsEaten += score.dots_eaten || 0;
+            userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
+        });
+        
+        let html = '<table class="stats-table">';
+        html += '<thead><tr><th>Player</th><th>Games Played</th><th>Highest Score</th><th>Highest Level</th><th>Total Dots</th><th>Avg Score</th><th>Total Time</th></tr></thead>';
+        html += '<tbody>';
+        
+        const sortedUsers = Object.keys(userStats).sort((a, b) => 
+            userStats[b].highestScore - userStats[a].highestScore
+        );
+        
+        sortedUsers.forEach(uid => {
+            const stats = userStats[uid];
+            const user = userMap[uid];
+            const avgScore = Math.round(stats.totalScore / stats.gamesPlayed);
+            const totalMinutes = Math.floor(stats.totalTime / 60);
+            const totalSeconds = stats.totalTime % 60;
+            const timeStr = totalMinutes > 0 ? `${totalMinutes}m ${totalSeconds}s` : `${totalSeconds}s`;
+            
+            const userName = getUserDisplayName(user);
+            
+            html += `<tr>
+                <td>${userName}</td>
+                <td>${stats.gamesPlayed}</td>
+                <td>${stats.highestScore.toLocaleString()}</td>
+                <td>${stats.highestLevel}</td>
+                <td>${stats.totalDotsEaten}</td>
+                <td>${avgScore.toLocaleString()}</td>
+                <td>${timeStr}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        pacmanStatsDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading Pac-Man statistics:', error);
+        pacmanStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
     }
 }
 
