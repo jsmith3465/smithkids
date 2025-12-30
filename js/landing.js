@@ -140,6 +140,14 @@ function initializeLanding() {
         referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
         referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
         
+        // Add click event to award bonus credit
+        referenceLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await awardBibleVerseBonus(session.uid, quote.book, quote.chapter, quote.verse);
+            // Navigate to the Bible page after awarding credit
+            window.location.href = referenceLink.href;
+        });
+        
         quoteAuthorEl.innerHTML = '';
         quoteAuthorEl.appendChild(document.createTextNode('— '));
         quoteAuthorEl.appendChild(referenceLink);
@@ -151,5 +159,118 @@ function initializeLanding() {
     // Show main content
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
+}
+
+async function awardBibleVerseBonus(userUid, book, chapter, verse) {
+    try {
+        // Get or create credit record
+        const { data: existingCredit, error: creditFetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userUid)
+            .single();
+        
+        if (creditFetchError && creditFetchError.code !== 'PGRST116') {
+            console.error('Error fetching credits:', creditFetchError);
+            return;
+        }
+        
+        const newBalance = (existingCredit?.balance || 0) + 1;
+        
+        if (existingCredit) {
+            // Update existing balance
+            const { error: balanceUpdateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (balanceUpdateError) {
+                console.error('Error updating credits:', balanceUpdateError);
+                return;
+            }
+        } else {
+            // Create new credit record
+            const { error: balanceInsertError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: userUid, balance: 1 });
+            
+            if (balanceInsertError) {
+                console.error('Error creating credit record:', balanceInsertError);
+                return;
+            }
+        }
+        
+        // Record transaction
+        const { error: transactionError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                to_user_uid: userUid,
+                amount: 1,
+                transaction_type: 'credit_added',
+                game_type: 'bible_verse_bonus',
+                description: `Special bonus for being biblically curious - ${book} ${chapter}:${verse}`
+            });
+        
+        if (transactionError) {
+            console.error('Error recording transaction:', transactionError);
+            // Don't fail if transaction recording fails, credit was already added
+        }
+        
+        // Show success message
+        showBonusMessage();
+        
+    } catch (error) {
+        console.error('Error awarding Bible verse bonus:', error);
+    }
+}
+
+function showBonusMessage() {
+    // Create a temporary message element
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        padding: 15px 20px;
+        border-radius: 10px;
+        border: 2px solid #28a745;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        font-size: 1rem;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    messageDiv.textContent = '✨ +1 Credit: Special bonus for being biblically curious!';
+    
+    // Add animation style if not already present
+    if (!document.getElementById('bonusMessageStyle')) {
+        const style = document.createElement('style');
+        style.id = 'bonusMessageStyle';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(messageDiv);
+    
+    // Remove message after 3 seconds
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideInRight 0.3s ease-out reverse';
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 300);
+    }, 3000);
 }
 
