@@ -116,50 +116,8 @@ async function loadAllUsers() {
 }
 
 async function loadManagerOverview() {
-    try {
-        // Get total standard users count
-        const { data: users, error: usersError } = await supabase
-            .from('Users')
-            .select('UID')
-            .eq('user_type', 'standard');
-        
-        if (usersError) throw usersError;
-        const totalUsers = users?.length || 0;
-        
-        // Get all credit balances
-        const { data: credits, error: creditsError } = await supabase
-            .from('User_Credits')
-            .select('balance');
-        
-        if (creditsError) throw creditsError;
-        
-        // Calculate totals
-        let totalCredits = 0;
-        let userCount = 0;
-        
-        if (credits && credits.length > 0) {
-            credits.forEach(credit => {
-                totalCredits += credit.balance || 0;
-                userCount++;
-            });
-        }
-        
-        const averageBalance = userCount > 0 ? Math.round(totalCredits / userCount) : 0;
-        
-        // Update display
-        document.getElementById('totalUsersCount').textContent = totalUsers;
-        document.getElementById('totalCreditsCount').textContent = totalCredits.toLocaleString();
-        document.getElementById('averageBalance').textContent = averageBalance.toLocaleString();
-        
-        // Load credit tracking table
-        await loadCreditTrackingTable();
-        
-    } catch (error) {
-        console.error('Error loading manager overview:', error);
-        document.getElementById('totalUsersCount').textContent = 'Error';
-        document.getElementById('totalCreditsCount').textContent = 'Error';
-        document.getElementById('averageBalance').textContent = 'Error';
-    }
+    // Simply load the credit tracking table
+    await loadCreditTrackingTable();
 }
 
 // Store original values for comparison
@@ -170,29 +128,32 @@ async function loadCreditTrackingTable() {
     const saveBtn = document.getElementById('saveCreditTrackingBtn');
     
     try {
-        // Get all game/application credit tracking data
-        const { data: trackingData, error } = await supabase
-            .from('Game_Application_Credit_Tracking')
+        // Get all credit manager data
+        const { data: creditManagerData, error } = await supabase
+            .from('Credit_Manager')
             .select('*')
-            .order('game_app_name', { ascending: true });
+            .order('app_name', { ascending: true })
+            .order('transaction_type', { ascending: true });
         
         if (error) throw error;
         
-        if (!trackingData || trackingData.length === 0) {
-            container.innerHTML = '<div class="no-data">No credit tracking data found. The table may need to be initialized.</div>';
+        if (!creditManagerData || creditManagerData.length === 0) {
+            container.innerHTML = '<div class="no-data">No credit rules found. Click "Add" to create new rules.</div>';
+            saveBtn.style.display = 'none';
             return;
         }
         
         // Store original data
         creditTrackingData = {};
-        trackingData.forEach(item => {
-            creditTrackingData[item.tracking_id] = {
-                earned: item.total_credits_earned,
-                spent: item.total_credits_spent
+        creditManagerData.forEach(item => {
+            creditTrackingData[item.id] = {
+                app_name: item.app_name,
+                transaction_type: item.transaction_type,
+                credit_amount: item.credit_amount
             };
         });
         
-        // Create table
+        // Create table - show all entries in order
         const table = document.createElement('table');
         table.className = 'credits-table';
         table.style.marginTop = '0';
@@ -200,55 +161,16 @@ async function loadCreditTrackingTable() {
         // Header
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = `
-            <th>Game/Application</th>
-            <th>Credits Earned</th>
-            <th>Credits Spent</th>
-            <th>Net Credits</th>
-            <th>Total Transactions</th>
-            <th>Last Transaction</th>
+            <th>App Name</th>
+            <th>Transaction Type</th>
+            <th>Credit Amount</th>
             <th>Actions</th>
         `;
         table.appendChild(headerRow);
         
-        // Data rows
-        trackingData.forEach(item => {
-            const row = document.createElement('tr');
-            row.dataset.trackingId = item.tracking_id;
-            
-            const netCredits = item.total_credits_earned - item.total_credits_spent;
-            const netClass = netCredits >= 0 ? 'transaction-credit' : 'transaction-debit';
-            
-            const lastTransaction = item.last_transaction_at 
-                ? new Date(item.last_transaction_at).toLocaleDateString()
-                : 'Never';
-            
-            row.innerHTML = `
-                <td><strong>${item.game_app_name}</strong><br><small style="color: #666;">${item.game_app_type}</small></td>
-                <td>
-                    <input type="number" 
-                           class="credit-edit-input" 
-                           data-field="earned" 
-                           data-id="${item.tracking_id}"
-                           value="${item.total_credits_earned}" 
-                           min="0" 
-                           style="width: 100px; padding: 5px; border: 2px solid #e0e0e0; border-radius: 5px; text-align: center;">
-                </td>
-                <td>
-                    <input type="number" 
-                           class="credit-edit-input" 
-                           data-field="spent" 
-                           data-id="${item.tracking_id}"
-                           value="${item.total_credits_spent}" 
-                           min="0" 
-                           style="width: 100px; padding: 5px; border: 2px solid #e0e0e0; border-radius: 5px; text-align: center;">
-                </td>
-                <td class="${netClass}" style="font-weight: 600;">${netCredits >= 0 ? '+' : ''}${netCredits.toLocaleString()}</td>
-                <td>${item.total_transactions.toLocaleString()}</td>
-                <td style="font-size: 0.9rem; color: #666;">${lastTransaction}</td>
-                <td>
-                    <button class="btn btn-small btn-secondary" onclick="resetRow(${item.tracking_id})" style="padding: 5px 10px; font-size: 0.85rem;">Reset</button>
-                </td>
-            `;
+        // Data rows - show all entries
+        creditManagerData.forEach(item => {
+            const row = createCreditManagerRow(item);
             table.appendChild(row);
         });
         
@@ -258,50 +180,96 @@ async function loadCreditTrackingTable() {
         // Show save button
         saveBtn.style.display = 'inline-block';
         
-        // Add event listeners to inputs for real-time net calculation
-        document.querySelectorAll('.credit-edit-input').forEach(input => {
-            input.addEventListener('input', function() {
-                updateNetCredits(this);
-            });
-        });
-        
     } catch (error) {
-        console.error('Error loading credit tracking table:', error);
-        container.innerHTML = '<div class="no-data">Error loading credit tracking data. Please try again.</div>';
+        console.error('Error loading credit manager table:', error);
+        container.innerHTML = '<div class="no-data">Error loading credit manager data. Please try again.</div>';
+        saveBtn.style.display = 'none';
     }
 }
 
-function updateNetCredits(input) {
-    const row = input.closest('tr');
-    const earnedInput = row.querySelector('input[data-field="earned"]');
-    const spentInput = row.querySelector('input[data-field="spent"]');
-    const netCell = row.querySelector('td:nth-child(4)');
+function createCreditManagerRow(item) {
+    const row = document.createElement('tr');
+    row.dataset.id = item.id;
     
-    const earned = parseInt(earnedInput.value) || 0;
-    const spent = parseInt(spentInput.value) || 0;
-    const net = earned - spent;
+    const typeClass = item.transaction_type === 'credit' ? 'transaction-credit' : 'transaction-debit';
     
-    netCell.className = net >= 0 ? 'transaction-credit' : 'transaction-debit';
-    netCell.style.fontWeight = '600';
-    netCell.textContent = `${net >= 0 ? '+' : ''}${net.toLocaleString()}`;
+    row.innerHTML = `
+        <td><strong>${item.app_name}</strong></td>
+        <td>
+            <select class="credit-type-select" 
+                    data-field="type" 
+                    data-id="${item.id}"
+                    style="padding: 5px 10px; border: 2px solid #e0e0e0; border-radius: 5px; font-weight: 600; cursor: pointer;">
+                <option value="credit" ${item.transaction_type === 'credit' ? 'selected' : ''} style="color: #28a745;">Credit (Earns)</option>
+                <option value="debit" ${item.transaction_type === 'debit' ? 'selected' : ''} style="color: #dc3545;">Debit (Costs)</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" 
+                   class="credit-edit-input" 
+                   data-field="amount" 
+                   data-id="${item.id}"
+                   value="${item.credit_amount}" 
+                   min="0" 
+                   style="width: 100px; padding: 5px; border: 2px solid #e0e0e0; border-radius: 5px; text-align: center;">
+        </td>
+        <td>
+            <button class="btn btn-small btn-secondary" onclick="resetCreditManagerRow(${item.id})" style="padding: 5px 10px; font-size: 0.85rem;">Reset</button>
+        </td>
+    `;
+    
+    // Update select styling based on value
+    const select = row.querySelector('.credit-type-select');
+    select.addEventListener('change', function() {
+        if (this.value === 'credit') {
+            this.style.color = '#28a745';
+            this.style.borderColor = '#28a745';
+        } else {
+            this.style.color = '#dc3545';
+            this.style.borderColor = '#dc3545';
+        }
+    });
+    
+    // Set initial styling
+    if (item.transaction_type === 'credit') {
+        select.style.color = '#28a745';
+        select.style.borderColor = '#28a745';
+    } else {
+        select.style.color = '#dc3545';
+        select.style.borderColor = '#dc3545';
+    }
+    
+    return row;
 }
 
-// Make resetRow available globally
-window.resetRow = function(trackingId) {
-    const row = document.querySelector(`tr[data-tracking-id="${trackingId}"]`);
+// Make resetCreditManagerRow available globally
+window.resetCreditManagerRow = function(id) {
+    const row = document.querySelector(`tr[data-id="${id}"]`);
     if (!row) return;
     
-    const original = creditTrackingData[trackingId];
+    const original = creditTrackingData[id];
     if (!original) return;
     
-    const earnedInput = row.querySelector('input[data-field="earned"]');
-    const spentInput = row.querySelector('input[data-field="spent"]');
+    const amountInput = row.querySelector('input[data-field="amount"]');
+    const typeSelect = row.querySelector('select[data-field="type"]');
     
-    earnedInput.value = original.earned;
-    spentInput.value = original.spent;
+    if (amountInput) {
+        amountInput.value = original.credit_amount;
+    }
     
-    updateNetCredits(earnedInput);
+    if (typeSelect) {
+        typeSelect.value = original.transaction_type;
+        // Update styling
+        if (original.transaction_type === 'credit') {
+            typeSelect.style.color = '#28a745';
+            typeSelect.style.borderColor = '#28a745';
+        } else {
+            typeSelect.style.color = '#dc3545';
+            typeSelect.style.borderColor = '#dc3545';
+        }
+    }
 };
+
 
 async function saveCreditTrackingChanges() {
     const saveBtn = document.getElementById('saveCreditTrackingBtn');
@@ -316,27 +284,31 @@ async function saveCreditTrackingChanges() {
     saveBtn.textContent = 'Saving...';
     
     try {
-        const rows = document.querySelectorAll('#creditTrackingTableContainer tr[data-tracking-id]');
+        const rows = document.querySelectorAll('#creditTrackingTableContainer tr[data-id]');
         const updates = [];
         
         for (const row of rows) {
-            const trackingId = parseInt(row.dataset.trackingId);
-            const earnedInput = row.querySelector('input[data-field="earned"]');
-            const spentInput = row.querySelector('input[data-field="spent"]');
+            const id = parseInt(row.dataset.id);
+            const amountInput = row.querySelector('input[data-field="amount"]');
+            const typeSelect = row.querySelector('select[data-field="type"]');
             
-            const earned = parseInt(earnedInput.value) || 0;
-            const spent = parseInt(spentInput.value) || 0;
+            if (!amountInput || !typeSelect) continue;
+            
+            const creditAmount = parseInt(amountInput.value) || 0;
+            const transactionType = typeSelect.value;
             
             // Check if values changed
-            const original = creditTrackingData[trackingId];
-            if (original && original.earned === earned && original.spent === spent) {
+            const original = creditTrackingData[id];
+            if (original && 
+                original.credit_amount === creditAmount && 
+                original.transaction_type === transactionType) {
                 continue; // No changes
             }
             
             updates.push({
-                tracking_id: trackingId,
-                total_credits_earned: earned,
-                total_credits_spent: spent,
+                id: id,
+                credit_amount: creditAmount,
+                transaction_type: transactionType,
                 updated_at: new Date().toISOString()
             });
         }
@@ -351,13 +323,13 @@ async function saveCreditTrackingChanges() {
         // Update each record
         for (const update of updates) {
             const { error } = await supabase
-                .from('Game_Application_Credit_Tracking')
+                .from('Credit_Manager')
                 .update({
-                    total_credits_earned: update.total_credits_earned,
-                    total_credits_spent: update.total_credits_spent,
+                    credit_amount: update.credit_amount,
+                    transaction_type: update.transaction_type,
                     updated_at: update.updated_at
                 })
-                .eq('tracking_id', update.tracking_id);
+                .eq('id', update.id);
             
             if (error) throw error;
         }
@@ -368,11 +340,96 @@ async function saveCreditTrackingChanges() {
         showSuccess(`Successfully updated ${updates.length} record(s).`);
         
     } catch (error) {
-        console.error('Error saving credit tracking changes:', error);
+        console.error('Error saving credit manager changes:', error);
         showError('Error saving changes. Please try again.');
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Changes';
+    }
+}
+
+// Hide add credit scheme form
+window.hideAddCreditSchemeForm = function() {
+    const form = document.getElementById('addCreditSchemeForm');
+    if (form) {
+        form.style.display = 'none';
+        const formElement = document.getElementById('newCreditSchemeForm');
+        if (formElement) {
+            formElement.reset();
+        }
+    }
+};
+
+// Add new credit scheme
+async function addNewCreditScheme() {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const appName = document.getElementById('newAppName').value.trim();
+    const transactionType = document.getElementById('newTransactionType').value;
+    const creditAmount = parseInt(document.getElementById('newCreditAmount').value) || 0;
+    
+    if (!appName) {
+        showError('Please enter an app/game name.');
+        return;
+    }
+    
+    if (!transactionType) {
+        showError('Please select a transaction type (credit or debit).');
+        return;
+    }
+    
+    if (creditAmount < 0) {
+        showError('Credit amount must be 0 or greater.');
+        return;
+    }
+    
+    try {
+        // Check if entry already exists (same app name and transaction type)
+        const { data: existing, error: checkError } = await supabase
+            .from('Credit_Manager')
+            .select('id')
+            .eq('app_name', appName)
+            .eq('transaction_type', transactionType)
+            .maybeSingle();
+        
+        if (existing) {
+            showError(`A ${transactionType} rule for "${appName}" already exists.`);
+            return;
+        }
+        
+        // Insert new entry
+        const { error: insertError } = await supabase
+            .from('Credit_Manager')
+            .insert({
+                app_name: appName,
+                transaction_type: transactionType,
+                credit_amount: creditAmount
+            });
+        
+        if (insertError) {
+            if (insertError.code === '23505') { // Unique constraint violation
+                showError(`A ${transactionType} rule for "${appName}" already exists.`);
+            } else {
+                throw insertError;
+            }
+            return;
+        }
+        
+        showSuccess(`Successfully added ${transactionType} rule for "${appName}".`);
+        
+        // Hide the form
+        hideAddCreditSchemeForm();
+        
+        // Reload the table
+        await loadCreditTrackingTable();
+        
+    } catch (error) {
+        console.error('Error adding credit scheme:', error);
+        showError('Error adding scheme. Please try again.');
     }
 }
 
@@ -809,60 +866,6 @@ function setupAdminEventListeners() {
         saveCreditTrackingBtn.addEventListener('click', saveCreditTrackingChanges);
     }
     
-    // Add credit tracking button
-    const addCreditTrackingBtn = document.getElementById('addCreditTrackingBtn');
-    if (addCreditTrackingBtn) {
-        addCreditTrackingBtn.addEventListener('click', () => {
-            const modal = document.getElementById('addCreditTrackingModal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
-        });
-    }
-    
-    // Close modal when clicking outside
-    const addCreditTrackingModal = document.getElementById('addCreditTrackingModal');
-    if (addCreditTrackingModal) {
-        addCreditTrackingModal.addEventListener('click', (e) => {
-            if (e.target === addCreditTrackingModal) {
-                closeAddCreditTrackingModal();
-            }
-        });
-    }
-    
-    // Credit tracking type selection
-    const creditTrackingType = document.getElementById('creditTrackingType');
-    if (creditTrackingType) {
-        creditTrackingType.addEventListener('change', function() {
-            const customTypeGroup = document.getElementById('customTypeGroup');
-            const customNameGroup = document.getElementById('customNameGroup');
-            const customType = document.getElementById('customType');
-            const customName = document.getElementById('customName');
-            
-            if (this.value === 'custom') {
-                customTypeGroup.style.display = 'block';
-                customNameGroup.style.display = 'block';
-                customType.required = true;
-                customName.required = true;
-            } else {
-                customTypeGroup.style.display = 'none';
-                customNameGroup.style.display = 'none';
-                customType.required = false;
-                customName.required = false;
-                customType.value = '';
-                customName.value = '';
-            }
-        });
-    }
-    
-    // Add credit tracking form submission
-    const addCreditTrackingForm = document.getElementById('addCreditTrackingForm');
-    if (addCreditTrackingForm) {
-        addCreditTrackingForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await addNewCreditTrackingEntry();
-        });
-    }
     
     selectAllBtn.addEventListener('click', () => {
         document.querySelectorAll('#userCheckboxList input[type="checkbox"]').forEach(cb => {
@@ -889,6 +892,26 @@ function setupAdminEventListeners() {
             } else {
                 document.getElementById('userHistorySection').style.display = 'none';
             }
+        });
+    }
+    
+    // Add credit scheme button
+    const addCreditSchemeBtn = document.getElementById('addCreditSchemeBtn');
+    if (addCreditSchemeBtn) {
+        addCreditSchemeBtn.addEventListener('click', () => {
+            const form = document.getElementById('addCreditSchemeForm');
+            if (form) {
+                form.style.display = 'block';
+            }
+        });
+    }
+    
+    // Add credit scheme form submission
+    const newCreditSchemeForm = document.getElementById('newCreditSchemeForm');
+    if (newCreditSchemeForm) {
+        newCreditSchemeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addNewCreditScheme();
         });
     }
 }
@@ -1352,129 +1375,3 @@ async function loadUserCreditHistory(userId) {
 }
 
 
-// Close add credit tracking modal
-window.closeAddCreditTrackingModal = function() {
-    const modal = document.getElementById('addCreditTrackingModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const form = document.getElementById('addCreditTrackingForm');
-        if (form) form.reset();
-        const customTypeGroup = document.getElementById('customTypeGroup');
-        const customNameGroup = document.getElementById('customNameGroup');
-        if (customTypeGroup) customTypeGroup.style.display = 'none';
-        if (customNameGroup) customNameGroup.style.display = 'none';
-    }
-};
-
-// Add new credit tracking entry
-async function addNewCreditTrackingEntry() {
-    const session = window.authStatus?.getSession();
-    if (!session || session.userType !== 'admin') {
-        showError('Admin access required.');
-        return;
-    }
-    
-    const typeSelect = document.getElementById('creditTrackingType');
-    const customType = document.getElementById('customType');
-    const customName = document.getElementById('customName');
-    const initialEarned = parseInt(document.getElementById('initialCreditsEarned').value) || 0;
-    const initialSpent = parseInt(document.getElementById('initialCreditsSpent').value) || 0;
-    
-    if (!typeSelect || !typeSelect.value) {
-        showError('Please select a game/application/link.');
-        return;
-    }
-    
-    let gameAppType = '';
-    let gameAppName = '';
-    
-    if (typeSelect.value === 'custom') {
-        gameAppType = customType.value.trim().toLowerCase();
-        gameAppName = customName.value.trim();
-        
-        if (!gameAppType || !gameAppName) {
-            showError('Please enter both custom type and name.');
-            return;
-        }
-        
-        // Validate custom type format (lowercase, underscores only)
-        if (!/^[a-z_]+$/.test(gameAppType)) {
-            showError('Custom type must contain only lowercase letters and underscores.');
-            return;
-        }
-    } else {
-        gameAppType = typeSelect.value;
-        
-        // Map types to display names
-        const typeNameMap = {
-            'tic_tac_toe': 'Tic Tac Toe',
-            'snake': 'Snake Game',
-            'bible_trivia': 'Bible Trivia',
-            'hangman': 'Hangman',
-            'galaga': 'Galaga',
-            'breakout': 'Breakout',
-            'workout': 'Workout',
-            'chore': 'Chore',
-            'memory_verse': 'Memory Verse',
-            'badge': 'Badge',
-            'bible_verse_bonus': 'Bible Verse Bonus',
-            'bible_reader': 'Bible Reader',
-            'stats': 'Statistics Page',
-            'settings': 'Settings Page',
-            'credit_balance': 'Credit Balance Page',
-            'approvals': 'Approvals Page',
-            'badges': 'Badges Page',
-            'fruit_of_spirit': 'Fruit of the Spirit Page',
-            'morning_checklist': 'Morning Checklist'
-        };
-        
-        gameAppName = typeNameMap[gameAppType] || gameAppType.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-    }
-    
-    try {
-        // Check if entry already exists
-        const { data: existing, error: checkError } = await supabase
-            .from('Game_Application_Credit_Tracking')
-            .select('tracking_id')
-            .eq('game_app_type', gameAppType)
-            .maybeSingle();
-        
-        if (existing) {
-            showError(`An entry for "${gameAppName}" (${gameAppType}) already exists.`);
-            return;
-        }
-        
-        // Insert new entry
-        const { error: insertError } = await supabase
-            .from('Game_Application_Credit_Tracking')
-            .insert({
-                game_app_type: gameAppType,
-                game_app_name: gameAppName,
-                total_credits_earned: initialEarned,
-                total_credits_spent: initialSpent,
-                total_transactions: 0,
-                last_transaction_at: null
-            });
-        
-        if (insertError) {
-            if (insertError.code === '23505') { // Unique constraint violation
-                showError(`An entry with type "${gameAppType}" already exists.`);
-            } else {
-                throw insertError;
-            }
-            return;
-        }
-        
-        showSuccess(`Successfully added "${gameAppName}" to credit tracking.`);
-        closeAddCreditTrackingModal();
-        
-        // Reload the table
-        await loadCreditTrackingTable();
-        
-    } catch (error) {
-        console.error('Error adding credit tracking entry:', error);
-        showError('Error adding entry. Please try again.');
-    }
-}

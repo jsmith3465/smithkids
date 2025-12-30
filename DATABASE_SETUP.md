@@ -339,6 +339,67 @@ GROUP BY u.UID, u.First_Name, u.Last_Name
 ORDER BY wins DESC;
 ```
 
+## Credit_Manager Table
+
+Create this table for managing credit earning and spending rules for games and applications:
+
+```sql
+CREATE TABLE IF NOT EXISTS Credit_Manager (
+    id SERIAL PRIMARY KEY,
+    app_name TEXT NOT NULL,
+    transaction_type TEXT NOT NULL CHECK (transaction_type IN ('debit', 'credit')),
+    credit_amount INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_credit_manager_app_name ON Credit_Manager(app_name);
+CREATE INDEX IF NOT EXISTS idx_credit_manager_type ON Credit_Manager(transaction_type);
+```
+
+### Table Structure Details:
+
+- **id**: Primary key, auto-incrementing unique identifier
+- **app_name**: Name of the game/application/link (e.g., 'Bible Trivia', 'Workout', 'Tic Tac Toe')
+- **transaction_type**: Whether this is a 'debit' (costs credits) or 'credit' (earns credits)
+- **credit_amount**: The number of credits for this transaction type
+- **created_at**: Timestamp of when the record was created
+- **updated_at**: Timestamp of when the record was last updated
+
+### Notes:
+
+- This table defines the credit rules for each game/application
+- Each app can have multiple entries (one for debit, one for credit, or both)
+- The `transaction_type` field determines if the app costs credits (debit) or earns credits (credit)
+- Admins can add, edit, and delete entries through the Credit Manager interface
+
+### Example Queries:
+
+**Get all credit-earning apps:**
+```sql
+SELECT app_name, credit_amount
+FROM Credit_Manager
+WHERE transaction_type = 'credit'
+ORDER BY app_name;
+```
+
+**Get all apps that cost credits:**
+```sql
+SELECT app_name, credit_amount
+FROM Credit_Manager
+WHERE transaction_type = 'debit'
+ORDER BY app_name;
+```
+
+**Get all rules for a specific app:**
+```sql
+SELECT transaction_type, credit_amount
+FROM Credit_Manager
+WHERE app_name = 'Bible Trivia'
+ORDER BY transaction_type;
+```
+
 ## Game_Application_Credit_Tracking Table
 
 Create this table for tracking total credits earned and spent per game/application:

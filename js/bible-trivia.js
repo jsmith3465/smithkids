@@ -2993,28 +2993,54 @@ class BibleTrivia {
         
         document.getElementById('finalScore').textContent = this.score;
         
-        // Calculate credits
+        // Get maximum credits from Credit_Manager table
+        let MAX_CREDITS = 20; // Default fallback
+        try {
+            const { data: creditData, error: creditError } = await supabase
+                .from('Credit_Manager')
+                .select('credit_amount')
+                .eq('app_name', 'Bible Trivia')
+                .eq('transaction_type', 'credit')
+                .maybeSingle();
+            
+            if (!creditError && creditData && creditData.credit_amount > 0) {
+                MAX_CREDITS = creditData.credit_amount;
+            }
+        } catch (error) {
+            console.warn('Could not fetch max credits from Credit_Manager, using default:', error);
+        }
+        
+        // Calculate credits based on percentage of maximum
         let creditsEarned = 0;
         let message = '';
         
         if (this.score < 3) {
             creditsEarned = 0;
             message = "Keep studying! Read the Bible stories to learn more and try again.";
-        } else if (this.score >= 3 && this.score <= 4) {
-            creditsEarned = 1;
-            message = "Good start! Keep learning!";
-        } else if (this.score >= 5 && this.score <= 6) {
-            creditsEarned = 3;
-            message = "Nice work! You're getting better!";
-        } else if (this.score === 7) {
-            creditsEarned = 5;
-            message = "Great job! You know your Bible stories!";
-        } else if (this.score >= 8 && this.score <= 9) {
-            creditsEarned = 10;
-            message = "Excellent! You're really learning!";
-        } else if (this.score === 10) {
-            creditsEarned = 20;
-            message = "Perfect score! You're a Bible expert!";
+        } else {
+            // Calculate credits as percentage of maximum, rounded to nearest whole number
+            // Percentage = (score / 10) * 100
+            // Credits = (percentage / 100) * MAX_CREDITS, rounded
+            const percentage = (this.score / 10) * 100;
+            creditsEarned = Math.round((percentage / 100) * MAX_CREDITS);
+            
+            // Ensure minimum of 1 credit if score is 3 or more
+            if (creditsEarned < 1 && this.score >= 3) {
+                creditsEarned = 1;
+            }
+            
+            // Set message based on score
+            if (this.score >= 3 && this.score <= 4) {
+                message = "Good start! Keep learning!";
+            } else if (this.score >= 5 && this.score <= 6) {
+                message = "Nice work! You're getting better!";
+            } else if (this.score === 7) {
+                message = "Great job! You know your Bible stories!";
+            } else if (this.score >= 8 && this.score <= 9) {
+                message = "Excellent! You're really learning!";
+            } else if (this.score === 10) {
+                message = "Perfect score! You're a Bible expert!";
+            }
         }
         
         document.getElementById('resultsMessage').textContent = message;
@@ -3254,12 +3280,36 @@ class BibleTrivia {
                 };
             }
             
-            // Calculate credits earned
-            const creditsEarned = this.score < 3 ? 0 : 
-                                (this.score >= 3 && this.score <= 4) ? 1 :
-                                (this.score >= 5 && this.score <= 6) ? 3 :
-                                (this.score === 7) ? 5 :
-                                (this.score >= 8 && this.score <= 9) ? 10 : 20;
+            // Calculate credits earned based on percentage of maximum
+            // Get maximum credits from Credit_Manager table
+            let MAX_CREDITS = 20; // Default fallback
+            try {
+                const { data: creditData, error: creditError } = await supabase
+                    .from('Credit_Manager')
+                    .select('credit_amount')
+                    .eq('app_name', 'Bible Trivia')
+                    .eq('transaction_type', 'credit')
+                    .maybeSingle();
+                
+                if (!creditError && creditData && creditData.credit_amount > 0) {
+                    MAX_CREDITS = creditData.credit_amount;
+                }
+            } catch (error) {
+                console.warn('Could not fetch max credits from Credit_Manager, using default:', error);
+            }
+            
+            let creditsEarned = 0;
+            
+            if (this.score >= 3) {
+                // Calculate credits as percentage of maximum, rounded to nearest whole number
+                const percentage = (this.score / 10) * 100;
+                creditsEarned = Math.round((percentage / 100) * MAX_CREDITS);
+                
+                // Ensure minimum of 1 credit if score is 3 or more
+                if (creditsEarned < 1) {
+                    creditsEarned = 1;
+                }
+            }
             
             // Calculate percentage correct
             const percentageCorrect = (this.score / 10) * 100;
