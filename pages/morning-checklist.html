@@ -87,6 +87,21 @@
             flex-shrink: 0;
         }
         
+        #launchTimeClickable,
+        #countdownDisplay {
+            transition: opacity 0.2s ease;
+        }
+        
+        #launchTimeClickable:hover,
+        #countdownDisplay:hover {
+            opacity: 0.7;
+        }
+        
+        #launchTimeClickable:active,
+        #countdownDisplay:active {
+            opacity: 0.5;
+        }
+        
         .checklist-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -330,29 +345,26 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <!-- Monthly Memory Verse Display - At the very top -->
-            <div id="memoryVerseDisplay" style="font-size: 1.3rem; font-weight: 700; color: #333; margin-bottom: 12px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 3px solid #DAA520; border-radius: 10px; text-align: center; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
-                <div style="color: #CC5500; font-size: 1rem; margin-bottom: 8px; font-weight: 700;">📖 Monthly Memory Verse</div>
-                <div id="memoryVerseText" style="font-size: 1.4rem; font-weight: 700; color: #333; font-style: italic;"></div>
-            </div>
-            
             <!-- Date and Time Display -->
             <div class="checklist-header" style="text-align: center;">
                 <div id="dateTimeDisplay" style="font-size: 1.2rem; font-weight: 700; color: #CC5500; margin-bottom: 4px;">
                     <span id="currentDate"></span> <span style="margin: 0 20px; color: #999;">|</span> <span id="currentTime" style="font-family: 'Courier New', monospace; color: #DAA520;"></span>
                 </div>
                 
-                <!-- Launch Time and Countdown -->
+                <!-- Launch Time and Countdown (Clickable) -->
                 <div style="font-size: 4rem; font-weight: 700; margin-top: 4px;">
-                    <span style="color: #666; font-size: 4rem;">Launch: <span id="launchTimeDisplay" style="color: #CC5500;"></span></span>
+                    <span style="color: #666; font-size: 4rem; cursor: pointer;" id="launchTimeClickable" title="Click to change launch time">Launch: <span id="launchTimeDisplay" style="color: #CC5500;"></span></span>
                     <span style="margin: 0 30px; color: #999; font-size: 4rem;">|</span>
-                    <span id="countdownDisplay" style="font-family: 'Courier New', monospace; font-size: 4rem;">
+                    <span id="countdownDisplay" style="font-family: 'Courier New', monospace; font-size: 4rem; cursor: pointer;" title="Click to change launch time">
                         <span id="countdownText" class="countdown-green">Loading...</span>
                     </span>
                 </div>
-                <div style="margin-top: 4px;">
-                    <button id="changeLaunchTimeBtn" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.75rem;">Change Launch Time</button>
-                </div>
+            </div>
+            
+            <!-- Monthly Memory Verse Display - Below timer, above user boxes -->
+            <div id="memoryVerseDisplay" style="font-size: 1.3rem; font-weight: 700; color: #333; margin: 12px 0; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 3px solid #DAA520; border-radius: 10px; text-align: center; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+                <div style="color: #CC5500; font-size: 1rem; margin-bottom: 8px; font-weight: 700;">📖 Monthly Memory Verse</div>
+                <div id="memoryVerseText" style="font-size: 1.4rem; font-weight: 700; color: #333; font-style: italic;"></div>
             </div>
             
             <div id="checklistGrid" class="checklist-grid">

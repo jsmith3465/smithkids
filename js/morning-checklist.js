@@ -126,8 +126,12 @@ async function checkAdminAccess() {
     document.addEventListener('click', unlockAudio, { once: false });
     document.addEventListener('touchstart', unlockAudio, { once: false });
     
-    // Add launch time change button listener
-    document.getElementById('changeLaunchTimeBtn').addEventListener('click', () => {
+    // Make launch time and countdown clickable to change launch time
+    document.getElementById('launchTimeClickable').addEventListener('click', () => {
+        showLaunchTimeModal();
+    });
+    
+    document.getElementById('countdownDisplay').addEventListener('click', () => {
         showLaunchTimeModal();
     });
     
