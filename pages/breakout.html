@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .breakout-container {
+            max-width: 800px;
+        }
+        
+        .game-header {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .game-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+            margin-bottom: 10px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #DAA520;
+        }
+        
+        .game-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .game-canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #000;
+            border: 5px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        #breakoutCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #000;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 2px solid #DAA520;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover:not(:disabled) {
+            background: #DAA520;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .game-message {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .game-message.game-over {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        
+        .game-message.win {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            position: relative;
+            display: none;
+        }
+        
+        .instructions.show {
+            display: block;
+        }
+        
+        .instructions h3 {
+            color: #CC5500;
+            margin-bottom: 10px;
+            margin-right: 30px;
+        }
+        
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .instructions-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .instructions-close:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .instructions-link {
+            color: #DAA520;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+        
+        .instructions-link:hover {
+            color: #CC5500;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .control-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container breakout-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h1 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Breakout</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="game-header">
+                <div class="game-title">🎾 Breakout</div>
+                <div class="game-info">
+                    <div class="info-item">
+                        <div class="info-label">Score</div>
+                        <div class="info-value" id="scoreDisplay">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Lives</div>
+                        <div class="info-value" id="livesDisplay">3</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Level</div>
+                        <div class="info-value" id="levelDisplay">1</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-section">
+                <div class="game-canvas-container">
+                    <canvas id="breakoutCanvas" width="600" height="400"></canvas>
+                </div>
+                
+                <div id="gameMessage"></div>
+                
+                <div class="control-buttons">
+                    <button class="control-btn" id="leftBtn">← Left</button>
+                    <button class="control-btn" id="rightBtn">→ Right</button>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="startBtn" class="btn btn-primary">Start Game</button>
+                    <button id="pauseBtn" class="btn btn-secondary hidden">Pause</button>
+                </div>
+                
+                <a href="#" id="instructionsLink" class="instructions-link">View details on how to play</a>
+                
+                <div class="instructions" id="instructions">
+                    <button class="instructions-close" id="instructionsClose">×</button>
+                    <h3>How to Play:</h3>
+                    <ul>
+                        <li>Use ← → arrow keys, A/D keys, or buttons to move the paddle</li>
+                        <li>Move the paddle to bounce the ball and break all the bricks</li>
+                        <li>Don't let the ball fall below the paddle - you'll lose a life!</li>
+                        <li>Break all bricks to advance to the next level</li>
+                        <li>You have 3 lives - use them wisely!</li>
+                        <li>Different colored bricks are worth different points</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/profile-menu.js"></script>
+    <script type="module" src="../js/breakout.js"></script>
+</body>
+</html>
+
