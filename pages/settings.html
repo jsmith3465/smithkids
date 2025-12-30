@@ -215,17 +215,17 @@
             
             <!-- Tab Navigation -->
             <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="general" id="generalTabBtn">Change Password</button>
+                <button class="settings-tab active" data-tab="password" id="passwordTabBtn">General Settings</button>
+                <button class="settings-tab" data-tab="general" id="generalTabBtn">Change Password</button>
                 <button class="settings-tab" data-tab="users" id="usersTabBtn">User Management</button>
                 <button class="settings-tab" data-tab="memory" id="memoryTabBtn">Monthly Memory Verse</button>
-                <button class="settings-tab" data-tab="password">General Settings</button>
                 <!-- Future tabs can be added here -->
             </div>
             
-            <!-- General Settings Tab -->
-            <div id="generalTab" class="tab-content active">
+            <!-- General Settings Tab (Pin Code and Launch Time) -->
+            <div id="passwordTab" class="tab-content active">
                 <div class="settings-section">
-                    <h2>Change Password</h2>
+                    <h2>Pin Code</h2>
                     <p style="color: #666; margin-bottom: 20px;">
                         Update your account password. You'll need to enter your current password to make changes.
                     </p>
@@ -252,10 +252,10 @@
                 </div>
             </div>
             
-            <!-- General Settings Tab -->
-            <div id="passwordTab" class="tab-content">
+            <!-- Change Password Tab -->
+            <div id="generalTab" class="tab-content">
                 <div class="settings-section">
-                    <h2>Pin Code</h2>
+                    <h2>Change Password</h2>
                     <p style="color: #666; margin-bottom: 20px;">
                         Set a pin code that will be required to post checklist changes and award credits. 
                         This pin code helps ensure only authorized admins can post checklist updates.

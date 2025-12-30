@@ -57,7 +57,8 @@ async function checkAdminAccess() {
     
     // Hide admin-only tabs for standard users
     if (session.userType !== 'admin') {
-        document.getElementById('generalTabBtn').style.display = 'none';
+        document.getElementById('passwordTabBtn').style.display = 'none';
+        document.getElementById('generalTabBtn').style.display = 'block'; // Change Password is visible to all
         document.getElementById('usersTabBtn').style.display = 'none';
         document.getElementById('memoryTabBtn').style.display = 'none';
     }
@@ -87,6 +88,12 @@ async function checkAdminAccess() {
         document.getElementById('saveMemoryVerseBtn').addEventListener('click', async () => {
             await saveMemoryVerse();
         });
+        
+        // Set General Settings as default active tab for admin
+        switchTab('password');
+    } else {
+        // Set Change Password as default active tab for standard users
+        switchTab('general');
     }
     
     // Add password change listener (for all users)
@@ -124,6 +131,12 @@ function switchTab(tabName) {
     } else if (tabName === 'memory') {
         loadMemoryVerses();
         initializeMemoryVerseForm();
+    } else if (tabName === 'password') {
+        // General Settings tab - load settings if admin
+        const session = window.authStatus?.getSession();
+        if (session && session.userType === 'admin') {
+            loadSettings();
+        }
     }
 }
 
