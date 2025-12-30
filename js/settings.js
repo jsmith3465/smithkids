@@ -131,6 +131,34 @@ function switchTab(tabName) {
     } else if (tabName === 'memory') {
         loadMemoryVerses();
         initializeMemoryVerseForm();
+        
+        // Add show/hide form button listener
+        const showBtn = document.getElementById('showAddMemoryVerseBtn');
+        if (showBtn) {
+            // Remove existing listener if any
+            const newBtn = showBtn.cloneNode(true);
+            showBtn.parentNode.replaceChild(newBtn, showBtn);
+            
+            newBtn.addEventListener('click', () => {
+                const form = document.getElementById('addMemoryVerseForm');
+                if (form.style.display === 'none') {
+                    form.style.display = 'block';
+                    newBtn.textContent = 'Cancel';
+                } else {
+                    form.style.display = 'none';
+                    newBtn.textContent = 'Add Memory Verse';
+                    // Clear form
+                    document.getElementById('memoryVerseMonth').value = '';
+                    document.getElementById('memoryVerseYear').value = '';
+                    document.getElementById('startBook').value = '';
+                    document.getElementById('startChapter').value = '';
+                    document.getElementById('startVerse').value = '';
+                    document.getElementById('endBook').value = '';
+                    document.getElementById('endChapter').value = '';
+                    document.getElementById('endVerse').value = '';
+                }
+            });
+        }
     } else if (tabName === 'password') {
         // General Settings tab - load settings if admin
         const session = window.authStatus?.getSession();
@@ -861,7 +889,7 @@ async function saveMemoryVerse() {
             showSuccess('Memory verse saved successfully!');
         }
         
-        // Clear form
+        // Clear form and hide it
         document.getElementById('memoryVerseMonth').value = '';
         document.getElementById('memoryVerseYear').value = '';
         document.getElementById('startBook').value = '';
@@ -871,6 +899,10 @@ async function saveMemoryVerse() {
         document.getElementById('endChapter').value = '';
         document.getElementById('endVerse').value = '';
         
+        // Hide form and reset button
+        document.getElementById('addMemoryVerseForm').style.display = 'none';
+        document.getElementById('showAddMemoryVerseBtn').textContent = 'Add Memory Verse';
+        
         // Reload list
         await loadMemoryVerses();
         
@@ -879,7 +911,7 @@ async function saveMemoryVerse() {
         showError('Error saving memory verse. Please try again.');
     } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Memory Verse';
+        saveBtn.textContent = 'Add Verse';
     }
 }
 

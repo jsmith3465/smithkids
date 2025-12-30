@@ -227,36 +227,6 @@
                 <div class="settings-section">
                     <h2>Pin Code</h2>
                     <p style="color: #666; margin-bottom: 20px;">
-                        Update your account password. You'll need to enter your current password to make changes.
-                    </p>
-                    
-                    <div class="input-group">
-                        <label for="currentPassword">Current Password:</label>
-                        <input type="password" id="currentPassword" placeholder="Enter your current password" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="newPassword">New Password:</label>
-                        <input type="password" id="newPassword" placeholder="Enter new password" required>
-                        <div class="help-text">Choose a strong password that you haven't used before.</div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="confirmNewPassword">Confirm New Password:</label>
-                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password" required>
-                    </div>
-                    
-                    <button id="savePasswordBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                        Change Password
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Change Password Tab -->
-            <div id="generalTab" class="tab-content">
-                <div class="settings-section">
-                    <h2>Change Password</h2>
-                    <p style="color: #666; margin-bottom: 20px;">
                         Set a pin code that will be required to post checklist changes and award credits. 
                         This pin code helps ensure only authorized admins can post checklist updates.
                     </p>
@@ -291,6 +261,36 @@
                     
                     <button id="saveLaunchTimeBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
                         Save Launch Time
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Change Password Tab -->
+            <div id="generalTab" class="tab-content">
+                <div class="settings-section">
+                    <h2>Change Password</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Update your account password. You'll need to enter your current password to make changes.
+                    </p>
+                    
+                    <div class="input-group">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" placeholder="Enter your current password" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password" required>
+                        <div class="help-text">Choose a strong password that you haven't used before.</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirmNewPassword">Confirm New Password:</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password" required>
+                    </div>
+                    
+                    <button id="savePasswordBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Change Password
                     </button>
                 </div>
             </div>
@@ -349,70 +349,73 @@
                         Set a memory verse for a specific month. Users can memorize the verse and earn 30 credits upon approval.
                     </p>
                     
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label for="memoryVerseMonth">Month:</label>
-                            <select id="memoryVerseMonth" required>
-                                <option value="">Select month...</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
+                    <!-- Add Memory Verse Form (Hidden by default) -->
+                    <div id="addMemoryVerseForm" style="display: none;">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="memoryVerseMonth">Month:</label>
+                                <select id="memoryVerseMonth" required>
+                                    <option value="">Select month...</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="memoryVerseYear">Year:</label>
+                                <select id="memoryVerseYear" required>
+                                    <option value="">Select year...</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label for="memoryVerseYear">Year:</label>
-                            <select id="memoryVerseYear" required>
-                                <option value="">Select year...</option>
-                            </select>
+                        
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="startBook">Starting Book:</label>
+                                <select id="startBook" required>
+                                    <option value="">Select a book...</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="startChapter">Starting Chapter:</label>
+                                <input type="number" id="startChapter" min="1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="startVerse">Starting Verse:</label>
+                                <input type="number" id="startVerse" min="1" required>
+                            </div>
                         </div>
+                        
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="endBook">Ending Book:</label>
+                                <select id="endBook" required>
+                                    <option value="">Select a book...</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="endChapter">Ending Chapter:</label>
+                                <input type="number" id="endChapter" min="1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="endVerse">Ending Verse:</label>
+                                <input type="number" id="endVerse" min="1" required>
+                            </div>
+                        </div>
+                        
+                        <button id="saveMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                            Add Verse
+                        </button>
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label for="startBook">Starting Book:</label>
-                            <select id="startBook" required>
-                                <option value="">Select a book...</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="startChapter">Starting Chapter:</label>
-                            <input type="number" id="startChapter" min="1" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="startVerse">Starting Verse:</label>
-                            <input type="number" id="startVerse" min="1" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label for="endBook">Ending Book:</label>
-                            <select id="endBook" required>
-                                <option value="">Select a book...</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="endChapter">Ending Chapter:</label>
-                            <input type="number" id="endChapter" min="1" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="endVerse">Ending Verse:</label>
-                            <input type="number" id="endVerse" min="1" required>
-                        </div>
-                    </div>
-                    
-                    <button id="saveMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                        Save Memory Verse
-                    </button>
                 </div>
                 
                 <div class="settings-section">
@@ -420,6 +423,9 @@
                     <div id="memoryVersesList">
                         <div class="loading">Loading memory verses...</div>
                     </div>
+                    <button id="showAddMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; margin-top: 20px;">
+                        Add Memory Verse
+                    </button>
                 </div>
             </div>
             
