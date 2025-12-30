@@ -139,6 +139,7 @@ async function loadEarnedBadges() {
             .order('First_Name', { ascending: true });
         
         if (usersError) {
+            console.error('Error fetching users:', usersError);
             throw usersError;
         }
         
@@ -149,14 +150,34 @@ async function loadEarnedBadges() {
         
         // Get all badges for all users (excluding Fruits of the Spirit)
         const fruitBadgeTypes = fruitsOfSpirit.map(f => f.id);
+        
+        // Get user UIDs
+        const userUids = users.map(u => u.UID);
+        
+        // If no users, return early
+        if (userUids.length === 0) {
+            earnedBadgesList.innerHTML = '<div class="no-badges">No standard users found.</div>';
+            return;
+        }
+        
+        console.log('Fetching badges for user UIDs:', userUids);
         const { data: allBadges, error: badgesError } = await supabase
             .from('User_Badges')
             .select('user_uid, badge_type, badge_name, earned_at')
-            .in('user_uid', users.map(u => u.UID));
+            .in('user_uid', userUids);
         
         if (badgesError) {
+            console.error('Error fetching badges:', badgesError);
+            console.error('Badges error details:', {
+                message: badgesError.message,
+                details: badgesError.details,
+                hint: badgesError.hint,
+                code: badgesError.code
+            });
             throw badgesError;
         }
+        
+        console.log('Fetched badges:', allBadges);
         
         // Filter out Fruits of the Spirit badges
         const achievementBadgesOnly = allBadges ? allBadges.filter(badge => !fruitBadgeTypes.includes(badge.badge_type)) : [];
@@ -233,7 +254,13 @@ async function loadEarnedBadges() {
         
     } catch (error) {
         console.error('Error loading earned badges:', error);
-        earnedBadgesList.innerHTML = '<div class="no-badges" style="color: #dc3545;">Error loading badge data. Please try again.</div>';
+        console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
+        earnedBadgesList.innerHTML = `<div class="no-badges" style="color: #dc3545;">Error loading badge data: ${error.message || 'Unknown error'}. Please check the console for details.</div>`;
     }
 }
 
@@ -258,17 +285,37 @@ async function loadFruitsOfSpirit() {
             return;
         }
         
+        // Get user UIDs
+        const userUids = users.map(u => u.UID);
+        
+        // If no users, return early
+        if (userUids.length === 0) {
+            fruitsBadgesList.innerHTML = '<div class="no-badges">No standard users found.</div>';
+            return;
+        }
+        
         // Get all Fruits of the Spirit badges
+        const fruitBadgeTypes = fruitsOfSpirit.map(f => f.id);
+        console.log('Fetching Fruits of the Spirit badges for user UIDs:', userUids, 'and badge types:', fruitBadgeTypes);
         const { data: allFruitBadges, error: badgesError } = await supabase
             .from('User_Badges')
             .select('user_uid, badge_type, badge_name, earned_at')
-            .in('user_uid', users.map(u => u.UID))
-            .in('badge_type', fruitsOfSpirit.map(f => f.id))
+            .in('user_uid', userUids)
+            .in('badge_type', fruitBadgeTypes)
             .order('earned_at', { ascending: false });
         
         if (badgesError) {
+            console.error('Error fetching Fruits of the Spirit badges:', badgesError);
+            console.error('Fruits badges error details:', {
+                message: badgesError.message,
+                details: badgesError.details,
+                hint: badgesError.hint,
+                code: badgesError.code
+            });
             throw badgesError;
         }
+        
+        console.log('Fetched Fruits of the Spirit badges:', allFruitBadges);
         
         // Group badges by user
         const userFruitsMap = new Map();
@@ -348,7 +395,13 @@ async function loadFruitsOfSpirit() {
         
     } catch (error) {
         console.error('Error loading Fruits of the Spirit:', error);
-        fruitsBadgesList.innerHTML = '<div class="no-badges" style="color: #dc3545;">Error loading Fruits of the Spirit data. Please try again.</div>';
+        console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
+        fruitsBadgesList.innerHTML = `<div class="no-badges" style="color: #dc3545;">Error loading Fruits of the Spirit data: ${error.message || 'Unknown error'}. Please check the console for details.</div>`;
     }
 }
 
