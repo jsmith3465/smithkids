@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Blast - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .block-blast-container {
+            max-width: min(95vw, 1400px);
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        @media (min-width: 1400px) {
+            .block-blast-container {
+                max-width: 1400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .block-blast-container {
+                max-width: 100%;
+                padding: 20px;
+            }
+        }
+        
+        .game-header {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .game-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+            margin-bottom: 10px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #DAA520;
+        }
+        
+        .game-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .game-canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: min(90vw, 600px);
+            margin: 0 auto;
+            background: #f0f0f0;
+            border: 5px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (min-width: 1400px) {
+            .game-canvas-container {
+                max-width: 600px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-canvas-container {
+                max-width: 100%;
+            }
+        }
+        
+        #blockBlastCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #f0f0f0;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 2px solid #DAA520;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover:not(:disabled) {
+            background: #DAA520;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .game-message {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .game-message.game-over {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        
+        .game-message.paused {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #DAA520;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            list-style: disc;
+            padding-left: 20px;
+            color: #666;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2.5rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 2rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="block-blast-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Block Blast</h1>
+                </div>
+                <div id="profileMenuContainer"></div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="game-header">
+                <div class="game-title">Block Blast</div>
+                <div class="game-info">
+                    <div class="info-item">
+                        <div class="info-label">Score</div>
+                        <div class="info-value" id="scoreDisplay">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Level</div>
+                        <div class="info-value" id="levelDisplay">1</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Blocks Cleared</div>
+                        <div class="info-value" id="blocksDisplay">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-section">
+                <div class="game-canvas-container">
+                    <canvas id="blockBlastCanvas" width="400" height="600"></canvas>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="startBtn" class="btn btn-primary">Start Game</button>
+                    <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                    <button id="pauseBtn" class="btn btn-secondary">Pause</button>
+                </div>
+                
+                <div id="gameMessage" class="game-message hidden"></div>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li><strong>Click blocks:</strong> Click on groups of 2 or more same-colored blocks to clear them</li>
+                    <li><strong>Goal:</strong> Clear as many blocks as possible to score points</li>
+                    <li><strong>Scoring:</strong> Larger groups give more points (2 blocks = 10pts, 3 blocks = 30pts, 4+ blocks = 50pts each)</li>
+                    <li><strong>Level Up:</strong> Clear a certain number of blocks to advance to the next level</li>
+                    <li><strong>Game Over:</strong> The game ends when no more moves are available</li>
+                    <li><strong>P:</strong> Pause/Resume game</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <p>Designed in Orlando by the Smith Kids</p>
+    </footer>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/profile-menu.js"></script>
+    <script type="module" src="../js/block-blast.js"></script>
+</body>
+</html>
+

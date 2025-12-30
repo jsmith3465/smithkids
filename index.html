@@ -157,7 +157,7 @@
             }
             
             .game-card {
-                padding: 20px;
+                padding: 15px;
             }
             
             .section-content {
@@ -190,8 +190,8 @@
         .game-card {
             background: white;
             border: 3px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 15px;
             text-decoration: none;
             color: #333;
             transition: all 0.3s ease;
@@ -209,28 +209,29 @@
         }
         
         .game-card-icon {
-            font-size: 4rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem;
+            margin-bottom: 8px;
         }
         
         .game-card-title {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         
         .game-card-description {
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            line-height: 1.3;
         }
         
         .game-card-credits {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 6px 10px;
+            border-radius: 5px;
             margin-top: auto;
             display: inline-block;
             text-align: center;
@@ -256,13 +257,13 @@
         
         @media (max-width: 768px) {
             .game-card {
-                padding: 20px 15px;
+                padding: 12px 10px;
             }
             
             .game-card-credits {
-                font-size: 0.85rem;
-                padding: 6px 10px;
-                margin-top: 8px;
+                font-size: 0.7rem;
+                padding: 5px 8px;
+                margin-top: 6px;
             }
         }
         
@@ -402,6 +403,12 @@
                         <div class="game-card-title">Pac-Man</div>
                         <div class="game-card-description">Classic arcade maze game! Eat all the dots while avoiding ghosts. Eat power pellets to turn the tables and eat the ghosts for bonus points!</div>
                         <div class="game-card-credits cost" data-app-name="Pac-Man" data-transaction-type="debit">💰 Costs 3 credits to play</div>
+                    </a>
+                    <a href="pages/block-blast.html" class="game-card">
+                        <div class="game-card-icon">💥</div>
+                        <div class="game-card-title">Block Blast</div>
+                        <div class="game-card-description">Match and clear blocks! Click groups of same-colored blocks to clear them. Larger groups score more points!</div>
+                        <div class="game-card-credits cost" data-app-name="Block Blast" data-transaction-type="debit">💰 Costs 5 credits to play</div>
                     </a>
                 </div>
             </div>

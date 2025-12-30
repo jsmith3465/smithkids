@@ -261,6 +261,13 @@ async function updateCreditDisplays() {
         if (pacmanEl) {
             pacmanEl.textContent = `💰 Costs ${pacmanCost} credit${pacmanCost !== 1 ? 's' : ''} to play`;
         }
+        
+        // Update Block Blast
+        const blockBlastCost = await getCreditAmount('Block Blast', 'debit', 5);
+        const blockBlastEl = document.querySelector('a[href="pages/block-blast.html"] .game-card-credits');
+        if (blockBlastEl) {
+            blockBlastEl.textContent = `💰 Costs ${blockBlastCost} credit${blockBlastCost !== 1 ? 's' : ''} to play`;
+        }
     } catch (error) {
         console.error('Error updating credit displays:', error);
     }

@@ -124,6 +124,25 @@ CREATE INDEX idx_pacman_scores_user ON pacman_scores(user_uid);
 CREATE INDEX idx_pacman_scores_created ON pacman_scores(created_at);
 ```
 
+## block_blast_scores Table
+
+Create this table for tracking Block Blast game scores:
+
+```sql
+CREATE TABLE block_blast_scores (
+    score_id SERIAL PRIMARY KEY,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
+    score INTEGER NOT NULL,
+    level INTEGER NOT NULL DEFAULT 1,
+    blocks_cleared INTEGER NOT NULL DEFAULT 0,
+    game_duration_seconds INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_block_blast_scores_user ON block_blast_scores(user_uid);
+CREATE INDEX idx_block_blast_scores_created ON block_blast_scores(created_at);
+```
+
 ## Unified_Approvals Table
 
 Create this table for unified approval tracking of workouts, chores, and memory verses:
