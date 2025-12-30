@@ -267,6 +267,7 @@
                 <div class="credits-tabs">
                     <button class="credits-tab active" data-tab="add">Add Credits</button>
                     <button class="credits-tab" data-tab="balances">View Balances</button>
+                    <button class="credits-tab" data-tab="history">Credit History</button>
                     <button class="credits-tab" data-tab="quick">Quick Link</button>
                 </div>
                 
@@ -303,6 +304,34 @@
                         <h2 style="margin-bottom: 20px;">All Users Credit Balances</h2>
                         <div id="allCreditsList">
                             <div class="loading">Loading credit balances...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Credit History Tab -->
+                <div id="historyTab" class="tab-content">
+                    <!-- Credit History Section -->
+                    <div class="credits-form">
+                        <h2 style="margin-bottom: 20px;">User Credit History</h2>
+                        <p style="color: #666; margin-bottom: 15px;">Select a user to view their complete credit transaction history.</p>
+                        
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label for="historyUserSelect" style="display: block; margin-bottom: 10px; font-weight: 600;">Select User:</label>
+                            <select id="historyUserSelect" class="chores-input" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem;">
+                                <option value="">Select a user...</option>
+                            </select>
+                        </div>
+                        
+                        <div id="userHistorySection" style="display: none;">
+                            <div class="balance-card" style="margin-bottom: 20px;">
+                                <div class="balance-label">Current Credit Balance</div>
+                                <div class="balance-amount" id="historyUserBalance">0</div>
+                            </div>
+                            
+                            <h3 style="margin-bottom: 15px;">Transaction History</h3>
+                            <div id="historyTransactionsList">
+                                <div class="loading">Loading transactions...</div>
+                            </div>
                         </div>
                     </div>
                 </div>

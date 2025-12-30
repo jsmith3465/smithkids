@@ -3013,24 +3013,36 @@ class BibleTrivia {
         
         document.getElementById('resultsMessage').textContent = message;
         
-        // Award credits if earned
+        // Award credits if earned (always call to ensure proper recording)
         if (creditsEarned > 0) {
             const creditsEarnedDiv = document.getElementById('creditsEarned');
             creditsEarnedDiv.textContent = `You earned ${creditsEarned} credits!`;
             creditsEarnedDiv.style.display = 'block';
             
-            await this.awardCredits(creditsEarned);
+            // Award credits and record transaction
+            const creditsAwarded = await this.awardCredits(creditsEarned);
+            if (!creditsAwarded) {
+                console.error('Failed to award credits for Bible Trivia game');
+            }
         } else {
             document.getElementById('creditsEarned').style.display = 'none';
         }
         
-        // Save game result
+        // Save game result (this also records credits_earned in the results table)
         await this.saveGameResult();
     }
     
     async awardCredits(amount) {
         const session = window.authStatus?.getSession();
-        if (!session) return;
+        if (!session || !session.uid) {
+            console.error('No user session found - cannot award credits');
+            return false;
+        }
+        
+        if (amount <= 0) {
+            console.warn('Attempted to award 0 or negative credits');
+            return false;
+        }
         
         try {
             // Get current balance
@@ -3040,9 +3052,14 @@ class BibleTrivia {
                 .eq('user_uid', session.uid)
                 .single();
             
+            if (fetchError && fetchError.code !== 'PGRST116') {
+                throw fetchError;
+            }
+            
             const oldBalance = existingCredit?.balance || 0;
             const newBalance = oldBalance + amount;
             
+            // Update or create credit record
             if (existingCredit) {
                 // Update existing balance
                 const { error: updateError } = await supabase
@@ -3053,7 +3070,10 @@ class BibleTrivia {
                     })
                     .eq('credit_id', existingCredit.credit_id);
                 
-                if (updateError) throw updateError;
+                if (updateError) {
+                    console.error('Error updating credit balance:', updateError);
+                    throw updateError;
+                }
             } else {
                 // Create new credit record
                 const { error: insertError } = await supabase
@@ -3063,25 +3083,47 @@ class BibleTrivia {
                         balance: amount 
                     });
                 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    console.error('Error creating credit record:', insertError);
+                    throw insertError;
+                }
             }
             
-            // Record transaction
-            const { error: transError } = await supabase
+            // Record transaction in credit history
+            const transactionDescription = `Bible Trivia: Scored ${this.score}/10 correct (${amount} credit${amount !== 1 ? 's' : ''} earned)`;
+            
+            const { data: transactionData, error: transError } = await supabase
                 .from('Credit_Transactions')
                 .insert({
-                    from_user_uid: session.uid,
+                    from_user_uid: null, // Self-earned credits have no from_user
                     to_user_uid: session.uid,
                     amount: amount,
                     transaction_type: 'credit_added',
                     game_type: 'bible_trivia',
-                    description: `Bible Trivia: Scored ${this.score}/10`
-                });
+                    description: transactionDescription
+                })
+                .select()
+                .single();
             
-            if (transError) throw transError;
+            if (transError) {
+                console.error('Error recording credit transaction:', transError);
+                throw transError;
+            }
+            
+            console.log(`Successfully awarded ${amount} credits for Bible Trivia. Transaction ID: ${transactionData?.transaction_id}`);
+            console.log(`Old balance: ${oldBalance}, New balance: ${newBalance}`);
+            
+            // Update profile menu if available to refresh credit balance display
+            if (window.createProfileMenu) {
+                setTimeout(() => window.createProfileMenu(), 500);
+            }
+            
+            return true;
             
         } catch (error) {
             console.error('Error awarding credits:', error);
+            console.error('Error details:', error.message, error.stack);
+            return false;
         }
     }
     

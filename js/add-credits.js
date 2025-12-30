@@ -64,6 +64,7 @@ async function checkUserAccess() {
         await loadQuickAccessLink();
         await loadAllUsers();
         await loadAllCredits();
+        await loadHistoryUsers();
         setupAdminEventListeners();
     } else {
         // Show standard user content
@@ -538,6 +539,7 @@ function setupAdminEventListeners() {
     const selectAllBtn = document.getElementById('selectAllBtn');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const addCreditsBtn = document.getElementById('addCreditsBtn');
+    const historyUserSelect = document.getElementById('historyUserSelect');
     
     selectAllBtn.addEventListener('click', () => {
         document.querySelectorAll('#userCheckboxList input[type="checkbox"]').forEach(cb => {
@@ -554,6 +556,18 @@ function setupAdminEventListeners() {
     addCreditsBtn.addEventListener('click', async () => {
         await addCredits();
     });
+    
+    // History user selection
+    if (historyUserSelect) {
+        historyUserSelect.addEventListener('change', async (e) => {
+            const selectedUserId = e.target.value;
+            if (selectedUserId) {
+                await loadUserCreditHistory(parseInt(selectedUserId));
+            } else {
+                document.getElementById('userHistorySection').style.display = 'none';
+            }
+        });
+    }
 }
 
 function switchTab(tabName) {
@@ -571,6 +585,10 @@ function switchTab(tabName) {
     // Load data for the selected tab if needed
     if (tabName === 'balances') {
         loadAllCredits();
+    } else if (tabName === 'history') {
+        // Reset history view when switching to tab
+        document.getElementById('historyUserSelect').value = '';
+        document.getElementById('userHistorySection').style.display = 'none';
     }
 }
 
@@ -849,5 +867,159 @@ function generateToken() {
     }
     
     return token;
+}
+
+async function loadHistoryUsers() {
+    const historyUserSelect = document.getElementById('historyUserSelect');
+    if (!historyUserSelect) return;
+    
+    try {
+        const { data: users, error } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .eq('user_type', 'standard')
+            .order('First_Name', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Clear existing options except the first one
+        historyUserSelect.innerHTML = '<option value="">Select a user...</option>';
+        
+        if (!users || users.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No standard users found';
+            historyUserSelect.appendChild(option);
+            return;
+        }
+        
+        users.forEach(user => {
+            const displayName = (user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name} (${user.Username})`
+                : user.Username;
+            
+            const option = document.createElement('option');
+            option.value = user.UID;
+            option.textContent = displayName;
+            historyUserSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading history users:', error);
+        historyUserSelect.innerHTML = '<option value="">Error loading users</option>';
+    }
+}
+
+async function loadUserCreditHistory(userId) {
+    const userHistorySection = document.getElementById('userHistorySection');
+    const historyUserBalance = document.getElementById('historyUserBalance');
+    const historyTransactionsList = document.getElementById('historyTransactionsList');
+    
+    if (!userHistorySection || !historyUserBalance || !historyTransactionsList) return;
+    
+    try {
+        // Show the section
+        userHistorySection.style.display = 'block';
+        
+        // Load user balance
+        const { data: creditData, error: creditError } = await supabase
+            .from('User_Credits')
+            .select('balance')
+            .eq('user_uid', userId)
+            .single();
+        
+        if (creditError && creditError.code !== 'PGRST116') {
+            console.error('Error loading balance:', creditError);
+        }
+        
+        const balance = creditData ? creditData.balance : 0;
+        historyUserBalance.textContent = balance;
+        
+        // Load transactions
+        historyTransactionsList.innerHTML = '<div class="loading">Loading transactions...</div>';
+        
+        const { data: transactions, error: transError } = await supabase
+            .from('Credit_Transactions')
+            .select(`
+                transaction_id,
+                from_user_uid,
+                to_user_uid,
+                amount,
+                transaction_type,
+                game_type,
+                description,
+                created_at,
+                Users!Credit_Transactions_from_user_uid_fkey(First_Name, Last_Name, Username)
+            `)
+            .eq('to_user_uid', userId)
+            .order('created_at', { ascending: false })
+            .limit(500); // Show more transactions for admin view
+        
+        if (transError) throw transError;
+        
+        if (!transactions || transactions.length === 0) {
+            historyTransactionsList.innerHTML = '<div class="no-data">No transactions found for this user.</div>';
+            return;
+        }
+        
+        // Build table
+        const table = document.createElement('table');
+        table.className = 'transactions-table';
+        
+        // Header
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Date/Time</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Amount</th>
+        `;
+        table.appendChild(headerRow);
+        
+        // Transaction rows
+        transactions.forEach(trans => {
+            const row = document.createElement('tr');
+            
+            const date = new Date(trans.created_at);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let typeText = '';
+            let description = trans.description || '';
+            
+            if (trans.transaction_type === 'credit_added') {
+                typeText = 'Credit Earned';
+                const fromUser = trans.Users;
+                if (fromUser) {
+                    const fromName = (fromUser.First_Name && fromUser.Last_Name) 
+                        ? `${fromUser.First_Name} ${fromUser.Last_Name}` 
+                        : fromUser.Username;
+                    description = description || `Added by ${fromName}`;
+                }
+            } else if (trans.transaction_type === 'game_payment') {
+                typeText = 'Credit Spent';
+                const gameType = trans.game_type || 'game';
+                description = description || `Played ${gameType.replace('_', ' ')}`;
+            } else if (trans.transaction_type === 'credit_adjusted') {
+                typeText = 'Balance Adjusted';
+            }
+            
+            const amountClass = trans.transaction_type === 'credit_added' ? 'transaction-credit' : 'transaction-debit';
+            const amountSign = trans.transaction_type === 'credit_added' ? '+' : '-';
+            
+            row.innerHTML = `
+                <td>${dateStr}</td>
+                <td>${typeText}</td>
+                <td>${description}</td>
+                <td class="${amountClass}">${amountSign}${trans.amount}</td>
+            `;
+            table.appendChild(row);
+        });
+        
+        historyTransactionsList.innerHTML = '';
+        historyTransactionsList.appendChild(table);
+        
+    } catch (error) {
+        console.error('Error loading user credit history:', error);
+        historyTransactionsList.innerHTML = '<div class="no-data">Error loading transaction history.</div>';
+    }
 }
 
