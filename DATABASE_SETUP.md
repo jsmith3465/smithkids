@@ -126,6 +126,25 @@ CREATE TABLE User_Badges (
 -- Indexes for better query performance
 CREATE INDEX idx_user_badges_user ON User_Badges(user_uid);
 CREATE INDEX idx_user_badges_type ON User_Badges(badge_type);
+
+## badge_notifications Table
+
+Create this table for tracking badge notifications that can be displayed across all pages:
+
+```sql
+CREATE TABLE badge_notifications (
+    id SERIAL PRIMARY KEY,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
+    badge_type TEXT NOT NULL,
+    badge_name TEXT NOT NULL,
+    credits_awarded INTEGER NOT NULL DEFAULT 20,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better query performance
+CREATE INDEX idx_badge_notifications_user ON badge_notifications(user_uid);
+CREATE INDEX idx_badge_notifications_created ON badge_notifications(created_at);
+```
 CREATE INDEX idx_user_badges_earned_at ON User_Badges(earned_at);
 CREATE INDEX idx_user_badges_user_type ON User_Badges(user_uid, badge_type);
 ```

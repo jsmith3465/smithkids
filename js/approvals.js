@@ -252,6 +252,9 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
                 .eq('id', sourceId);
             
             if (verseError) throw verseError;
+            
+            // Check for 3 consecutive months bonus
+            await checkAndAwardConsecutiveMonthsBonus(approval.user_uid, sourceId);
         }
         
         // Award credits to user
@@ -316,6 +319,22 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
         // Update profile menu counter
         if (window.createProfileMenu) {
             setTimeout(() => window.createProfileMenu(), 500);
+        }
+        
+        // Check for badge eligibility
+        try {
+            const { checkAllBadges } = await import('./badge-checker.js');
+            let badgeContext = 'general';
+            if (approvalType === 'workout') {
+                badgeContext = 'workout_approved';
+            } else if (approvalType === 'chore') {
+                badgeContext = 'chore_approved';
+            } else if (approvalType === 'memory_verse') {
+                badgeContext = 'memory_verse_approved';
+            }
+            await checkAllBadges(approval.user_uid, badgeContext);
+        } catch (error) {
+            console.error('Error checking badges:', error);
         }
         
     } catch (error) {
@@ -428,6 +447,16 @@ async function approveAllItems() {
                 .in('id', verseIds);
             
             if (verseError) throw verseError;
+            
+            // Check for 3 consecutive months bonus for each user who had memory verses approved
+            const uniqueUserIds = [...new Set(memoryVerses.map(v => v.user_uid))];
+            for (const userId of uniqueUserIds) {
+                const userVerses = memoryVerses.filter(v => v.user_uid === userId);
+                // Check bonus for each verse submission (in case multiple were approved)
+                for (const verse of userVerses) {
+                    await checkAndAwardConsecutiveMonthsBonus(userId, verse.source_id);
+                }
+            }
         }
         
         // Update credits for all users
@@ -722,4 +751,157 @@ function showError(message) {
     errorMsg.textContent = message;
     errorMsg.style.display = 'block';
     document.getElementById('successMessage').style.display = 'none';
+}
+
+// Check if user has 3 consecutive months of approved memory verses and award bonus
+async function checkAndAwardConsecutiveMonthsBonus(userUid, currentSubmissionId) {
+    try {
+        // Get the current submission's month_year
+        const { data: currentSubmission, error: currentError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .select('month_year')
+            .eq('id', currentSubmissionId)
+            .single();
+        
+        if (currentError || !currentSubmission) {
+            console.error('Error fetching current submission:', currentError);
+            return;
+        }
+        
+        // Get all approved memory verse submissions for this user, ordered by month_year descending
+        const { data: approvedSubmissions, error: submissionsError } = await supabase
+            .from('Memory_Verse_Submissions')
+            .select('month_year, approved_at')
+            .eq('user_uid', userUid)
+            .eq('status', 'approved')
+            .order('month_year', { ascending: false })
+            .limit(3);
+        
+        if (submissionsError) {
+            console.error('Error fetching approved submissions:', submissionsError);
+            return;
+        }
+        
+        // Need at least 3 approved submissions
+        if (!approvedSubmissions || approvedSubmissions.length < 3) {
+            return;
+        }
+        
+        // Check if the last 3 submissions are consecutive months
+        const months = approvedSubmissions.map(s => s.month_year).sort(); // Sort ascending for easier checking
+        
+        // Parse dates and check if they're consecutive
+        const monthDates = months.map(monthYear => {
+            const [year, month] = monthYear.split('-').map(Number);
+            return new Date(year, month - 1, 1); // Create date for first day of month
+        });
+        
+        // Check if dates are consecutive (each month is exactly 1 month after the previous)
+        let isConsecutive = true;
+        for (let i = 1; i < monthDates.length; i++) {
+            const prevMonth = monthDates[i - 1];
+            const currentMonth = monthDates[i];
+            
+            // Calculate expected next month
+            const expectedNextMonth = new Date(prevMonth);
+            expectedNextMonth.setMonth(expectedNextMonth.getMonth() + 1);
+            
+            // Check if current month matches expected next month
+            if (currentMonth.getTime() !== expectedNextMonth.getTime()) {
+                isConsecutive = false;
+                break;
+            }
+        }
+        
+        if (!isConsecutive) {
+            return; // Not consecutive, no bonus
+        }
+        
+        // Check if we've already awarded this bonus for this 3-month streak
+        // We'll check if there's already a transaction for "3 consecutive months bonus" 
+        // for this user with a recent date (within last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const { data: existingBonus, error: bonusCheckError } = await supabase
+            .from('Credit_Transactions')
+            .select('transaction_id')
+            .eq('to_user_uid', userUid)
+            .eq('game_type', 'memory_verse_consecutive_bonus')
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .maybeSingle();
+        
+        if (bonusCheckError && bonusCheckError.code !== 'PGRST116') {
+            console.error('Error checking existing bonus:', bonusCheckError);
+            return;
+        }
+        
+        // If bonus already awarded recently, don't award again
+        if (existingBonus) {
+            return;
+        }
+        
+        // Award 50 credit bonus
+        const BONUS_AMOUNT = 50;
+        
+        // Get current balance
+        const { data: existingCredit, error: creditFetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userUid)
+            .single();
+        
+        if (creditFetchError && creditFetchError.code !== 'PGRST116') {
+            console.error('Error fetching credit balance:', creditFetchError);
+            return;
+        }
+        
+        const oldBalance = existingCredit?.balance || 0;
+        const newBalance = oldBalance + BONUS_AMOUNT;
+        
+        // Update balance
+        if (existingCredit) {
+            const { error: balanceUpdateError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', existingCredit.credit_id);
+            
+            if (balanceUpdateError) {
+                console.error('Error updating balance for bonus:', balanceUpdateError);
+                return;
+            }
+        } else {
+            const { error: balanceInsertError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: userUid, balance: BONUS_AMOUNT });
+            
+            if (balanceInsertError) {
+                console.error('Error inserting balance for bonus:', balanceInsertError);
+                return;
+            }
+        }
+        
+        // Record transaction
+        const { error: transError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                from_user_uid: null, // System bonus
+                to_user_uid: userUid,
+                amount: BONUS_AMOUNT,
+                transaction_type: 'credit_added',
+                game_type: 'memory_verse_consecutive_bonus',
+                description: `Memory Verse Champion Bonus: 3 consecutive months - ${BONUS_AMOUNT} credits`
+            });
+        
+        if (transError) {
+            console.error('Error recording bonus transaction:', transError);
+            // Don't fail if transaction recording fails, balance was already updated
+        }
+        
+        console.log(`Awarded ${BONUS_AMOUNT} credit bonus to user ${userUid} for 3 consecutive months of memory verses`);
+        
+    } catch (error) {
+        console.error('Error checking consecutive months bonus:', error);
+        // Don't throw - this is a bonus feature, shouldn't break the approval process
+    }
 }

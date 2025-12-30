@@ -168,6 +168,14 @@ async function initializeLanding() {
     
     // Initialize approval notifications
     await initializeApprovalNotifications();
+    
+    // Initialize badge notifications
+    try {
+        const { initializeBadgeNotifications } = await import('./badge-notification-system.js');
+        await initializeBadgeNotifications();
+    } catch (error) {
+        console.error('Error initializing badge notifications:', error);
+    }
 }
 
 // Load and display Fruit of the Spirit badges in the banner

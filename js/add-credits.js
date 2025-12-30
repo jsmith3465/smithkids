@@ -130,7 +130,7 @@ async function loadCreditTrackingTable() {
     try {
         // Get all credit manager data
         const { data: creditManagerData, error } = await supabase
-            .from('Credit_Manager')
+            .from('credit_manager')
             .select('*')
             .order('app_name', { ascending: true })
             .order('transaction_type', { ascending: true });
@@ -323,7 +323,7 @@ async function saveCreditTrackingChanges() {
         // Update each record
         for (const update of updates) {
             const { error } = await supabase
-                .from('Credit_Manager')
+                .from('credit_manager')
                 .update({
                     credit_amount: update.credit_amount,
                     transaction_type: update.transaction_type,
@@ -390,7 +390,7 @@ async function addNewCreditScheme() {
     try {
         // Check if entry already exists (same app name and transaction type)
         const { data: existing, error: checkError } = await supabase
-            .from('Credit_Manager')
+            .from('credit_manager')
             .select('id')
             .eq('app_name', appName)
             .eq('transaction_type', transactionType)
@@ -403,7 +403,7 @@ async function addNewCreditScheme() {
         
         // Insert new entry
         const { error: insertError } = await supabase
-            .from('Credit_Manager')
+            .from('credit_manager')
             .insert({
                 app_name: appName,
                 transaction_type: transactionType,

@@ -340,6 +340,17 @@ class HangmanGame {
         
         // Save score to database
         await this.saveScore(false);
+        
+        // Check for badge eligibility
+        try {
+            const session = window.authStatus?.getSession();
+            if (session && session.uid) {
+                const { checkAllBadges } = await import('./badge-checker.js');
+                await checkAllBadges(session.uid, 'game_completed');
+            }
+        } catch (error) {
+            console.error('Error checking badges:', error);
+        }
     }
     
     async saveScore(won) {

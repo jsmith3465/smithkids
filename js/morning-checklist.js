@@ -788,6 +788,11 @@ async function postChecklistChanges() {
                 .eq('checklist_date', date)
                 .single();
             
+            // Check if all 6 tasks are completed
+            const allTasksComplete = checkboxStates.task_1 && checkboxStates.task_2 && 
+                                    checkboxStates.task_3 && checkboxStates.task_4 && 
+                                    checkboxStates.task_5 && checkboxStates.task_6;
+            
             const updateData = {
                 user_uid: parseInt(userUid),
                 checklist_date: date,
@@ -829,6 +834,14 @@ async function postChecklistChanges() {
             if (allCompleted) {
                 // Award 10 credits (only if not already awarded for this date)
                 await awardChecklistCredits(parseInt(userUid), usersMap[userUid], date);
+                
+                // Check for badge eligibility
+                try {
+                    const { checkAllBadges } = await import('./badge-checker.js');
+                    await checkAllBadges(parseInt(userUid), 'checklist_completed');
+                } catch (error) {
+                    console.error('Error checking badges:', error);
+                }
             }
         }
         

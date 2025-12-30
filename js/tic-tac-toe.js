@@ -1214,6 +1214,19 @@ class TicTacToe {
                     .eq('session_id', this.remoteSessionId);
             }
             
+            // Check for badge eligibility for both players
+            try {
+                const { checkAllBadges } = await import('./badge-checker.js');
+                if (player1Uid) {
+                    await checkAllBadges(player1Uid, 'game_completed');
+                }
+                if (player2Uid) {
+                    await checkAllBadges(player2Uid, 'game_completed');
+                }
+            } catch (error) {
+                console.error('Error checking badges:', error);
+            }
+            
             return gameResult ? gameResult.game_id : null;
         } catch (error) {
             console.error('Error saving game result:', error);

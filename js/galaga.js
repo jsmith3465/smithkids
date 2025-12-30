@@ -523,9 +523,23 @@ class GalagaGame {
         }
     }
     
-    gameOver() {
+    async gameOver() {
         this.gameRunning = false;
         this.gamePaused = false;
+        
+        // Save score
+        await this.saveScore();
+        
+        // Check for badge eligibility
+        try {
+            const session = window.authStatus?.getSession();
+            if (session && session.uid) {
+                const { checkAllBadges } = await import('./badge-checker.js');
+                await checkAllBadges(session.uid, 'game_completed');
+            }
+        } catch (error) {
+            console.error('Error checking badges:', error);
+        }
         
         // Calculate game duration
         if (this.gameStartTime) {

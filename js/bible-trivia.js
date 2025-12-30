@@ -2829,6 +2829,14 @@ class BibleTrivia {
         // Initialize approval notifications for standard users
         if (session.userType !== 'admin') {
             initializeApprovalNotifications();
+            
+            // Initialize badge notifications
+            try {
+                const { initializeBadgeNotifications } = await import('./badge-notification-system.js');
+                await initializeBadgeNotifications();
+            } catch (error) {
+                console.error('Error initializing badge notifications:', error);
+            }
         }
         
         // Event listeners
@@ -2997,7 +3005,7 @@ class BibleTrivia {
         let MAX_CREDITS = 20; // Default fallback
         try {
             const { data: creditData, error: creditError } = await supabase
-                .from('Credit_Manager')
+                .from('credit_manager')
                 .select('credit_amount')
                 .eq('app_name', 'Bible Trivia')
                 .eq('transaction_type', 'credit')
@@ -3062,6 +3070,14 @@ class BibleTrivia {
         
         // Save game result (this also records credits_earned in the results table)
         await this.saveGameResult();
+        
+        // Check for badge eligibility
+        try {
+            const { checkAllBadges } = await import('./badge-checker.js');
+            await checkAllBadges(session.uid, 'bible_trivia_completed');
+        } catch (error) {
+            console.error('Error checking badges:', error);
+        }
     }
     
     async awardCredits(amount) {
@@ -3285,7 +3301,7 @@ class BibleTrivia {
             let MAX_CREDITS = 20; // Default fallback
             try {
                 const { data: creditData, error: creditError } = await supabase
-                    .from('Credit_Manager')
+                    .from('credit_manager')
                     .select('credit_amount')
                     .eq('app_name', 'Bible Trivia')
                     .eq('transaction_type', 'credit')

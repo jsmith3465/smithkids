@@ -289,9 +289,21 @@ class BreakoutGame {
         this.updateDisplay();
     }
     
-    gameOver() {
+    async gameOver() {
         this.gameRunning = false;
-        this.saveGameResult();
+        await this.saveGameResult();
+        
+        // Check for badge eligibility
+        try {
+            const session = window.authStatus?.getSession();
+            if (session && session.uid) {
+                const { checkAllBadges } = await import('./badge-checker.js');
+                await checkAllBadges(session.uid, 'game_completed');
+            }
+        } catch (error) {
+            console.error('Error checking badges:', error);
+        }
+        
         this.showMessage('Game Over!', 'game-over');
         document.getElementById('startBtn').textContent = 'Play Again';
         document.getElementById('startBtn').classList.remove('hidden');

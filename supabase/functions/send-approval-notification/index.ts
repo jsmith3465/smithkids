@@ -23,11 +23,200 @@ Deno.serve(async (req) => {
   console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
   try {
-    // Get the approval data from the request
+    // Get the notification data from the request
     const requestBody = await req.json();
     console.log('Request body:', requestBody);
-    const { approval_id, approval_type, user_name, description, credits_amount } = requestBody;
+    const { notification_type, approval_id, approval_type, user_name, description, credits_amount, badge_name, earned_at } = requestBody;
 
+    // Handle badge notifications differently
+    if (notification_type === 'badge_unlocked') {
+      if (!user_name || !badge_name) {
+        console.error('Missing required fields for badge notification');
+        return new Response(
+          JSON.stringify({ error: 'Missing required fields' }),
+          { 
+            status: 400, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      console.log('Processing badge notification:', { user_name, badge_name, earned_at });
+      
+      // Check environment variables
+      if (!RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is not set!');
+        return new Response(
+          JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Supabase credentials not set!');
+        return new Response(
+          JSON.stringify({ error: 'Supabase credentials not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Get Supabase client with service role key for admin access
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      console.log('Supabase client created');
+
+      // Get all admin users with email addresses
+      console.log('Fetching admin users...');
+      const { data: admins, error: adminError } = await supabase
+        .from('Users')
+        .select('UID, First_Name, Last_Name, Username, EmailAddress')
+        .eq('user_type', 'admin')
+        .not('EmailAddress', 'is', null);
+
+      if (adminError) {
+        console.error('Error fetching admins:', adminError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch admins', details: adminError.message }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      console.log(`Found ${admins?.length || 0} admin users with email addresses`);
+
+      if (!admins || admins.length === 0) {
+        console.warn('No admin users with email addresses found');
+        return new Response(
+          JSON.stringify({ error: 'No admin users with email addresses found' }),
+          { 
+            status: 404, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Prepare badge notification email
+      const emailSubject = `Badge Unlocked - ${badge_name} - Smith Team Six`;
+      const siteUrl = Deno.env.get('SITE_URL') || 'https://smithfamjam.com';
+      
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }
+              .info-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #DAA520; }
+              .badge-icon { font-size: 3rem; text-align: center; margin: 20px 0; }
+              .button { display: inline-block; background: #DAA520; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+              .button-container { text-align: center; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🏆 Badge Unlocked!</h1>
+              </div>
+              <div class="content">
+                <div class="badge-icon">🏆</div>
+                <div class="info-box">
+                  <p><strong>User:</strong> ${user_name}</p>
+                  <p><strong>Badge:</strong> ${badge_name}</p>
+                  <p><strong>Unlocked:</strong> ${earned_at}</p>
+                </div>
+                <div class="button-container">
+                  <a href="${siteUrl}/pages/approvals.html" class="button">View Dashboard</a>
+                </div>
+              </div>
+              <div class="footer">
+                <p>Smith Team Six - Badge Notification System</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      // Send email to all admins
+      const emailResults = [];
+      for (const admin of admins) {
+        if (!admin.EmailAddress) {
+          console.warn(`Admin ${admin.UID} has no email address`);
+          continue;
+        }
+
+        console.log(`Sending badge notification email to ${admin.EmailAddress}...`);
+        try {
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+            },
+            body: JSON.stringify({
+              from: 'Smith Team Six <notifications@email.smithfamjam.com>',
+              to: [admin.EmailAddress],
+              subject: emailSubject,
+              html: emailHtml,
+            }),
+          });
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text();
+            console.error(`Failed to send email to ${admin.EmailAddress}:`, errorText);
+            emailResults.push({ admin: admin.UID, email: admin.EmailAddress, success: false, error: errorText });
+          } else {
+            const result = await emailResponse.json();
+            console.log(`Email sent successfully to ${admin.EmailAddress}`);
+            emailResults.push({ admin: admin.UID, email: admin.EmailAddress, success: true, id: result.id });
+          }
+        } catch (error) {
+          console.error(`Error sending email to ${admin.EmailAddress}:`, error);
+          emailResults.push({ admin: admin.UID, email: admin.EmailAddress, success: false, error: error.message });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Badge notification sent to ${admins.length} admin(s)`,
+          results: emailResults,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+
+    // Original approval notification logic
     if (!approval_id) {
       console.error('Missing approval_id in request');
       return new Response(
