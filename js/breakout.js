@@ -1,5 +1,6 @@
 // Breakout Game
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { initializeApprovalNotifications } from './notification-system.js';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
@@ -463,6 +464,11 @@ class BreakoutGameManager {
         if (!session) {
             window.location.href = getPagePath('login.html');
             return;
+        }
+        
+        // Initialize approval notifications for standard users
+        if (session.userType !== 'admin') {
+            initializeApprovalNotifications();
         }
         
         // Check credits before allowing game to start (skip for admins)

@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: 'Smith Team Six <notifications@resend.dev>', // Use your verified domain in production
+            from: 'Smith Team Six <notifications@email.smithfamjam.com>',
             to: [admin.EmailAddress],
             subject: emailSubject,
             html: emailHtml,

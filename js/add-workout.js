@@ -9,6 +9,7 @@ function getPagePath(pageName) {
     return pageName;
 }
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { initializeApprovalNotifications } from './notification-system.js';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
@@ -58,6 +59,11 @@ async function checkUserAccess() {
     document.getElementById('standardUserContent').classList.remove('hidden');
     
     setupEventListeners();
+    
+    // Initialize approval notifications for standard users
+    if (session.userType !== 'admin') {
+        await initializeApprovalNotifications();
+    }
 }
 
 function setupEventListeners() {

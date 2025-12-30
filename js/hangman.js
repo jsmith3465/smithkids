@@ -1,6 +1,7 @@
 // Hangman Game
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { checkCredits, deductCredits, showCreditWarning } from './credit-system.js';
+import { initializeApprovalNotifications } from './notification-system.js';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
@@ -112,6 +113,12 @@ class HangmanGame {
                         document.getElementById('authCheck').classList.add('hidden');
                         document.getElementById('mainContent').classList.remove('hidden');
                         this.setupGame();
+                        
+                        // Initialize approval notifications for standard users
+                        const session = window.authStatus.getSession();
+                        if (session && session.userType !== 'admin') {
+                            initializeApprovalNotifications();
+                        }
                     } else {
                         window.location.href = getPagePath('login.html');
                     }
