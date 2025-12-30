@@ -231,6 +231,7 @@ async function loadFruitsOfSpirit(userUid) {
                 <div class="fruit-name">${fruit.name}</div>
                 <div class="fruit-verse">${fruit.verse}</div>
                 <div class="fruit-description">${fruit.description}</div>
+                ${fruit.earned ? '<div class="credit-box">💰 Earn 20 Credits</div>' : ''}
             </div>
             ${badgeIndicatorsHtml}
         `;

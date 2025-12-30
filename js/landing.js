@@ -159,6 +159,79 @@ function initializeLanding() {
     // Show main content
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
+    
+    // Load Fruit of the Spirit badges for standard users
+    if (session.userType !== 'admin') {
+        await loadFruitOfSpiritBanner(session.uid);
+    }
+}
+
+// Load and display Fruit of the Spirit badges in the banner
+async function loadFruitOfSpiritBanner(userUid) {
+    const fruitBanner = document.getElementById('fruitBanner');
+    const fruitBadgesContainer = document.getElementById('fruitBadgesContainer');
+    
+    if (!fruitBanner || !fruitBadgesContainer) return;
+    
+    try {
+        // Define the 9 Fruits of the Spirit
+        const fruits = [
+            { id: 'love', name: 'Love', icon: '❤️' },
+            { id: 'joy', name: 'Joy', icon: '😊' },
+            { id: 'peace', name: 'Peace', icon: '🕊️' },
+            { id: 'patience', name: 'Patience', icon: '⏳' },
+            { id: 'kindness', name: 'Kindness', icon: '🤝' },
+            { id: 'goodness', name: 'Goodness', icon: '✨' },
+            { id: 'faithfulness', name: 'Faithfulness', icon: '🙏' },
+            { id: 'gentleness', name: 'Gentleness', icon: '🌸' },
+            { id: 'self_control', name: 'Self-Control', icon: '🎯' }
+        ];
+        
+        // Fetch user's earned badges
+        const { data: userBadges, error } = await supabase
+            .from('User_Badges')
+            .select('badge_type')
+            .eq('user_uid', userUid)
+            .in('badge_type', fruits.map(f => f.id));
+        
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching fruit badges:', error);
+            return;
+        }
+        
+        const earnedBadgeTypes = new Set();
+        if (userBadges) {
+            userBadges.forEach(badge => {
+                earnedBadgeTypes.add(badge.badge_type);
+            });
+        }
+        
+        // Only show banner if user has at least one badge
+        if (earnedBadgeTypes.size === 0) {
+            fruitBanner.style.display = 'none';
+            return;
+        }
+        
+        // Display all fruits, highlighting earned ones
+        fruitBadgesContainer.innerHTML = '';
+        fruits.forEach(fruit => {
+            const isEarned = earnedBadgeTypes.has(fruit.id);
+            const badgeItem = document.createElement('div');
+            badgeItem.className = 'fruit-badge-item';
+            badgeItem.innerHTML = `
+                <div class="fruit-badge-icon ${isEarned ? '' : 'locked'}" title="${fruit.name}">${fruit.icon}</div>
+                <div class="fruit-badge-name">${fruit.name}</div>
+            `;
+            fruitBadgesContainer.appendChild(badgeItem);
+        });
+        
+        // Show the banner
+        fruitBanner.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error loading fruit of spirit banner:', error);
+        fruitBanner.style.display = 'none';
+    }
 }
 
 async function awardBibleVerseBonus(userUid, book, chapter, verse) {

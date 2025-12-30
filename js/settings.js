@@ -1057,7 +1057,7 @@ async function awardFruitBadge() {
             const selectedOption = userSelect.options[userSelect.selectedIndex];
             const userName = selectedOption.textContent;
             
-            showSuccess(`Successfully awarded ${badgeName} badge to ${userName}. User received 50 credits.`);
+            showSuccess(`Successfully awarded ${badgeName} badge to ${userName}. User received 20 credits.`);
             
             // Reset form
             document.getElementById('fruitUserSelect').value = '';

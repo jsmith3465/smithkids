@@ -62,8 +62,8 @@ export async function awardBadge(userUid, badgeType, badgeName = null) {
             return false;
         }
         
-        // Award 50 credits for earning a Fruit of the Spirit badge
-        const CREDITS_PER_BADGE = 50;
+        // Award 20 credits for earning a Fruit of the Spirit badge
+        const CREDITS_PER_BADGE = 20;
         try {
             // Get or create credit record
             const { data: existingCredit, error: creditFetchError } = await supabase
@@ -187,7 +187,7 @@ export async function getUserBadges(userUid) {
  * @param {string} badgeName - The badge name
  * @param {number} credits - The number of credits awarded
  */
-function showBadgeNotification(badgeType, badgeName, credits = 50) {
+function showBadgeNotification(badgeType, badgeName, credits = 20) {
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;

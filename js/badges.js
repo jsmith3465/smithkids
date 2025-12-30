@@ -126,6 +126,7 @@ async function loadBadges(userUid) {
             <div class="badge-icon">${badge.icon}</div>
             <div class="badge-name">${badge.name}</div>
             <div class="badge-description">${badge.description}</div>
+            ${badge.earned ? '<div class="credit-box">💰 Earn 20 Credits</div>' : ''}
         `;
         badgesList.appendChild(badgeCard);
     });
