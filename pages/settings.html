@@ -344,81 +344,6 @@
             <!-- Monthly Memory Verse Tab -->
             <div id="memoryTab" class="tab-content">
                 <div class="settings-section">
-                    <h2>Monthly Memory Verse</h2>
-                    <p style="color: #666; margin-bottom: 20px;">
-                        Set a memory verse for a specific month. Users can memorize the verse and earn 30 credits upon approval.
-                    </p>
-                    
-                    <!-- Add Memory Verse Form (Hidden by default) -->
-                    <div id="addMemoryVerseForm" style="display: none;">
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="memoryVerseMonth">Month:</label>
-                                <select id="memoryVerseMonth" required>
-                                    <option value="">Select month...</option>
-                                    <option value="01">January</option>
-                                    <option value="02">February</option>
-                                    <option value="03">March</option>
-                                    <option value="04">April</option>
-                                    <option value="05">May</option>
-                                    <option value="06">June</option>
-                                    <option value="07">July</option>
-                                    <option value="08">August</option>
-                                    <option value="09">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="memoryVerseYear">Year:</label>
-                                <select id="memoryVerseYear" required>
-                                    <option value="">Select year...</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="startBook">Starting Book:</label>
-                                <select id="startBook" required>
-                                    <option value="">Select a book...</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="startChapter">Starting Chapter:</label>
-                                <input type="number" id="startChapter" min="1" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="startVerse">Starting Verse:</label>
-                                <input type="number" id="startVerse" min="1" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="endBook">Ending Book:</label>
-                                <select id="endBook" required>
-                                    <option value="">Select a book...</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="endChapter">Ending Chapter:</label>
-                                <input type="number" id="endChapter" min="1" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="endVerse">Ending Verse:</label>
-                                <input type="number" id="endVerse" min="1" required>
-                            </div>
-                        </div>
-                        
-                        <button id="saveMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
-                            Add Verse
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
                     <h2>Current Memory Verses</h2>
                     <div id="memoryVersesList">
                         <div class="loading">Loading memory verses...</div>
@@ -426,6 +351,86 @@
                     <button id="showAddMemoryVerseBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; margin-top: 20px;">
                         Add Memory Verse
                     </button>
+                </div>
+            </div>
+            
+            <!-- Add Memory Verse Modal -->
+            <div id="addMemoryVerseModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 700px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0;">Add Memory Verse</h2>
+                        <button id="closeMemoryVerseModalBtn" class="btn btn-secondary" style="padding: 5px 15px;">✕</button>
+                    </div>
+                    
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Set a memory verse for a specific month. Users can memorize the verse and earn 30 credits upon approval.
+                    </p>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="memoryVerseMonth">Month:</label>
+                            <select id="memoryVerseMonth" required>
+                                <option value="">Select month...</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="memoryVerseYear">Year:</label>
+                            <select id="memoryVerseYear" required>
+                                <option value="">Select year...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="startBook">Starting Book:</label>
+                            <select id="startBook" required>
+                                <option value="">Select a book...</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="startChapter">Starting Chapter:</label>
+                            <input type="number" id="startChapter" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="startVerse">Starting Verse:</label>
+                            <input type="number" id="startVerse" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="endBook">Ending Book:</label>
+                            <select id="endBook" required>
+                                <option value="">Select a book...</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="endChapter">Ending Chapter:</label>
+                            <input type="number" id="endChapter" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="endVerse">Ending Verse:</label>
+                            <input type="number" id="endVerse" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button id="cancelMemoryVerseBtn" class="btn btn-secondary">Cancel</button>
+                        <button id="saveMemoryVerseBtn" class="btn btn-primary">Add Verse</button>
+                    </div>
                 </div>
             </div>
             
