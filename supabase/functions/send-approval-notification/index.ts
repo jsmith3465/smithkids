@@ -6,21 +6,79 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      },
+    });
+  }
+
+  console.log('=== send-approval-notification function called ===');
+  console.log('Method:', req.method);
+  console.log('Headers:', Object.fromEntries(req.headers.entries()));
+
   try {
     // Get the approval data from the request
-    const { approval_id, approval_type, user_name, description, credits_amount } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    const { approval_id, approval_type, user_name, description, credits_amount } = requestBody;
 
     if (!approval_id) {
+      console.error('Missing approval_id in request');
       return new Response(
         JSON.stringify({ error: 'Missing approval_id' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
+      );
+    }
+
+    console.log('Processing approval:', { approval_id, approval_type, user_name, credits_amount });
+
+    // Check environment variables
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set!');
+      return new Response(
+        JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+        { 
+          status: 500, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
+      );
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase credentials not set!');
+      return new Response(
+        JSON.stringify({ error: 'Supabase credentials not configured' }),
+        { 
+          status: 500, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
       );
     }
 
     // Get Supabase client with service role key for admin access
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    console.log('Supabase client created');
 
     // Get all admin users with email addresses
+    console.log('Fetching admin users...');
     const { data: admins, error: adminError } = await supabase
       .from('Users')
       .select('UID, First_Name, Last_Name, Username, EmailAddress')
@@ -30,16 +88,33 @@ Deno.serve(async (req) => {
     if (adminError) {
       console.error('Error fetching admins:', adminError);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch admins' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to fetch admins', details: adminError.message }),
+        { 
+          status: 500, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
       );
+    }
+
+    console.log(`Found ${admins?.length || 0} admin users with email addresses`);
+    if (admins && admins.length > 0) {
+      console.log('Admin emails:', admins.map(a => a.EmailAddress));
     }
 
     if (!admins || admins.length === 0) {
       console.warn('No admin users with email addresses found');
       return new Response(
         JSON.stringify({ error: 'No admin users with email addresses found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 404, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
       );
     }
 
@@ -154,6 +229,7 @@ Deno.serve(async (req) => {
     `;
 
     // Send email to all admins
+    console.log(`Sending emails to ${admins.length} admin(s)...`);
     const emailResults = [];
     for (const admin of admins) {
       if (!admin.EmailAddress) {
@@ -161,6 +237,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      console.log(`Sending email to ${admin.EmailAddress}...`);
       try {
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -199,7 +276,10 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       }
     );
   } catch (error) {
@@ -208,7 +288,10 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       }
     );
   }

@@ -69,15 +69,35 @@ class TicTacToe {
         const guestSession = sessionStorage.getItem('guestSession');
         const isGuest = roomCode && guestSession;
         
+        // Initialize Computer player immediately (don't wait for database)
+        this.players[this.COMPUTER_ID] = {
+            name: 'Computer',
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            credits: Infinity // Computer doesn't need credits
+        };
+        
+        // Populate dropdowns with Computer player immediately
+        this.updatePlayerSelects();
+        
         // Load users from database in background (don't block UI)
         if (!isGuest) {
             // Start loading users but don't wait for it
-            this.loadUsersFromDatabase().catch(err => {
+            this.loadUsersFromDatabase().then(() => {
+                // Update dropdowns after users are loaded
+                this.updatePlayerSelects();
+            }).catch(err => {
                 console.error('Error loading users:', err);
+                // Still update dropdowns even if loading fails (at least Computer will show)
+                this.updatePlayerSelects();
             });
             // Check if current user is admin
             const session = window.authStatus?.getSession();
             this.isAdmin = session && session.userType === 'admin';
+        } else {
+            // For guests, just show Computer
+            this.updatePlayerSelects();
         }
         
         // Set difficulty selector to saved value
@@ -204,14 +224,16 @@ class TicTacToe {
                 });
             }
             
-            // Build players object with Computer player
-            this.players[this.COMPUTER_ID] = {
-                name: 'Computer',
-                wins: 0,
-                losses: 0,
-                draws: 0,
-                credits: Infinity // Computer doesn't need credits
-            };
+            // Ensure Computer player exists (in case it wasn't initialized)
+            if (!this.players[this.COMPUTER_ID]) {
+                this.players[this.COMPUTER_ID] = {
+                    name: 'Computer',
+                    wins: 0,
+                    losses: 0,
+                    draws: 0,
+                    credits: Infinity // Computer doesn't need credits
+                };
+            }
             
             // Add users to players object with credit info
             this.users.forEach(user => {

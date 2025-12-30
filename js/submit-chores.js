@@ -145,8 +145,11 @@ async function submitChore() {
             console.error('Error creating unified approval:', approvalError);
             // Don't fail the chore submission if approval creation fails
         } else if (approvalData) {
-            // Send email notification to admins
-            await sendApprovalNotification(approvalData.approval_id, 'chore', choreType, 10, session.uid);
+            // Send email notification to admins (non-blocking)
+            sendApprovalNotification(approvalData.approval_id, 'chore', choreType, 10, session.uid)
+                .catch(err => {
+                    console.error('Failed to send notification (non-critical):', err);
+                });
         }
         
         showSuccess('Chore submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
@@ -190,27 +193,67 @@ async function sendApprovalNotification(approvalId, approvalType, description, c
             ? `${userData.First_Name} ${userData.Last_Name}`
             : userData.Username || 'Unknown User';
         
-        // Call the Edge Function to send notification
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/send-approval-notification`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({
+        // Call the Edge Function using Supabase client (handles auth automatically)
+        console.log('Attempting to send approval notification:', {
+            approvalId,
+            approvalType,
+            userName,
+            description,
+            creditsAmount
+        });
+        
+        const { data, error } = await supabase.functions.invoke('send-approval-notification', {
+            body: {
                 approval_id: approvalId,
                 approval_type: approvalType,
                 user_name: userName,
                 description: description,
                 credits_amount: creditsAmount,
-            }),
+            },
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error sending approval notification:', errorText);
+        if (error) {
+            console.error('Error sending approval notification:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            console.error('Full error object:', error);
+            
+            // If function invoke fails, try direct fetch as fallback
+            console.log('Attempting fallback method with direct fetch...');
+            try {
+                const session = window.authStatus?.getSession();
+                if (session) {
+                    const { data: { session: authSession } } = await supabase.auth.getSession();
+                    const token = authSession?.access_token;
+                    
+                    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-approval-notification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`,
+                            'apikey': SUPABASE_ANON_KEY,
+                        },
+                        body: JSON.stringify({
+                            approval_id: approvalId,
+                            approval_type: approvalType,
+                            user_name: userName,
+                            description: description,
+                            credits_amount: creditsAmount,
+                        }),
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Fallback method succeeded:', result);
+                    } else {
+                        const errorText = await response.text();
+                        console.error('Fallback method also failed:', errorText);
+                    }
+                }
+            } catch (fallbackError) {
+                console.error('Fallback method error:', fallbackError);
+            }
         } else {
-            console.log('Approval notification sent successfully');
+            console.log('Approval notification sent successfully', data);
         }
     } catch (error) {
         console.error('Error in sendApprovalNotification:', error);
