@@ -31,6 +31,7 @@ class TicTacToe {
         this.computerDifficulty = this.loadDifficulty();
         this.users = []; // Store users from database
         this.isAdmin = false; // Will be set after auth check
+        this.isProcessingMove = false; // Prevent double-clicks
         
         // Remote game properties
         this.isRemoteGame = false;
@@ -50,20 +51,7 @@ class TicTacToe {
     }
 
     async init() {
-        // Check if this is a guest session first
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomCode = urlParams.get('room');
-        const guestSession = sessionStorage.getItem('guestSession');
-        const isGuest = roomCode && guestSession;
-        
-        // Only fetch users from database if not a guest
-        if (!isGuest) {
-            await this.loadUsersFromDatabase();
-            // Check if current user is admin
-            const session = window.authStatus?.getSession();
-            this.isAdmin = session && session.userType === 'admin';
-        }
-        
+        // Initialize DOM elements first (don't wait for database)
         this.playerSetup = document.getElementById('playerSetup');
         this.gameSection = document.getElementById('gameSection');
         this.gameSetup = document.querySelector('.game-setup');
@@ -74,6 +62,23 @@ class TicTacToe {
         this.gameDifficultyGroup = document.getElementById('gameDifficultyGroup');
         this.gameComputerDifficultySelect = document.getElementById('gameComputerDifficulty');
         this.startGameBtn = document.getElementById('startGameBtn');
+        
+        // Check if this is a guest session first
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        const guestSession = sessionStorage.getItem('guestSession');
+        const isGuest = roomCode && guestSession;
+        
+        // Load users from database in background (don't block UI)
+        if (!isGuest) {
+            // Start loading users but don't wait for it
+            this.loadUsersFromDatabase().catch(err => {
+                console.error('Error loading users:', err);
+            });
+            // Check if current user is admin
+            const session = window.authStatus?.getSession();
+            this.isAdmin = session && session.userType === 'admin';
+        }
         
         // Set difficulty selector to saved value
         if (this.computerDifficultySelect) {
@@ -439,6 +444,7 @@ class TicTacToe {
         this.player2Symbol = 'O';
         this.gameActive = true;
         this.winningLine = null;
+        this.isProcessingMove = false; // Reset move processing flag
         this.clearWinLine();
         this.gameMessage.textContent = '';
         this.gameMessage.className = 'game-message';
@@ -450,17 +456,33 @@ class TicTacToe {
         this.newGameBtn.disabled = true;
         this.newGameBtn.classList.add('btn-disabled');
         
+        // Clear and rebuild board
+        if (!this.gameBoard) {
+            console.error('Game board element not found');
+            return;
+        }
+        
         this.gameBoard.innerHTML = '';
         
+        // Create cells and append them
+        const fragment = document.createDocumentFragment();
         for (let i = 0; i < 9; i++) {
             const cell = document.createElement('button');
             cell.className = 'cell';
             cell.dataset.index = i;
+            cell.textContent = ''; // Ensure empty initially
+            cell.setAttribute('aria-label', `Cell ${i + 1}`);
             cell.addEventListener('click', () => this.handleCellClick(i));
-            this.gameBoard.appendChild(cell);
+            fragment.appendChild(cell);
         }
+        this.gameBoard.appendChild(fragment);
         
+        // Update display to ensure board is properly rendered
+        this.updateBoardDisplay();
         this.updateDisplay();
+        
+        // Force a reflow to ensure the board is rendered
+        void this.gameBoard.offsetHeight;
         
         if (this.isCurrentPlayerComputer() && this.gameActive) {
             setTimeout(() => {
@@ -470,19 +492,41 @@ class TicTacToe {
     }
 
     handleCellClick(index) {
+        // Prevent clicks if game is not active or cell is already filled
+        if (!this.gameActive) {
+            console.log('Game not active');
+            return;
+        }
+        
         if (this.isCurrentPlayerComputer()) {
             return;
         }
         
-        if (!this.gameActive || this.board[index] !== null || this.winningLine) {
+        if (this.board[index] !== null) {
+            console.log('Cell already filled');
+            return;
+        }
+        
+        if (this.winningLine) {
+            return;
+        }
+        
+        // Ensure board is properly initialized
+        if (!this.gameBoard || this.gameBoard.children.length !== 9) {
+            console.error('Board not properly initialized');
+            this.initializeBoard();
             return;
         }
 
+        // Make the move
         this.makeMove(index);
     }
     
     async makeMove(index) {
-        if (!this.gameActive || this.board[index] !== null) return;
+        if (!this.gameActive || this.board[index] !== null || this.isProcessingMove) return;
+        
+        // Prevent double-clicks
+        this.isProcessingMove = true;
         
         // For remote games, check if it's the current player's turn
         if (this.isRemoteGame) {
@@ -491,16 +535,19 @@ class TicTacToe {
             const isPlayer2 = this.isGuest && this.currentPlayer === 'O';
             
             if (!isPlayer1 && !isPlayer2) {
+                this.isProcessingMove = false;
                 return; // Not your turn
             }
         }
         
+        // Update the board state
         this.board[index] = this.currentPlayer;
-        const cell = this.gameBoard.children[index];
-        cell.textContent = this.currentPlayer;
-        cell.offsetHeight;
-        cell.classList.add(this.currentPlayer.toLowerCase());
-        cell.classList.add('disabled');
+        
+        // Update the display immediately for better UX
+        this.updateBoardDisplay();
+        
+        // Force a reflow to ensure the display updates
+        void this.gameBoard.offsetHeight;
 
         // Update game state in database if remote
         if (this.isRemoteGame) {
@@ -536,6 +583,9 @@ class TicTacToe {
                 }, 500);
             }
         }
+        
+        // Re-enable move processing
+        this.isProcessingMove = false;
     }
     
     computerMove() {
@@ -934,18 +984,34 @@ class TicTacToe {
     updateBoardDisplay() {
         if (!this.gameBoard) return;
         
+        // Ensure we have 9 cells
+        if (this.gameBoard.children.length !== 9) {
+            console.warn('Board not properly initialized, reinitializing...');
+            this.gameBoard.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('button');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => this.handleCellClick(i));
+                this.gameBoard.appendChild(cell);
+            }
+        }
+        
         for (let i = 0; i < 9; i++) {
             const cell = this.gameBoard.children[i];
             if (!cell) continue;
             
+            // Update cell content and classes
             cell.textContent = this.board[i] || '';
             cell.classList.remove('x', 'o', 'disabled');
             
             if (this.board[i]) {
                 cell.classList.add(this.board[i].toLowerCase());
                 cell.classList.add('disabled');
+                cell.style.pointerEvents = 'none';
             } else {
                 cell.classList.remove('disabled');
+                cell.style.pointerEvents = 'auto';
             }
         }
     }
