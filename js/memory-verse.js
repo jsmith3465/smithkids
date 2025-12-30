@@ -445,6 +445,53 @@ async function fetchVerseText(verse) {
     }
 }
 
+// Function to send approval notification email
+async function sendApprovalNotification(approvalId, approvalType, description, creditsAmount, userUid) {
+    try {
+        // Get user information for the notification
+        const { data: userData, error: userError } = await supabase
+            .from('Users')
+            .select('First_Name, Last_Name, Username')
+            .eq('UID', userUid)
+            .single();
+        
+        if (userError) {
+            console.error('Error fetching user data for notification:', userError);
+            return;
+        }
+        
+        const userName = userData.First_Name && userData.Last_Name
+            ? `${userData.First_Name} ${userData.Last_Name}`
+            : userData.Username || 'Unknown User';
+        
+        // Call the Edge Function to send notification
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/send-approval-notification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                approval_id: approvalId,
+                approval_type: approvalType,
+                user_name: userName,
+                description: description,
+                credits_amount: creditsAmount,
+            }),
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error sending approval notification:', errorText);
+        } else {
+            console.log('Approval notification sent successfully');
+        }
+    } catch (error) {
+        console.error('Error in sendApprovalNotification:', error);
+        // Don't fail the submission if notification fails
+    }
+}
+
 async function submitMemoryVerse(monthYear, verseId) {
     const session = window.authStatus?.getSession();
     if (!session) return;
@@ -470,7 +517,7 @@ async function submitMemoryVerse(monthYear, verseId) {
         if (insertError) throw insertError;
         
         // Create unified approval entry
-        const { error: approvalError } = await supabase
+        const { data: approvalData, error: approvalError } = await supabase
             .from('unified_approvals')
             .insert({
                 approval_type: 'memory_verse',
@@ -479,11 +526,16 @@ async function submitMemoryVerse(monthYear, verseId) {
                 credits_amount: 50,
                 status: 'pending',
                 description: 'Memory Verse Submission'
-            });
+            })
+            .select('approval_id')
+            .single();
         
         if (approvalError) {
             console.error('Error creating unified approval:', approvalError);
             // Don't fail the submission if approval creation fails
+        } else if (approvalData) {
+            // Send email notification to admins
+            await sendApprovalNotification(approvalData.approval_id, 'memory_verse', 'Memory Verse Submission', 50, session.uid);
         }
         
         // Reload the page to show pending status

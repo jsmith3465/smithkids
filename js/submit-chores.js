@@ -128,7 +128,7 @@ async function submitChore() {
         if (error) throw error;
         
         // Create unified approval entry
-        const { error: approvalError } = await supabase
+        const { data: approvalData, error: approvalError } = await supabase
             .from('unified_approvals')
             .insert({
                 approval_type: 'chore',
@@ -137,11 +137,16 @@ async function submitChore() {
                 credits_amount: 10,
                 status: 'pending',
                 description: choreType
-            });
+            })
+            .select('approval_id')
+            .single();
         
         if (approvalError) {
             console.error('Error creating unified approval:', approvalError);
             // Don't fail the chore submission if approval creation fails
+        } else if (approvalData) {
+            // Send email notification to admins
+            await sendApprovalNotification(approvalData.approval_id, 'chore', choreType, 10, session.uid);
         }
         
         showSuccess('Chore submitted successfully! Waiting for admin approval. You will receive 10 credits once approved.');
@@ -163,6 +168,53 @@ async function submitChore() {
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Chore';
+    }
+}
+
+// Function to send approval notification email
+async function sendApprovalNotification(approvalId, approvalType, description, creditsAmount, userUid) {
+    try {
+        // Get user information for the notification
+        const { data: userData, error: userError } = await supabase
+            .from('Users')
+            .select('First_Name, Last_Name, Username')
+            .eq('UID', userUid)
+            .single();
+        
+        if (userError) {
+            console.error('Error fetching user data for notification:', userError);
+            return;
+        }
+        
+        const userName = userData.First_Name && userData.Last_Name
+            ? `${userData.First_Name} ${userData.Last_Name}`
+            : userData.Username || 'Unknown User';
+        
+        // Call the Edge Function to send notification
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/send-approval-notification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                approval_id: approvalId,
+                approval_type: approvalType,
+                user_name: userName,
+                description: description,
+                credits_amount: creditsAmount,
+            }),
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error sending approval notification:', errorText);
+        } else {
+            console.log('Approval notification sent successfully');
+        }
+    } catch (error) {
+        console.error('Error in sendApprovalNotification:', error);
+        // Don't fail the submission if notification fails
     }
 }
 
