@@ -1,6 +1,7 @@
 // Landing page functionality
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { initializeApprovalNotifications } from './notification-system.js';
+import { getCreditAmount, getBibleTriviaCreditDisplay, getCreditDisplayText } from './credit-display-utils.js';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
@@ -175,6 +176,79 @@ async function initializeLanding() {
         await initializeBadgeNotifications();
     } catch (error) {
         console.error('Error initializing badge notifications:', error);
+    }
+    
+    // Load and update credit amounts dynamically
+    await updateCreditDisplays();
+}
+
+// Update all credit displays on the homepage
+async function updateCreditDisplays() {
+    try {
+        // Update Memory Verse
+        const memoryVerseCredits = await getCreditAmount('Memory Verse', 'credit', 50);
+        const memoryVerseEl = document.querySelector('a[href="pages/memory-verse.html"] .game-card-credits');
+        if (memoryVerseEl) {
+            memoryVerseEl.textContent = `💎 Earn ${memoryVerseCredits} credits`;
+        }
+        
+        // Update Workout
+        const workoutCredits = await getCreditAmount('Workout', 'credit', 10);
+        const workoutEl = document.querySelector('a[href="pages/add-workout.html"] .game-card-credits');
+        if (workoutEl) {
+            workoutEl.textContent = `💎 Earn ${workoutCredits} Credits`;
+        }
+        
+        // Update Chore
+        const choreCredits = await getCreditAmount('Chore', 'credit', 10);
+        const choreEl = document.querySelector('a[href="pages/submit-chores.html"] .game-card-credits');
+        if (choreEl) {
+            choreEl.textContent = `💎 Earn ${choreCredits} Credits`;
+        }
+        
+        // Update Tic Tac Toe
+        const tttCost = await getCreditAmount('Tic Tac Toe', 'debit', 1);
+        const tttEl = document.querySelector('a[href="pages/tic-tac-toe.html"] .game-card-credits');
+        if (tttEl) {
+            tttEl.textContent = `💰 Costs ${tttCost} credit${tttCost !== 1 ? 's' : ''} to play`;
+        }
+        
+        // Update Snake
+        const snakeCost = await getCreditAmount('Snake Game', 'debit', 1);
+        const snakeEl = document.querySelector('a[href="pages/snake.html"] .game-card-credits');
+        if (snakeEl) {
+            snakeEl.textContent = `💰 Costs ${snakeCost} credit${snakeCost !== 1 ? 's' : ''} to play`;
+        }
+        
+        // Update Bible Trivia
+        const bibleTriviaText = await getBibleTriviaCreditDisplay();
+        const bibleTriviaEl = document.querySelector('a[href="pages/bible-trivia.html"] .game-card-credits');
+        if (bibleTriviaEl) {
+            bibleTriviaEl.textContent = bibleTriviaText;
+        }
+        
+        // Update Hangman
+        const hangmanCost = await getCreditAmount('Hangman', 'debit', 1);
+        const hangmanEl = document.querySelector('a[href="pages/hangman.html"] .game-card-credits');
+        if (hangmanEl) {
+            hangmanEl.textContent = `💰 Costs ${hangmanCost} credit${hangmanCost !== 1 ? 's' : ''} to play`;
+        }
+        
+        // Update Galaga
+        const galagaCost = await getCreditAmount('Galaga', 'debit', 3);
+        const galagaEl = document.querySelector('a[href="pages/galaga.html"] .game-card-credits');
+        if (galagaEl) {
+            galagaEl.textContent = `💰 Costs ${galagaCost} credit${galagaCost !== 1 ? 's' : ''} to play`;
+        }
+        
+        // Update Breakout
+        const breakoutCost = await getCreditAmount('Breakout', 'debit', 3);
+        const breakoutEl = document.querySelector('a[href="pages/breakout.html"] .game-card-credits');
+        if (breakoutEl) {
+            breakoutEl.textContent = `💰 Costs ${breakoutCost} credit${breakoutCost !== 1 ? 's' : ''} to play`;
+        }
+    } catch (error) {
+        console.error('Error updating credit displays:', error);
     }
 }
 

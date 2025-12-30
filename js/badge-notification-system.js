@@ -47,7 +47,6 @@ function cleanupOldBadgeNotifications() {
 
 // Badge icons mapping
 const badgeIcons = {
-    'first_game': '🎮',
     'trivia_master': '📖',
     'memory_verse': '🧠',
     'workout_warrior': '💪',

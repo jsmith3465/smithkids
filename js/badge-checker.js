@@ -9,68 +9,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
- * Check if user has earned the "First Game" badge
- * @param {number} userUid - The user's UID
- */
-export async function checkFirstGameBadge(userUid) {
-    try {
-        // Check if user already has the badge
-        const { data: existing, error: checkError } = await supabase
-            .from('User_Badges')
-            .select('badge_id')
-            .eq('user_uid', userUid)
-            .eq('badge_type', 'first_game')
-            .maybeSingle();
-        
-        if (checkError && checkError.code !== 'PGRST116') {
-            console.error('Error checking first_game badge:', checkError);
-            return;
-        }
-        
-        if (existing) {
-            return; // Already has the badge
-        }
-        
-        // Check if user has played any game
-        const gameTables = [
-            'bible_trivia_results',
-            'snake_scores',
-            'hangman_scores',
-            'galaga_scores',
-            'breakout_scores',
-            'ttt_player_results'
-        ];
-        
-        let hasPlayedGame = false;
-        
-        for (const table of gameTables) {
-            const { data, error } = await supabase
-                .from(table)
-                .select('*')
-                .eq('user_uid', userUid)
-                .limit(1)
-                .maybeSingle();
-            
-            if (error && error.code !== 'PGRST116') {
-                console.error(`Error checking ${table}:`, error);
-                continue;
-            }
-            
-            if (data) {
-                hasPlayedGame = true;
-                break;
-            }
-        }
-        
-        if (hasPlayedGame) {
-            await awardBadge(userUid, 'first_game', 'First Game');
-        }
-    } catch (error) {
-        console.error('Error checking first_game badge:', error);
-    }
-}
-
-/**
  * Check if user has earned the "Trivia Master" badge (10 correct answers)
  * @param {number} userUid - The user's UID
  */
@@ -114,7 +52,7 @@ export async function checkTriviaMasterBadge(userUid) {
 }
 
 /**
- * Check if user has earned the "Memory Verse Champion" badge
+ * Check if user has earned the "Memory Verse Champion" badge (3 consecutive months)
  * @param {number} userUid - The user's UID
  */
 export async function checkMemoryVerseBadge(userUid) {
@@ -136,21 +74,52 @@ export async function checkMemoryVerseBadge(userUid) {
             return; // Already has the badge
         }
         
-        // Check if user has an approved memory verse
-        const { data: approvedVerse, error: verseError } = await supabase
+        // Get all approved memory verse submissions for this user, ordered by month_year descending
+        const { data: approvedSubmissions, error: submissionsError } = await supabase
             .from('Memory_Verse_Submissions')
-            .select('id')
+            .select('month_year, approved_at')
             .eq('user_uid', userUid)
             .eq('status', 'approved')
-            .limit(1)
-            .maybeSingle();
+            .order('month_year', { ascending: false })
+            .limit(3);
         
-        if (verseError && verseError.code !== 'PGRST116') {
-            console.error('Error checking memory verse:', verseError);
+        if (submissionsError) {
+            console.error('Error fetching approved submissions:', submissionsError);
             return;
         }
         
-        if (approvedVerse) {
+        // Need at least 3 approved submissions
+        if (!approvedSubmissions || approvedSubmissions.length < 3) {
+            return;
+        }
+        
+        // Check if the last 3 submissions are consecutive months
+        const months = approvedSubmissions.map(s => s.month_year).sort(); // Sort ascending for easier checking
+        
+        // Parse dates and check if they're consecutive
+        const monthDates = months.map(monthYear => {
+            const [year, month] = monthYear.split('-').map(Number);
+            return new Date(year, month - 1, 1); // Create date for first day of month
+        });
+        
+        // Check if dates are consecutive (each month is exactly 1 month after the previous)
+        let isConsecutive = true;
+        for (let i = 1; i < monthDates.length; i++) {
+            const prevMonth = monthDates[i - 1];
+            const currentMonth = monthDates[i];
+            
+            // Calculate expected next month
+            const expectedNextMonth = new Date(prevMonth);
+            expectedNextMonth.setMonth(expectedNextMonth.getMonth() + 1);
+            
+            // Check if current month matches expected next month
+            if (currentMonth.getTime() !== expectedNextMonth.getTime()) {
+                isConsecutive = false;
+                break;
+            }
+        }
+        
+        if (isConsecutive) {
             await awardBadge(userUid, 'memory_verse', 'Memory Verse Champion');
         }
     } catch (error) {
@@ -308,11 +277,6 @@ export async function checkEarlyBirdBadge(userUid) {
  */
 export async function checkAllBadges(userUid, context = 'general') {
     try {
-        // Always check first_game when a game is completed
-        if (context === 'game_completed') {
-            await checkFirstGameBadge(userUid);
-        }
-        
         // Check trivia_master after Bible Trivia
         if (context === 'bible_trivia_completed') {
             await checkTriviaMasterBadge(userUid);
@@ -340,7 +304,6 @@ export async function checkAllBadges(userUid, context = 'general') {
         
         // For general checks, check all badges
         if (context === 'general') {
-            await checkFirstGameBadge(userUid);
             await checkTriviaMasterBadge(userUid);
             await checkMemoryVerseBadge(userUid);
             await checkWorkoutWarriorBadge(userUid);

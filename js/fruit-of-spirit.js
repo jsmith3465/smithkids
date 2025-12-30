@@ -1,5 +1,13 @@
 // Fruit of the Spirit badge page
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { getCreditAmount } from './credit-display-utils.js';
+
+const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
     const currentPath = window.location.pathname;
@@ -53,12 +61,6 @@ async function checkUserAccess() {
 
 async function loadFruitsOfSpirit(userUid) {
     const fruitList = document.getElementById('fruitList');
-    
-    // Import Supabase client
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // Define the 9 Fruits of the Spirit
     const fruits = [
@@ -232,13 +234,16 @@ async function loadFruitsOfSpirit(userUid) {
             `;
         }
         
+        // Get credit amount from database for this fruit
+        const fruitCreditAmount = fruit.earned ? await getCreditAmount(fruit.name, 'credit', 20) : 0;
+        
         fruitRow.innerHTML = `
             <span class="fruit-icon">${fruit.icon}</span>
             <div class="fruit-content">
                 <div class="fruit-name">${fruit.name}</div>
                 <div class="fruit-verse">${fruit.verse}</div>
                 <div class="fruit-description">${fruit.description}</div>
-                ${fruit.earned ? '<div class="credit-box">💰 Earn 20 Credits</div>' : ''}
+                ${fruit.earned ? `<div class="credit-box">💰 Earn ${fruitCreditAmount} Credits</div>` : ''}
             </div>
             ${badgeIndicatorsHtml}
         `;

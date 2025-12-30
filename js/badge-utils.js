@@ -77,7 +77,6 @@ export async function awardBadge(userUid, badgeType, badgeName = null) {
             } else {
                 // Try alternative badge name mappings
                 const badgeCreditMap = {
-                    'First Game': 'First Game',
                     'Trivia Master': 'Trivia Master',
                     'Memory Verse Champion': 'Memory Verse',
                     'Workout Warrior': 'Workout',
@@ -110,6 +109,11 @@ export async function awardBadge(userUid, badgeType, badgeName = null) {
         
         // For "All Fruits" badge, use 100 credits
         if (badgeType === 'all_fruits') {
+            CREDITS_PER_BADGE = 100;
+        }
+        
+        // For "Memory Verse Champion" badge, use 100 credits
+        if (badgeType === 'memory_verse' || badgeNameToUse === 'Memory Verse Champion') {
             CREDITS_PER_BADGE = 100;
         }
         try {

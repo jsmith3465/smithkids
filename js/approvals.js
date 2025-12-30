@@ -253,8 +253,7 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
             
             if (verseError) throw verseError;
             
-            // Check for 3 consecutive months bonus
-            await checkAndAwardConsecutiveMonthsBonus(approval.user_uid, sourceId);
+            // Badge check will handle 3 consecutive months (awards 100 credits via badge)
         }
         
         // Award credits to user

@@ -63,7 +63,7 @@ ON CONFLICT (app_name, transaction_type) DO NOTHING;
 INSERT INTO credit_manager (app_name, transaction_type, credit_amount) VALUES
     ('First Game', 'credit', 20),
     ('Trivia Master', 'credit', 20),
-    ('Memory Verse Champion', 'credit', 20),
+    ('Memory Verse Champion', 'credit', 100),
     ('Workout Warrior', 'credit', 20),
     ('Chore Champion', 'credit', 20),
     ('Early Bird', 'credit', 20),

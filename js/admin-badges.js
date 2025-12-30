@@ -84,7 +84,6 @@ function setupTabs() {
 
 // Badge icons mapping
 const badgeIcons = {
-    'first_game': '🎮',
     'trivia_master': '📖',
     'memory_verse': '🧠',
     'workout_warrior': '💪',
@@ -117,7 +116,6 @@ const fruitsOfSpirit = [
 
 // Achievement badges (non-Fruits of the Spirit)
 const achievementBadges = [
-    { id: 'first_game', name: 'First Game', icon: '🎮' },
     { id: 'trivia_master', name: 'Trivia Master', icon: '📖' },
     { id: 'memory_verse', name: 'Memory Verse Champion', icon: '🧠' },
     { id: 'workout_warrior', name: 'Workout Warrior', icon: '💪' },

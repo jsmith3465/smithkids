@@ -1,6 +1,7 @@
 // Badges page for standard users
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { getCreditAmount } from './credit-display-utils.js';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
@@ -64,13 +65,6 @@ async function loadBadges(userUid) {
     // Define available badges
     const availableBadges = [
         {
-            id: 'first_game',
-            name: 'First Game',
-            icon: '🎮',
-            description: 'Play your first game',
-            earned: false
-        },
-        {
             id: 'trivia_master',
             name: 'Trivia Master',
             icon: '📖',
@@ -81,7 +75,7 @@ async function loadBadges(userUid) {
             id: 'memory_verse',
             name: 'Memory Verse Champion',
             icon: '🧠',
-            description: 'Memorize a monthly memory verse',
+            description: 'Complete memory verse 3 months in a row',
             earned: false
         },
         {
@@ -153,12 +147,13 @@ async function loadBadges(userUid) {
     
     badgesList.innerHTML = '';
     
-    availableBadges.forEach(badge => {
+    // Load credit amounts for all badges
+    for (const badge of availableBadges) {
         const badgeCard = document.createElement('div');
         badgeCard.className = `badge-card ${badge.earned ? 'earned' : 'badge-locked'}`;
         
-        // Show different credit amount for "All Fruits" badge
-        const creditAmount = badge.id === 'all_fruits' ? 100 : 20;
+        // Get credit amount from database
+        const creditAmount = await getCreditAmount(badge.name, 'credit', badge.id === 'all_fruits' ? 100 : 20);
         
         badgeCard.innerHTML = `
             <div class="badge-icon">${badge.icon}</div>
@@ -167,6 +162,6 @@ async function loadBadges(userUid) {
             <div class="credit-box">💰 Earn ${creditAmount} Credits</div>
         `;
         badgesList.appendChild(badgeCard);
-    });
+    }
 }
 
