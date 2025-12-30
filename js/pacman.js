@@ -159,7 +159,7 @@ class PacManGame {
             nextDirection: 0,
             mouthOpen: true,
             mouthAngle: 0,
-            speed: 0.25
+            speed: 0.125  // Reduced by 50% from 0.25
         };
         
         // Ghosts
@@ -280,7 +280,7 @@ class PacManGame {
         this.level = 1;
         this.lives = 3;
         this.maze = JSON.parse(JSON.stringify(MAZE_LAYOUT));
-        this.pacman = { x: 14, y: 23, direction: 0, nextDirection: 0, mouthOpen: true, mouthAngle: 0, speed: 0.25 };
+        this.pacman = { x: 14, y: 23, direction: 0, nextDirection: 0, mouthOpen: true, mouthAngle: 0, speed: 0.125 };  // Reduced by 50% from 0.25
         this.ghosts = [
             { x: 13.5, y: 11, direction: 0, color: '#FF0000', name: 'Blinky', scared: false, inHouse: false },
             { x: 13.5, y: 14, direction: 0, color: '#FFB8FF', name: 'Pinky', scared: false, inHouse: true },
@@ -464,7 +464,7 @@ class PacManGame {
                 ghost.x = moveCheck.wrap.x;
                 ghost.y = moveCheck.wrap.y;
             } else if (moveCheck.canMove) {
-                const speed = ghost.scared ? 0.15 : 0.2;
+                const speed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
                 if (ghost.direction === 0) ghost.x += speed;
                 else if (ghost.direction === 1) ghost.y += speed;
                 else if (ghost.direction === 2) ghost.x -= speed;
@@ -546,7 +546,7 @@ class PacManGame {
         });
         this.powerPelletActive = false;
         this.powerPelletTimer = 0;
-        this.pacman.speed = Math.min(0.35, 0.25 + (this.level - 1) * 0.02);
+        this.pacman.speed = Math.min(0.175, 0.125 + (this.level - 1) * 0.01);  // Reduced by 50% (was 0.35 max, 0.25 base, 0.02 increment)
         this.countDots();
         this.updateDisplay();
     }
