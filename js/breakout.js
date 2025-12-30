@@ -16,7 +16,7 @@ function getPagePath(pageName) {
 }
 
 // Credit cost for Breakout
-const BREAKOUT_CREDIT_COST = 2;
+const BREAKOUT_CREDIT_COST = 3;
 
 // Check if user has enough credits
 async function checkCredits(userUid, cost) {

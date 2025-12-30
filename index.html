@@ -60,17 +60,11 @@
         
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-top: 40px;
             margin-left: auto;
             margin-right: auto;
-            max-width: 1200px;
-        }
-        
-        /* When there are 3 games, center them */
-        .games-grid:has(.game-card:nth-child(3):last-child) {
-            grid-template-columns: repeat(3, 1fr);
             max-width: 900px;
         }
         
@@ -84,13 +78,6 @@
         .games-grid:has(.game-card:nth-child(1):last-child):not(:has(.game-card:nth-child(2))) {
             grid-template-columns: 1fr;
             max-width: 300px;
-        }
-        
-        @media (max-width: 1200px) {
-            .games-grid {
-                grid-template-columns: repeat(3, 1fr);
-                max-width: 900px;
-            }
         }
         
         @media (max-width: 900px) {
@@ -340,7 +327,7 @@
                         <div class="game-card-icon">🎾</div>
                         <div class="game-card-title">Breakout</div>
                         <div class="game-card-description">Classic brick-breaking game! Use your paddle to bounce the ball and break all the bricks. Advance through levels!</div>
-                        <div class="game-card-credits cost">💰 Costs 2 credits to play</div>
+                        <div class="game-card-credits cost">💰 Costs 3 credits to play</div>
                     </a>
                 </div>
             </div>

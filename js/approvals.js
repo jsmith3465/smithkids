@@ -78,12 +78,15 @@ async function loadUnapprovedItems() {
                 workout_type,
                 credits_amount,
                 created_at,
-                Users!Workouts_user_uid_fkey(UID, First_Name, Last_Name, Username)
+                Users(UID, First_Name, Last_Name, Username)
             `)
             .eq('is_approved', false)
             .order('created_at', { ascending: true });
         
-        if (workoutsError) throw workoutsError;
+        if (workoutsError) {
+            console.error('Error fetching workouts:', workoutsError);
+            throw workoutsError;
+        }
         
         // Get all unapproved chores
         const { data: chores, error: choresError } = await supabase
@@ -94,12 +97,15 @@ async function loadUnapprovedItems() {
                 chore_type,
                 credits_amount,
                 created_at,
-                Users!Chores_user_uid_fkey(UID, First_Name, Last_Name, Username)
+                Users(UID, First_Name, Last_Name, Username)
             `)
             .eq('is_approved', false)
             .order('created_at', { ascending: true });
         
-        if (choresError) throw choresError;
+        if (choresError) {
+            console.error('Error fetching chores:', choresError);
+            throw choresError;
+        }
         
         // Get all pending memory verse submissions
         const { data: memoryVerses, error: memoryVersesError } = await supabase
@@ -109,7 +115,8 @@ async function loadUnapprovedItems() {
                 user_uid,
                 month_year,
                 submitted_at,
-                Monthly_Memory_Verses!Memory_Verse_Submissions_verse_id_fkey(
+                verse_id,
+                Monthly_Memory_Verses(
                     start_book,
                     start_chapter,
                     start_verse,
@@ -117,12 +124,15 @@ async function loadUnapprovedItems() {
                     end_chapter,
                     end_verse
                 ),
-                Users!Memory_Verse_Submissions_user_uid_fkey(UID, First_Name, Last_Name, Username)
+                Users(UID, First_Name, Last_Name, Username)
             `)
             .eq('status', 'pending')
             .order('submitted_at', { ascending: true });
         
-        if (memoryVersesError) throw memoryVersesError;
+        if (memoryVersesError) {
+            console.error('Error fetching memory verses:', memoryVersesError);
+            throw memoryVersesError;
+        }
         
         if ((!workouts || workouts.length === 0) && (!chores || chores.length === 0) && (!memoryVerses || memoryVerses.length === 0)) {
             approvalsList.innerHTML = '<div class="no-approvals">No pending approvals. Great job!</div>';
@@ -212,9 +222,9 @@ async function loadUnapprovedItems() {
             memoryVerses.forEach(submission => {
                 const user = submission.Users;
                 const verse = submission.Monthly_Memory_Verses;
-                const displayName = (user.First_Name && user.Last_Name)
+                const displayName = (user && user.First_Name && user.Last_Name)
                     ? `${user.First_Name} ${user.Last_Name}`
-                    : user.Username || 'Unknown User';
+                    : (user && user.Username) || 'Unknown User';
                 
                 const reference = verse && verse.start_book === verse.end_book 
                     ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
@@ -255,7 +265,8 @@ async function loadUnapprovedItems() {
         
     } catch (error) {
         console.error('Error loading approvals:', error);
-        approvalsList.innerHTML = '<div class="no-approvals">Error loading approvals. Please try again.</div>';
+        const errorMessage = error.message || 'Unknown error occurred';
+        approvalsList.innerHTML = `<div class="no-approvals" style="color: #dc3545;">Error loading approvals: ${errorMessage}. Please try again or contact support.</div>`;
     }
 }
 
@@ -800,7 +811,8 @@ async function loadApprovedMemoryVerses() {
                 month_year,
                 submitted_at,
                 approved_at,
-                Monthly_Memory_Verses!Memory_Verse_Submissions_verse_id_fkey(
+                verse_id,
+                Monthly_Memory_Verses(
                     start_book,
                     start_chapter,
                     start_verse,
@@ -808,12 +820,15 @@ async function loadApprovedMemoryVerses() {
                     end_chapter,
                     end_verse
                 ),
-                Users!Memory_Verse_Submissions_user_uid_fkey(UID, First_Name, Last_Name, Username)
+                Users(UID, First_Name, Last_Name, Username)
             `)
             .eq('status', 'approved')
             .order('approved_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching approved memory verses:', error);
+            throw error;
+        }
         
         if (!approvedVerses || approvedVerses.length === 0) {
             approvedList.innerHTML = '<div class="no-approvals">No approved memory verses yet.</div>';
