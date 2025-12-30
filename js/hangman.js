@@ -96,6 +96,8 @@ class HangmanGame {
         this.maxWrongGuesses = 6;
         this.gameActive = false;
         this.score = 0;
+        this.gameStartTime = null;
+        this.gameDuration = 0;
         
         this.init();
     }
@@ -182,6 +184,8 @@ class HangmanGame {
         this.wrongGuesses = 0;
         this.gameActive = true;
         this.score = 0;
+        this.gameStartTime = Date.now();
+        this.gameDuration = 0;
         
         // Reset alphabet buttons
         this.alphabetGrid.querySelectorAll('.letter-btn').forEach(btn => {
@@ -273,6 +277,11 @@ class HangmanGame {
     async gameWon() {
         this.gameActive = false;
         
+        // Calculate game duration
+        if (this.gameStartTime) {
+            this.gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        }
+        
         // Calculate final score (bonus for fewer wrong guesses)
         const bonus = (this.maxWrongGuesses - this.wrongGuesses) * 5;
         this.score += bonus;
@@ -293,6 +302,11 @@ class HangmanGame {
     
     async gameLost() {
         this.gameActive = false;
+        
+        // Calculate game duration
+        if (this.gameStartTime) {
+            this.gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        }
         
         // Reveal the word
         let display = '';
@@ -320,23 +334,27 @@ class HangmanGame {
     
     async saveScore(won) {
         const session = window.authStatus?.getSession();
-        if (!session) return;
+        if (!session || !session.uid) {
+            console.error('No user session found');
+            return;
+        }
         
         try {
-            // Check if Hangman_Scores table exists, if not, just log the score
             const { error } = await supabase
-                .from('Hangman_Scores')
+                .from('hangman_scores')
                 .insert({
                     user_uid: session.uid,
                     score: this.score,
                     word: this.currentWord,
                     won: won,
                     wrong_guesses: this.wrongGuesses,
-                    created_at: new Date().toISOString()
+                    game_duration_seconds: this.gameDuration || null
                 });
             
-            if (error && error.code !== '42P01') { // 42P01 is "table does not exist"
+            if (error) {
                 console.error('Error saving hangman score:', error);
+            } else {
+                console.log('Hangman score saved successfully');
             }
         } catch (error) {
             console.error('Error saving hangman score:', error);
