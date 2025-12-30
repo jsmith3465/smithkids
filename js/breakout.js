@@ -101,6 +101,11 @@ class BreakoutGame {
     constructor() {
         this.canvas = document.getElementById('breakoutCanvas');
         this.ctx = this.canvas.getContext('2d');
+        
+        // Resize canvas to fit container while maintaining aspect ratio
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
         this.paddle = {
             x: this.canvas.width / 2 - 50,
             y: this.canvas.height - 30,
@@ -134,6 +139,35 @@ class BreakoutGame {
         
         this.initBricks();
         this.setupEventListeners();
+    }
+    
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        if (!container) return;
+        
+        const containerWidth = container.clientWidth;
+        const maxWidth = Math.min(containerWidth - 20, 1000); // Leave some padding, max 1000px
+        const width = Math.max(600, maxWidth); // Minimum 600px
+        const height = Math.round(width * 0.7); // Maintain 10:7 aspect ratio
+        
+        // Set canvas size (internal resolution)
+        this.canvas.width = width;
+        this.canvas.height = height;
+        
+        // Update game elements
+        this.paddle.x = this.canvas.width / 2 - 50;
+        this.paddle.y = this.canvas.height - 30;
+        this.ball.x = this.canvas.width / 2;
+        this.ball.y = this.canvas.height - 50;
+        
+        // Recalculate brick layout
+        this.brickWidth = Math.floor((this.canvas.width - (this.brickOffsetLeft * 2) - (this.brickPadding * (this.brickCols - 1))) / this.brickCols);
+        this.initBricks();
+        
+        // Redraw if game is running
+        if (this.gameRunning) {
+            this.draw();
+        }
     }
     
     initBricks() {

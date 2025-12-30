@@ -90,6 +90,9 @@ async function loadStatistics(tabName) {
         case 'breakout':
             await loadBreakoutStatistics();
             break;
+        case 'tetris':
+            await loadTetrisStatistics();
+            break;
     }
 }
 
@@ -827,6 +830,98 @@ async function loadBreakoutStatistics() {
     } catch (error) {
         console.error('Error loading Breakout statistics:', error);
         breakoutStatsDiv.innerHTML = '<div class="no-data">Error loading Breakout statistics</div>';
+    }
+}
+
+async function loadTetrisStatistics() {
+    const tetrisStatsDiv = document.getElementById('tetrisStats');
+    
+    try {
+        const { data: scores, error: scoresError } = await supabase
+            .from('tetris_scores')
+            .select('user_uid, score, level, lines_cleared, game_duration_seconds, created_at')
+            .order('score', { ascending: false });
+        
+        if (scoresError) throw scoresError;
+        
+        if (!scores || scores.length === 0) {
+            tetrisStatsDiv.innerHTML = '<div class="no-data">No Tetris game data available yet. Play the game to see statistics!</div>';
+            return;
+        }
+        
+        const userIds = [...new Set(scores.map(s => s.user_uid))];
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', userIds);
+        
+        if (usersError) throw usersError;
+        
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        const userStats = {};
+        scores.forEach(score => {
+            if (!userStats[score.user_uid]) {
+                userStats[score.user_uid] = {
+                    gamesPlayed: 0,
+                    totalScore: 0,
+                    highestScore: 0,
+                    highestLevel: 0,
+                    totalLinesCleared: 0,
+                    totalTime: 0
+                };
+            }
+            userStats[score.user_uid].gamesPlayed++;
+            userStats[score.user_uid].totalScore += score.score;
+            if (score.score > userStats[score.user_uid].highestScore) {
+                userStats[score.user_uid].highestScore = score.score;
+            }
+            if (score.level > userStats[score.user_uid].highestLevel) {
+                userStats[score.user_uid].highestLevel = score.level;
+            }
+            userStats[score.user_uid].totalLinesCleared += score.lines_cleared || 0;
+            userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
+        });
+        
+        let html = '<table class="stats-table">';
+        html += '<thead><tr><th>Player</th><th>Games Played</th><th>Highest Score</th><th>Highest Level</th><th>Total Lines</th><th>Avg Score</th><th>Total Time</th></tr></thead>';
+        html += '<tbody>';
+        
+        const sortedUsers = Object.keys(userStats).sort((a, b) => 
+            userStats[b].highestScore - userStats[a].highestScore
+        );
+        
+        sortedUsers.forEach(uid => {
+            const stats = userStats[uid];
+            const user = userMap[uid];
+            const avgScore = Math.round(stats.totalScore / stats.gamesPlayed);
+            const totalMinutes = Math.floor(stats.totalTime / 60);
+            const totalSeconds = stats.totalTime % 60;
+            const timeStr = totalMinutes > 0 ? `${totalMinutes}m ${totalSeconds}s` : `${totalSeconds}s`;
+            
+            const userName = getUserDisplayName(user);
+            
+            html += `<tr>
+                <td>${userName}</td>
+                <td>${stats.gamesPlayed}</td>
+                <td>${stats.highestScore.toLocaleString()}</td>
+                <td>${stats.highestLevel}</td>
+                <td>${stats.totalLinesCleared}</td>
+                <td>${avgScore.toLocaleString()}</td>
+                <td>${timeStr}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        tetrisStatsDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading Tetris statistics:', error);
+        tetrisStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
     }
 }
 

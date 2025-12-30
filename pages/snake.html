@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         .snake-game-container {
-            max-width: 600px;
+            max-width: min(95vw, 1200px);
             margin: 0 auto;
             background: #fff;
             border-radius: 20px;
@@ -15,6 +15,19 @@
             width: 100%;
             padding: 40px;
             text-align: center;
+        }
+        
+        @media (min-width: 1200px) {
+            .snake-game-container {
+                max-width: 1200px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .snake-game-container {
+                max-width: 100%;
+                padding: 20px;
+            }
         }
         
         .game-header {
@@ -54,12 +67,24 @@
         .snake-canvas-container {
             position: relative;
             width: 100%;
-            max-width: 500px;
+            max-width: min(90vw, 800px);
             margin: 0 auto;
             background: #000;
             border: 5px solid #333;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (min-width: 1200px) {
+            .snake-canvas-container {
+                max-width: 800px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .snake-canvas-container {
+                max-width: 100%;
+            }
         }
         
         #snakeCanvas {
@@ -229,7 +254,7 @@
             </div>
             
             <div class="snake-canvas-container">
-                <canvas id="snakeCanvas" width="500" height="500"></canvas>
+                <canvas id="snakeCanvas" width="800" height="800"></canvas>
             </div>
             
             <div class="game-controls">

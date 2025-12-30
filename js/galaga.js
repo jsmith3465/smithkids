@@ -101,6 +101,11 @@ class GalagaGame {
     constructor() {
         this.canvas = document.getElementById('galagaCanvas');
         this.ctx = this.canvas.getContext('2d');
+        
+        // Resize canvas to fit container while maintaining aspect ratio
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
         this.width = this.canvas.width;
         this.height = this.canvas.height;
         
@@ -140,6 +145,34 @@ class GalagaGame {
         this.usingMouse = false;
         
         this.init();
+    }
+    
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        if (!container) return;
+        
+        const containerWidth = container.clientWidth;
+        const maxSize = Math.min(containerWidth - 20, 1000); // Leave some padding, max 1000px
+        const size = Math.max(600, maxSize); // Minimum 600px
+        
+        // Set canvas size (internal resolution)
+        this.canvas.width = size;
+        this.canvas.height = size;
+        
+        // Update dimensions
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        
+        // Reposition player if game is running
+        if (this.gameRunning && this.player) {
+            this.player.x = this.width / 2;
+            this.player.y = this.height - 50;
+        }
+        
+        // Redraw if game is running
+        if (this.gameRunning) {
+            this.draw();
+        }
     }
     
     init() {

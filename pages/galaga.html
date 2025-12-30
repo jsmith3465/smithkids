@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         .galaga-container {
-            max-width: 800px;
+            max-width: min(95vw, 1400px);
             margin: 0 auto;
             background: #fff;
             border-radius: 20px;
@@ -15,6 +15,19 @@
             width: 100%;
             padding: 40px;
             text-align: center;
+        }
+        
+        @media (min-width: 1400px) {
+            .galaga-container {
+                max-width: 1400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .galaga-container {
+                max-width: 100%;
+                padding: 20px;
+            }
         }
         
         .game-header {
@@ -71,12 +84,24 @@
         .game-canvas-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: min(90vw, 1000px);
             margin: 0 auto;
             background: #000;
             border: 5px solid #333;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (min-width: 1400px) {
+            .game-canvas-container {
+                max-width: 1000px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-canvas-container {
+                max-width: 100%;
+            }
         }
         
         #galagaCanvas {
@@ -260,7 +285,7 @@
             
             <div class="game-section">
                 <div class="game-canvas-container">
-                    <canvas id="galagaCanvas" width="600" height="600"></canvas>
+                    <canvas id="galagaCanvas" width="1000" height="1000"></canvas>
                 </div>
                 
                 <div id="gameMessage"></div>

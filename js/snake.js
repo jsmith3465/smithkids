@@ -13,6 +13,11 @@ class SnakeGame {
         this.canvas = document.getElementById('snakeCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.gridSize = 20;
+        
+        // Resize canvas to fit container while maintaining aspect ratio
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
         this.tileCount = this.canvas.width / this.gridSize;
         
         this.snake = [{ x: 10, y: 10 }];
@@ -60,6 +65,27 @@ class SnakeGame {
         
         // Draw initial state
         this.draw();
+    }
+    
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        if (!container) return;
+        
+        const containerWidth = container.clientWidth;
+        const maxSize = Math.min(containerWidth - 20, 800); // Leave some padding, max 800px
+        const size = Math.max(400, maxSize); // Minimum 400px
+        
+        // Set canvas size (internal resolution)
+        this.canvas.width = size;
+        this.canvas.height = size;
+        
+        // Update tile count
+        this.tileCount = this.canvas.width / this.gridSize;
+        
+        // Redraw if game is running
+        if (this.gameRunning) {
+            this.draw();
+        }
     }
     
     async startGame(initialDirection = null) {
