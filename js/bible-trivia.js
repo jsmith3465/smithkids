@@ -3224,9 +3224,82 @@ class BibleTrivia {
                 console.error('Error saving Bible Trivia game result:', saveError);
             } else {
                 console.log('Bible Trivia game result saved successfully');
+                
+                // Update user stats table
+                await this.updateUserStats(session.uid);
             }
         } catch (error) {
             console.error('Error saving game result:', error);
+        }
+    }
+    
+    async updateUserStats(userUid) {
+        try {
+            // Check if user stats exist
+            const { data: existingStats, error: fetchError } = await supabase
+                .from('bible_trivia_user_stats')
+                .select('stats_id, total_games_played, total_easy_questions, total_easy_correct, total_moderate_questions, total_moderate_correct, total_hard_questions, total_hard_correct')
+                .eq('user_uid', userUid)
+                .single();
+            
+            if (fetchError && fetchError.code !== 'PGRST116') {
+                console.error('Error fetching user stats:', fetchError);
+                return;
+            }
+            
+            // Calculate new totals
+            const newGamesPlayed = (existingStats?.total_games_played || 0) + 1;
+            const newEasyQuestions = (existingStats?.total_easy_questions || 0) + this.answersByDifficulty.easy.total;
+            const newEasyCorrect = (existingStats?.total_easy_correct || 0) + this.answersByDifficulty.easy.correct;
+            const newModerateQuestions = (existingStats?.total_moderate_questions || 0) + this.answersByDifficulty.moderate.total;
+            const newModerateCorrect = (existingStats?.total_moderate_correct || 0) + this.answersByDifficulty.moderate.correct;
+            const newHardQuestions = (existingStats?.total_hard_questions || 0) + this.answersByDifficulty.hard.total;
+            const newHardCorrect = (existingStats?.total_hard_correct || 0) + this.answersByDifficulty.hard.correct;
+            
+            if (existingStats) {
+                // Update existing stats
+                const { error: updateError } = await supabase
+                    .from('bible_trivia_user_stats')
+                    .update({
+                        total_games_played: newGamesPlayed,
+                        total_easy_questions: newEasyQuestions,
+                        total_easy_correct: newEasyCorrect,
+                        total_moderate_questions: newModerateQuestions,
+                        total_moderate_correct: newModerateCorrect,
+                        total_hard_questions: newHardQuestions,
+                        total_hard_correct: newHardCorrect,
+                        last_updated: new Date().toISOString()
+                    })
+                    .eq('stats_id', existingStats.stats_id);
+                
+                if (updateError) {
+                    console.error('Error updating user stats:', updateError);
+                } else {
+                    console.log('User stats updated successfully');
+                }
+            } else {
+                // Insert new stats record
+                const { error: insertError } = await supabase
+                    .from('bible_trivia_user_stats')
+                    .insert({
+                        user_uid: userUid,
+                        total_games_played: newGamesPlayed,
+                        total_easy_questions: newEasyQuestions,
+                        total_easy_correct: newEasyCorrect,
+                        total_moderate_questions: newModerateQuestions,
+                        total_moderate_correct: newModerateCorrect,
+                        total_hard_questions: newHardQuestions,
+                        total_hard_correct: newHardCorrect
+                    });
+                
+                if (insertError) {
+                    console.error('Error inserting user stats:', insertError);
+                } else {
+                    console.log('User stats created successfully');
+                }
+            }
+        } catch (error) {
+            console.error('Error updating user stats:', error);
         }
     }
     

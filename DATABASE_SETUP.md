@@ -231,6 +231,114 @@ CREATE INDEX idx_bible_trivia_score ON Bible_Trivia_Results(score);
 - **hard_correct**: Number of hard questions answered correctly
 - **created_at**: Timestamp of when the game was completed
 
+## Bible_Trivia_User_Stats Table
+
+Create this table for tracking aggregated Bible Trivia statistics per user:
+
+```sql
+CREATE TABLE IF NOT EXISTS bible_trivia_user_stats (
+    stats_id SERIAL PRIMARY KEY,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID") UNIQUE,
+    total_games_played INTEGER NOT NULL DEFAULT 0,
+    total_easy_questions INTEGER NOT NULL DEFAULT 0,
+    total_easy_correct INTEGER NOT NULL DEFAULT 0,
+    total_moderate_questions INTEGER NOT NULL DEFAULT 0,
+    total_moderate_correct INTEGER NOT NULL DEFAULT 0,
+    total_hard_questions INTEGER NOT NULL DEFAULT 0,
+    total_hard_correct INTEGER NOT NULL DEFAULT 0,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_bible_trivia_user_stats_user ON bible_trivia_user_stats(user_uid);
+```
+
+### Table Structure Details:
+
+- **stats_id**: Primary key, auto-incrementing unique identifier
+- **user_uid**: Foreign key referencing the Users table, unique per user (one stats record per user)
+- **total_games_played**: Total number of games completed by the user
+- **total_easy_questions**: Total number of easy questions asked across all games
+- **total_easy_correct**: Total number of easy questions answered correctly
+- **total_moderate_questions**: Total number of moderate questions asked across all games
+- **total_moderate_correct**: Total number of moderate questions answered correctly
+- **total_hard_questions**: Total number of hard questions asked across all games
+- **total_hard_correct**: Total number of hard questions answered correctly
+- **last_updated**: Timestamp of when the stats were last updated
+
+### Notes:
+
+- This table is automatically updated each time a user completes a Bible Trivia game
+- The stats are aggregated from individual game results in the `bible_trivia_results` table
+- This provides fast access to user statistics without needing to aggregate from all game results each time
+
+## TTT_Player_Results Table
+
+Create this table for tracking individual player results in Tic Tac Toe games:
+
+```sql
+CREATE TABLE IF NOT EXISTS ttt_player_results (
+    result_id SERIAL PRIMARY KEY,
+    game_id BIGINT NOT NULL REFERENCES "TTT_Game_Results"("game_id") ON DELETE CASCADE,
+    user_uid BIGINT REFERENCES "Users"("UID"),
+    result TEXT NOT NULL CHECK (result IN ('win', 'loss', 'draw')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_ttt_player_results_game ON ttt_player_results(game_id);
+CREATE INDEX IF NOT EXISTS idx_ttt_player_results_user ON ttt_player_results(user_uid);
+CREATE INDEX IF NOT EXISTS idx_ttt_player_results_result ON ttt_player_results(result);
+```
+
+### Table Structure Details:
+
+- **result_id**: Primary key, auto-incrementing unique identifier
+- **game_id**: Foreign key referencing the TTT_Game_Results table, links to the specific game
+- **user_uid**: Foreign key referencing the Users table, identifies which user played (null for computer players)
+- **result**: The result for this player - 'win', 'loss', or 'draw'
+- **created_at**: Timestamp of when the result was recorded
+
+### Notes:
+
+- This table records each user's individual result for each Tic Tac Toe game
+- Computer players are not recorded (user_uid will be null)
+- Each game will have 1-2 records (one for each human player)
+- The result is automatically determined based on the game outcome
+- This provides a user-centric view of game results for easy statistics tracking
+
+### Example Queries:
+
+**Get all wins for a specific user:**
+```sql
+SELECT COUNT(*) as wins
+FROM ttt_player_results
+WHERE user_uid = [user_id] AND result = 'win';
+```
+
+**Get all games played by a user:**
+```sql
+SELECT result, COUNT(*) as count
+FROM ttt_player_results
+WHERE user_uid = [user_id]
+GROUP BY result;
+```
+
+**Get win/loss/draw statistics for all users:**
+```sql
+SELECT 
+    u.UID,
+    u.First_Name,
+    u.Last_Name,
+    COUNT(CASE WHEN tpr.result = 'win' THEN 1 END) as wins,
+    COUNT(CASE WHEN tpr.result = 'loss' THEN 1 END) as losses,
+    COUNT(CASE WHEN tpr.result = 'draw' THEN 1 END) as draws
+FROM Users u
+LEFT JOIN ttt_player_results tpr ON u.UID = tpr.user_uid
+GROUP BY u.UID, u.First_Name, u.Last_Name
+ORDER BY wins DESC;
+```
+
 ## Notes
 
 - The `month_year` field should be in format 'YYYY-MM' (e.g., '2025-01' for January 2025)
@@ -242,4 +350,6 @@ CREATE INDEX idx_bible_trivia_score ON Bible_Trivia_Results(score);
 - The `source_id` field references the original table's ID (workout_id, chore_id, or memory_verse_submission id)
 - The User_Badges table tracks all badges earned by users, including the 9 Fruits of the Spirit badges
 - The Bible_Trivia_Results table tracks detailed statistics for each game, including breakdown by difficulty level
+- The Bible_Trivia_User_Stats table tracks aggregated statistics per user for fast access to total games played and question totals by difficulty
+- The ttt_player_results table tracks individual player results (win/loss/draw) for each Tic Tac Toe game played
 

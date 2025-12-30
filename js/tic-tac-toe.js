@@ -1105,6 +1105,11 @@ class TicTacToe {
                 return null;
             }
             
+            // Save individual player results
+            if (gameResult && gameResult.game_id) {
+                await this.savePlayerResults(gameResult.game_id, player1Uid, player2Uid, winnerUid, isDraw);
+            }
+            
             // If this is a remote game, update the remote session with game_id
             if (this.isRemoteGame && this.remoteSessionId && gameResult) {
                 await supabase
@@ -1117,6 +1122,63 @@ class TicTacToe {
         } catch (error) {
             console.error('Error saving game result:', error);
             return null;
+        }
+    }
+    
+    async savePlayerResults(gameId, player1Uid, player2Uid, winnerUid, isDraw) {
+        try {
+            const playerResults = [];
+            
+            // Determine result for player 1
+            if (player1Uid !== null) {
+                let player1Result;
+                if (isDraw) {
+                    player1Result = 'draw';
+                } else if (winnerUid === player1Uid) {
+                    player1Result = 'win';
+                } else {
+                    player1Result = 'loss';
+                }
+                
+                playerResults.push({
+                    game_id: gameId,
+                    user_uid: player1Uid,
+                    result: player1Result
+                });
+            }
+            
+            // Determine result for player 2
+            if (player2Uid !== null) {
+                let player2Result;
+                if (isDraw) {
+                    player2Result = 'draw';
+                } else if (winnerUid === player2Uid) {
+                    player2Result = 'win';
+                } else {
+                    player2Result = 'loss';
+                }
+                
+                playerResults.push({
+                    game_id: gameId,
+                    user_uid: player2Uid,
+                    result: player2Result
+                });
+            }
+            
+            // Insert player results if there are any
+            if (playerResults.length > 0) {
+                const { error: playerResultsError } = await supabase
+                    .from('ttt_player_results')
+                    .insert(playerResults);
+                
+                if (playerResultsError) {
+                    console.error('Error saving player results:', playerResultsError);
+                } else {
+                    console.log('Player results saved successfully');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving player results:', error);
         }
     }
     
