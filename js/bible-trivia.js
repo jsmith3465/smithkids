@@ -2776,6 +2776,13 @@ class BibleTrivia {
         this.questions = this.shuffleQuestions([...triviaQuestions]);
         this.gameStarted = false;
         
+        // Track answers by difficulty
+        this.answersByDifficulty = {
+            easy: { total: 0, correct: 0 },
+            moderate: { total: 0, correct: 0 },
+            hard: { total: 0, correct: 0 }
+        };
+        
         this.init();
     }
     
@@ -2908,6 +2915,14 @@ class BibleTrivia {
         
         // Check if correct
         const isCorrect = index === question.correct;
+        
+        // Track answer by difficulty
+        const difficulty = question.difficulty;
+        this.answersByDifficulty[difficulty].total++;
+        if (isCorrect) {
+            this.answersByDifficulty[difficulty].correct++;
+        }
+        
         if (isCorrect) {
             options[index].classList.add('correct');
             this.score++;
@@ -3178,17 +3193,31 @@ class BibleTrivia {
         if (!session) return;
         
         try {
+            // Calculate credits earned
+            const creditsEarned = this.score < 3 ? 0 : 
+                                (this.score >= 3 && this.score <= 4) ? 1 :
+                                (this.score >= 5 && this.score <= 6) ? 3 :
+                                (this.score === 7) ? 5 :
+                                (this.score >= 8 && this.score <= 9) ? 10 : 20;
+            
+            // Calculate percentage correct
+            const percentageCorrect = (this.score / 10) * 100;
+            
+            // Save detailed game result
             await supabase
                 .from('Bible_Trivia_Results')
                 .insert({
                     user_uid: session.uid,
                     score: this.score,
                     total_questions: 10,
-                    credits_earned: this.score < 3 ? 0 : 
-                                    (this.score >= 3 && this.score <= 4) ? 1 :
-                                    (this.score >= 5 && this.score <= 6) ? 3 :
-                                    (this.score === 7) ? 5 :
-                                    (this.score >= 8 && this.score <= 9) ? 10 : 20
+                    credits_earned: creditsEarned,
+                    percentage_correct: percentageCorrect,
+                    easy_questions: this.answersByDifficulty.easy.total,
+                    easy_correct: this.answersByDifficulty.easy.correct,
+                    moderate_questions: this.answersByDifficulty.moderate.total,
+                    moderate_correct: this.answersByDifficulty.moderate.correct,
+                    hard_questions: this.answersByDifficulty.hard.total,
+                    hard_correct: this.answersByDifficulty.hard.correct
                 });
         } catch (error) {
             // Table might not exist yet, that's okay
@@ -3201,6 +3230,13 @@ class BibleTrivia {
         this.score = 0;
         this.selectedAnswer = null;
         this.questions = this.shuffleQuestions([...triviaQuestions]);
+        
+        // Reset difficulty tracking
+        this.answersByDifficulty = {
+            easy: { total: 0, correct: 0 },
+            moderate: { total: 0, correct: 0 },
+            hard: { total: 0, correct: 0 }
+        };
         
         document.getElementById('resultsScreen').classList.remove('show');
         document.getElementById('startScreen').classList.remove('hidden');

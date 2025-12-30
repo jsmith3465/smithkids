@@ -188,6 +188,49 @@ WHERE user_uid = [user_id]
 ORDER BY earned_at DESC;
 ```
 
+## Bible_Trivia_Results Table
+
+Create this table for tracking detailed Bible Trivia game statistics:
+
+```sql
+CREATE TABLE Bible_Trivia_Results (
+    result_id SERIAL PRIMARY KEY,
+    user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
+    score INTEGER NOT NULL,
+    total_questions INTEGER NOT NULL DEFAULT 10,
+    credits_earned INTEGER NOT NULL DEFAULT 0,
+    percentage_correct DECIMAL(5,2) NOT NULL,
+    easy_questions INTEGER NOT NULL DEFAULT 0,
+    easy_correct INTEGER NOT NULL DEFAULT 0,
+    moderate_questions INTEGER NOT NULL DEFAULT 0,
+    moderate_correct INTEGER NOT NULL DEFAULT 0,
+    hard_questions INTEGER NOT NULL DEFAULT 0,
+    hard_correct INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better query performance
+CREATE INDEX idx_bible_trivia_user ON Bible_Trivia_Results(user_uid);
+CREATE INDEX idx_bible_trivia_created_at ON Bible_Trivia_Results(created_at);
+CREATE INDEX idx_bible_trivia_score ON Bible_Trivia_Results(score);
+```
+
+### Table Structure Details:
+
+- **result_id**: Primary key, auto-incrementing unique identifier
+- **user_uid**: Foreign key referencing the Users table, identifies who played
+- **score**: Total number of correct answers (out of 10)
+- **total_questions**: Total questions in the game (always 10)
+- **credits_earned**: Number of credits earned based on score
+- **percentage_correct**: Percentage of questions answered correctly
+- **easy_questions**: Number of easy questions in the game (should be 5)
+- **easy_correct**: Number of easy questions answered correctly
+- **moderate_questions**: Number of moderate questions in the game (should be 3)
+- **moderate_correct**: Number of moderate questions answered correctly
+- **hard_questions**: Number of hard questions in the game (should be 2)
+- **hard_correct**: Number of hard questions answered correctly
+- **created_at**: Timestamp of when the game was completed
+
 ## Notes
 
 - The `month_year` field should be in format 'YYYY-MM' (e.g., '2025-01' for January 2025)
@@ -198,4 +241,5 @@ ORDER BY earned_at DESC;
 - When a workout, chore, or memory verse is created, an entry is automatically created in Unified_Approvals
 - The `source_id` field references the original table's ID (workout_id, chore_id, or memory_verse_submission id)
 - The User_Badges table tracks all badges earned by users, including the 9 Fruits of the Spirit badges
+- The Bible_Trivia_Results table tracks detailed statistics for each game, including breakdown by difficulty level
 

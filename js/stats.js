@@ -312,60 +312,56 @@ async function loadBibleTriviaStatistics() {
     const bibleTriviaStatsDiv = document.getElementById('bibleTriviaStats');
     
     try {
-        const { data: answers, error: answersError } = await supabase
-            .from('Bible_Trivia_Answers')
-            .select('user_uid, is_correct, answered_at');
+        // Fetch game results with detailed difficulty tracking
+        const { data: results, error: resultsError } = await supabase
+            .from('Bible_Trivia_Results')
+            .select('user_uid, score, total_questions, percentage_correct, easy_questions, easy_correct, moderate_questions, moderate_correct, hard_questions, hard_correct, created_at')
+            .order('created_at', { ascending: false });
         
-        if (answersError) {
-            console.log('Bible_Trivia_Answers table may not exist:', answersError);
+        if (resultsError) {
+            console.log('Bible_Trivia_Results table may not exist:', resultsError);
             bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
             return;
         }
         
-        const { data: linkClicks, error: clicksError } = await supabase
-            .from('Bible_Trivia_Link_Clicks')
-            .select('user_uid, clicked_at');
-        
-        if (clicksError) {
-            console.log('Bible_Trivia_Link_Clicks table may not exist:', clicksError);
-        }
-        
-        if ((!answers || answers.length === 0) && (!linkClicks || linkClicks.length === 0)) {
+        if (!results || results.length === 0) {
             bibleTriviaStatsDiv.innerHTML = '<div class="no-data">No Bible Trivia data available yet. Play the game to see statistics!</div>';
             return;
         }
         
+        // Aggregate stats by user
         const userStats = {};
         
-        if (answers) {
-            answers.forEach(answer => {
-                if (!userStats[answer.user_uid]) {
-                    userStats[answer.user_uid] = {
-                        questionsAsked: 0,
-                        questionsCorrect: 0,
-                        bibleLinkClicks: 0
-                    };
-                }
-                userStats[answer.user_uid].questionsAsked++;
-                if (answer.is_correct) {
-                    userStats[answer.user_uid].questionsCorrect++;
-                }
-            });
-        }
+        results.forEach(result => {
+            const uid = result.user_uid;
+            if (!userStats[uid]) {
+                userStats[uid] = {
+                    gamesPlayed: 0,
+                    totalQuestions: 0,
+                    totalCorrect: 0,
+                    totalEasy: 0,
+                    easyCorrect: 0,
+                    totalModerate: 0,
+                    moderateCorrect: 0,
+                    totalHard: 0,
+                    hardCorrect: 0,
+                    totalPercentage: 0
+                };
+            }
+            
+            userStats[uid].gamesPlayed++;
+            userStats[uid].totalQuestions += result.total_questions || 10;
+            userStats[uid].totalCorrect += result.score || 0;
+            userStats[uid].totalEasy += result.easy_questions || 0;
+            userStats[uid].easyCorrect += result.easy_correct || 0;
+            userStats[uid].totalModerate += result.moderate_questions || 0;
+            userStats[uid].moderateCorrect += result.moderate_correct || 0;
+            userStats[uid].totalHard += result.hard_questions || 0;
+            userStats[uid].hardCorrect += result.hard_correct || 0;
+            userStats[uid].totalPercentage += parseFloat(result.percentage_correct) || 0;
+        });
         
-        if (linkClicks) {
-            linkClicks.forEach(click => {
-                if (!userStats[click.user_uid]) {
-                    userStats[click.user_uid] = {
-                        questionsAsked: 0,
-                        questionsCorrect: 0,
-                        bibleLinkClicks: 0
-                    };
-                }
-                userStats[click.user_uid].bibleLinkClicks++;
-            });
-        }
-        
+        // Get user information
         const userIds = Object.keys(userStats).map(uid => parseInt(uid));
         const { data: users, error: usersError } = await supabase
             .from('Users')
@@ -387,32 +383,38 @@ async function loadBibleTriviaStatistics() {
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = `
             <th>User</th>
-            <th>Questions Asked</th>
-            <th>Questions Correct</th>
-            <th>Correct %</th>
-            <th>Bible Link Clicks</th>
+            <th>Games Played</th>
+            <th>Overall %</th>
+            <th>Easy (Correct/Total)</th>
+            <th>Moderate (Correct/Total)</th>
+            <th>Hard (Correct/Total)</th>
         `;
         table.appendChild(headerRow);
         
         const sortedUsers = Object.entries(userStats).sort((a, b) => {
-            return b[1].questionsAsked - a[1].questionsAsked;
+            return b[1].gamesPlayed - a[1].gamesPlayed;
         });
         
         sortedUsers.forEach(([uid, stats]) => {
             const user = userMap[uid];
             if (!user) return;
             
-            const correctPercentage = stats.questionsAsked > 0
-                ? ((stats.questionsCorrect / stats.questionsAsked) * 100).toFixed(1)
+            const displayName = (user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name}` 
+                : user.Username || 'Unknown';
+            
+            const avgPercentage = stats.gamesPlayed > 0
+                ? (stats.totalPercentage / stats.gamesPlayed).toFixed(1)
                 : '0.0';
             
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${getUserDisplayName(user)}</td>
-                <td>${stats.questionsAsked}</td>
-                <td>${stats.questionsCorrect}</td>
-                <td><strong>${correctPercentage}%</strong></td>
-                <td>${stats.bibleLinkClicks}</td>
+                <td>${displayName}</td>
+                <td>${stats.gamesPlayed}</td>
+                <td><strong>${avgPercentage}%</strong></td>
+                <td>${stats.easyCorrect} / ${stats.totalEasy}</td>
+                <td>${stats.moderateCorrect} / ${stats.totalModerate}</td>
+                <td>${stats.hardCorrect} / ${stats.totalHard}</td>
             `;
             table.appendChild(row);
         });
