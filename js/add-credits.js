@@ -161,7 +161,7 @@ async function loadCreditTrackingTable() {
         // Header
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = `
-            <th>App Name</th>
+            <th style="text-align: left;">App Name</th>
             <th>Transaction Type</th>
             <th>Credit Amount</th>
             <th>Actions</th>
@@ -193,8 +193,39 @@ function createCreditManagerRow(item) {
     
     const typeClass = item.transaction_type === 'credit' ? 'transaction-credit' : 'transaction-debit';
     
+    // Define badge names
+    const badgeNames = [
+        'Trivia Master',
+        'Memory Verse Champion',
+        'Workout Warrior',
+        'Chore Champion',
+        'Early Bird',
+        'All Fruits of the Spirit'
+    ];
+    
+    // Define Fruits of the Spirit names
+    const fruitNames = [
+        'Love',
+        'Joy',
+        'Peace',
+        'Patience',
+        'Kindness',
+        'Goodness',
+        'Faithfulness',
+        'Gentleness',
+        'Self-Control'
+    ];
+    
+    // Add prefix based on type
+    let displayName = item.app_name;
+    if (badgeNames.includes(item.app_name)) {
+        displayName = `Badge: ${item.app_name}`;
+    } else if (fruitNames.includes(item.app_name)) {
+        displayName = `Fruit of the Spirit: ${item.app_name}`;
+    }
+    
     row.innerHTML = `
-        <td><strong>${item.app_name}</strong></td>
+        <td style="text-align: left;"><strong>${displayName}</strong></td>
         <td>
             <select class="credit-type-select" 
                     data-field="type" 
