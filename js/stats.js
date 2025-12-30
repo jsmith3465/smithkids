@@ -202,14 +202,105 @@ async function loadTTTStatistics() {
     const tttStatsDiv = document.getElementById('tttStats');
     
     try {
+        // Try to use the new ttt_player_results table first (more efficient)
+        const { data: playerResults, error: playerResultsError } = await supabase
+            .from('ttt_player_results')
+            .select('user_uid, result')
+            .not('user_uid', 'is', null);
+        
+        if (!playerResultsError && playerResults && playerResults.length > 0) {
+            // Use the new player results table
+            const playerStats = {};
+            
+            playerResults.forEach(result => {
+                const uid = result.user_uid;
+                if (!playerStats[uid]) {
+                    playerStats[uid] = { wins: 0, losses: 0, draws: 0 };
+                }
+                
+                if (result.result === 'win') {
+                    playerStats[uid].wins++;
+                } else if (result.result === 'loss') {
+                    playerStats[uid].losses++;
+                } else if (result.result === 'draw') {
+                    playerStats[uid].draws++;
+                }
+            });
+            
+            const userIds = Object.keys(playerStats).map(uid => parseInt(uid));
+            const { data: users, error: usersError } = await supabase
+                .from('Users')
+                .select('UID, First_Name, Last_Name, Username')
+                .in('UID', userIds);
+            
+            if (usersError) throw usersError;
+            
+            const userMap = {};
+            if (users) {
+                users.forEach(user => {
+                    userMap[user.UID] = user;
+                });
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'stats-table';
+            
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = `
+                <th>Player</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Draws</th>
+                <th>Total Games</th>
+                <th>Win %</th>
+            `;
+            table.appendChild(headerRow);
+            
+            const sortedPlayers = Object.entries(playerStats).sort((a, b) => {
+                const aTotal = a[1].wins + a[1].losses + a[1].draws;
+                const bTotal = b[1].wins + b[1].losses + b[1].draws;
+                return bTotal - aTotal;
+            });
+            
+            sortedPlayers.forEach(([uid, stats]) => {
+                const user = userMap[uid];
+                if (!user) return;
+                
+                const totalGames = stats.wins + stats.losses + stats.draws;
+                const winPercentage = totalGames > 0 
+                    ? ((stats.wins / totalGames) * 100).toFixed(1) 
+                    : '0.0';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${getUserDisplayName(user)}</td>
+                    <td>${stats.wins}</td>
+                    <td>${stats.losses}</td>
+                    <td>${stats.draws}</td>
+                    <td>${totalGames}</td>
+                    <td><strong>${winPercentage}%</strong></td>
+                `;
+                table.appendChild(row);
+            });
+            
+            tttStatsDiv.innerHTML = '';
+            tttStatsDiv.appendChild(table);
+            return;
+        }
+        
+        // Fallback to TTT_Game_Results table if ttt_player_results is empty
         const { data: games, error: gamesError } = await supabase
             .from('TTT_Game_Results')
             .select('player1_uid, player2_uid, winner_uid, is_draw, is_computer_player');
         
-        if (gamesError) throw gamesError;
+        if (gamesError) {
+            console.error('Error loading TTT games:', gamesError);
+            tttStatsDiv.innerHTML = `<div class="no-data">Error loading Tic Tac Toe statistics: ${gamesError.message}</div>`;
+            return;
+        }
         
         if (!games || games.length === 0) {
-            tttStatsDiv.innerHTML = '<div class="no-data">No Tic Tac Toe games played yet</div>';
+            tttStatsDiv.innerHTML = '<div class="no-data">No Tic Tac Toe games played yet. Play a game to see statistics!</div>';
             return;
         }
         
@@ -304,7 +395,7 @@ async function loadTTTStatistics() {
         
     } catch (error) {
         console.error('Error loading TTT statistics:', error);
-        tttStatsDiv.innerHTML = '<div class="no-data">Error loading Tic Tac Toe statistics</div>';
+        tttStatsDiv.innerHTML = `<div class="no-data">Error loading Tic Tac Toe statistics: ${error.message}</div>`;
     }
 }
 

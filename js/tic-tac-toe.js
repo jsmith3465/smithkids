@@ -1101,7 +1101,14 @@ class TicTacToe {
                 .single();
             
             if (error) {
-                console.error('Error saving game result:', error);
+                console.error('Error saving TTT game result:', error);
+                // Log more details for debugging
+                console.error('Game data attempted:', gameData);
+                return null;
+            }
+            
+            if (!gameResult || !gameResult.game_id) {
+                console.error('Game result saved but no game_id returned');
                 return null;
             }
             
