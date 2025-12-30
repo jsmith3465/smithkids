@@ -229,6 +229,7 @@ async function loadChapter(book, chapter) {
         const passageContainer = document.createElement('div');
         passageContainer.style.width = '100%';
         passageContainer.style.minHeight = '600px';
+        passageContainer.style.background = 'transparent';
         
         // Create iframe for Bible Gateway passage
         const iframe = document.createElement('iframe');
@@ -236,7 +237,8 @@ async function loadChapter(book, chapter) {
         iframe.style.width = '100%';
         iframe.style.minHeight = '600px';
         iframe.style.border = 'none';
-        iframe.style.borderRadius = '10px';
+        iframe.style.borderRadius = '0';
+        iframe.style.background = 'white';
         iframe.allowFullscreen = true;
         iframe.loading = 'lazy';
         
