@@ -177,6 +177,17 @@
             margin: 20px 0;
         }
         
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2.5rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 2rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -184,7 +195,7 @@
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <h1 style="margin: 0;">Snake Game</h1>
+                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Snake Game</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
