@@ -136,6 +136,7 @@ class GalagaGame {
         // Input
         this.keys = {};
         this.mouseX = 0;
+        this.usingMouse = false;
         
         this.init();
     }
@@ -198,8 +199,15 @@ class GalagaGame {
         
         // Mouse controls
         this.canvas.addEventListener('mousemove', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            this.mouseX = e.clientX - rect.left;
+            if (this.gameRunning && !this.gamePaused) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouseX = e.clientX - rect.left;
+                this.usingMouse = true;
+            }
+        });
+        
+        this.canvas.addEventListener('mouseleave', () => {
+            this.usingMouse = false;
         });
         
         this.canvas.addEventListener('click', () => {
@@ -207,6 +215,22 @@ class GalagaGame {
                 this.shoot();
             }
         });
+        
+        // Instructions toggle
+        const instructionsLink = document.getElementById('instructionsLink');
+        const instructions = document.getElementById('instructions');
+        const instructionsClose = document.getElementById('instructionsClose');
+        
+        if (instructionsLink && instructions && instructionsClose) {
+            instructionsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                instructions.classList.add('show');
+            });
+            
+            instructionsClose.addEventListener('click', () => {
+                instructions.classList.remove('show');
+            });
+        }
         
         // Initial draw
         this.draw();
@@ -300,12 +324,14 @@ class GalagaGame {
     
     moveLeft() {
         if (this.gameRunning && !this.gamePaused) {
+            this.usingMouse = false; // Switch to keyboard/button control
             this.player.x = Math.max(this.player.width / 2, this.player.x - this.player.speed);
         }
     }
     
     moveRight() {
         if (this.gameRunning && !this.gamePaused) {
+            this.usingMouse = false; // Switch to keyboard/button control
             this.player.x = Math.min(this.width - this.player.width / 2, this.player.x + this.player.speed);
         }
     }
@@ -325,16 +351,18 @@ class GalagaGame {
     update() {
         if (!this.gameRunning || this.gamePaused) return;
         
-        // Handle input
+        // Handle keyboard input
         if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) {
+            this.usingMouse = false; // Switch to keyboard control
             this.moveLeft();
         }
         if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) {
+            this.usingMouse = false; // Switch to keyboard control
             this.moveRight();
         }
         
-        // Update player position with mouse
-        if (this.mouseX > 0) {
+        // Update player position with mouse (only if actively using mouse)
+        if (this.usingMouse && this.mouseX > 0) {
             this.player.x = Math.max(
                 this.player.width / 2,
                 Math.min(this.width - this.player.width / 2, this.mouseX)

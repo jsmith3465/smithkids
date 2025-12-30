@@ -136,13 +136,21 @@
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             padding: 20px;
+            margin-top: 20px;
             margin-bottom: 20px;
             text-align: left;
+            position: relative;
+            display: none;
+        }
+        
+        .instructions.show {
+            display: block;
         }
         
         .instructions h3 {
             color: #CC5500;
             margin-bottom: 10px;
+            margin-right: 30px;
         }
         
         .instructions ul {
@@ -153,6 +161,45 @@
         .instructions li {
             margin: 5px 0;
             color: #666;
+        }
+        
+        .instructions-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .instructions-close:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .instructions-link {
+            color: #DAA520;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+        
+        .instructions-link:hover {
+            color: #CC5500;
+            text-decoration: underline;
         }
         
         @media (max-width: 768px) {
@@ -205,17 +252,6 @@
             </div>
             
             <div class="game-section">
-                <div class="instructions">
-                    <h3>How to Play:</h3>
-                    <ul>
-                        <li>Use ← → arrow keys or buttons to move your ship</li>
-                        <li>Press SPACE or click "Shoot" to fire</li>
-                        <li>Destroy all enemy ships to advance to the next level</li>
-                        <li>Avoid enemy bullets and collisions</li>
-                        <li>You have 3 lives - use them wisely!</li>
-                    </ul>
-                </div>
-                
                 <div class="game-canvas-container">
                     <canvas id="galagaCanvas" width="600" height="600"></canvas>
                 </div>
@@ -231,6 +267,20 @@
                 <div class="game-controls">
                     <button id="startBtn" class="btn btn-primary">Start Game</button>
                     <button id="pauseBtn" class="btn btn-secondary hidden">Pause</button>
+                </div>
+                
+                <a href="#" id="instructionsLink" class="instructions-link">View details on how to play</a>
+                
+                <div class="instructions" id="instructions">
+                    <button class="instructions-close" id="instructionsClose">×</button>
+                    <h3>How to Play:</h3>
+                    <ul>
+                        <li>Use ← → arrow keys or buttons to move your ship</li>
+                        <li>Press SPACE or click "Shoot" to fire</li>
+                        <li>Destroy all enemy ships to advance to the next level</li>
+                        <li>Avoid enemy bullets and collisions</li>
+                        <li>You have 3 lives - use them wisely!</li>
+                    </ul>
                 </div>
             </div>
         </div>
