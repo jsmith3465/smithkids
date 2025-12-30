@@ -61,6 +61,7 @@ async function checkAdminAccess() {
     document.getElementById('adminContent').classList.remove('hidden');
     
     await loadUnapprovedItems();
+    await loadApprovedMemoryVerses();
     setupEventListeners();
 }
 
@@ -321,8 +322,9 @@ window.approveMemoryVerse = async function(submissionId, userUid) {
         
         showSuccess('Memory verse approved! User received 30 credits.');
         
-        // Reload approvals list
+        // Reload approvals list and approved memory verses list
         await loadUnapprovedItems();
+        await loadApprovedMemoryVerses();
         
     } catch (error) {
         console.error('Error approving memory verse:', error);
@@ -767,5 +769,86 @@ function showError(message) {
     errorMsg.textContent = message;
     errorMsg.style.display = 'block';
     document.getElementById('successMessage').style.display = 'none';
+}
+
+// Load all approved memory verse submissions
+async function loadApprovedMemoryVerses() {
+    const approvedList = document.getElementById('approvedMemoryVersesList');
+    
+    if (!approvedList) return;
+    
+    try {
+        // Get all approved memory verse submissions
+        const { data: approvedVerses, error } = await supabase
+            .from('Memory_Verse_Submissions')
+            .select(`
+                id,
+                user_uid,
+                month_year,
+                submitted_at,
+                approved_at,
+                Monthly_Memory_Verses!Memory_Verse_Submissions_verse_id_fkey(
+                    start_book,
+                    start_chapter,
+                    start_verse,
+                    end_book,
+                    end_chapter,
+                    end_verse
+                ),
+                Users!Memory_Verse_Submissions_user_uid_fkey(UID, First_Name, Last_Name, Username)
+            `)
+            .eq('status', 'approved')
+            .order('approved_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!approvedVerses || approvedVerses.length === 0) {
+            approvedList.innerHTML = '<div class="no-approvals">No approved memory verses yet.</div>';
+            return;
+        }
+        
+        // Create table
+        let html = '<table class="users-table" style="width: 100%; margin-top: 0;"><thead><tr>';
+        html += '<th>User</th><th>Month/Year</th><th>Verse Reference</th><th>Submitted</th><th>Approved</th></tr></thead><tbody>';
+        
+        approvedVerses.forEach(submission => {
+            const user = submission.Users;
+            const displayName = (user && user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name}` 
+                : (user && user.Username) || 'Unknown';
+            
+            const verse = submission.Monthly_Memory_Verses;
+            const reference = verse && verse.start_book === verse.end_book 
+                ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse}${verse.start_verse !== verse.end_verse ? `-${verse.end_verse}` : ''}`
+                : verse 
+                    ? `${verse.start_book} ${verse.start_chapter}:${verse.start_verse} - ${verse.end_book} ${verse.end_chapter}:${verse.end_verse}`
+                    : 'N/A';
+            
+            const monthYear = new Date(submission.month_year + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const submittedDate = submission.submitted_at 
+                ? new Date(submission.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'N/A';
+            
+            const approvedDate = submission.approved_at 
+                ? new Date(submission.approved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'N/A';
+            
+            html += `<tr>
+                <td>${displayName}</td>
+                <td>${monthYear}</td>
+                <td>${reference}</td>
+                <td>${submittedDate}</td>
+                <td>${approvedDate}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table>';
+        approvedList.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading approved memory verses:', error);
+        approvedList.innerHTML = '<div class="no-approvals">Error loading approved memory verses.</div>';
+    }
 }
 
