@@ -59,23 +59,9 @@ async function checkUserAccess() {
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
     
-    // Show "Add Memory Verse" button only for admins
-    const isAdmin = session.userType === 'admin';
-    const addBtn = document.getElementById('addMemoryVerseBtn');
-    if (addBtn) {
-        addBtn.style.display = isAdmin ? 'block' : 'none';
-        if (isAdmin) {
-            addBtn.addEventListener('click', () => {
-                showAddVerseModal();
-            });
-        }
-    }
-    
-    // Initialize modal
-    initializeModal();
+    await loadMemoryVerse();
     
     await loadMemoryVerse();
-    await loadAllMemoryVerses();
 }
 
 function initializeModal() {
