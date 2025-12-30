@@ -3,11 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistics - SmithFamJam</title>
+    <title>Statistics - Smith Team Six</title>
     <link rel="stylesheet" href="../style.css">
     <style>
         .stats-container {
-            max-width: 1000px;
+            max-width: 1200px;
+        }
+        
+        /* Tab Navigation */
+        .stats-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .stats-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+        
+        .stats-tab:hover {
+            color: #DAA520;
+            background: rgba(218, 165, 32, 0.05);
+        }
+        
+        .stats-tab.active {
+            color: #CC5500;
+            border-bottom-color: #CC5500;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .stats-section {
@@ -18,54 +60,13 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
         
-        .stats-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #DAA520;
-            padding-bottom: 10px;
-        }
-        
-        .snake-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 2px solid #DAA520;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .stat-card-label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .stat-card-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #CC5500;
-        }
-        
-        .stat-card-player {
-            font-size: 1rem;
-            color: #333;
-            margin-top: 10px;
-            font-weight: 600;
-        }
-        
-        .ttt-stats-table {
+        .stats-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
         
-        .ttt-stats-table th {
+        .stats-table th {
             background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
             color: white;
             padding: 12px;
@@ -73,26 +74,17 @@
             font-weight: 600;
         }
         
-        .ttt-stats-table td {
+        .stats-table td {
             padding: 12px;
             border-bottom: 1px solid #e0e0e0;
         }
         
-        .ttt-stats-table tr:last-child td {
+        .stats-table tr:last-child td {
             border-bottom: none;
         }
         
-        .ttt-stats-table tr:hover {
+        .stats-table tr:hover {
             background: #f8f9fa;
-        }
-        
-        .ttt-stats-table .most-row {
-            background: #fff3cd;
-            font-weight: 600;
-        }
-        
-        .ttt-stats-table .most-row:hover {
-            background: #ffeaa7;
         }
         
         .loading {
@@ -106,93 +98,6 @@
             padding: 40px;
             color: #999;
             font-style: italic;
-        }
-        
-        .high-scores-list {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .score-item {
-            padding: 12px;
-            margin: 8px 0;
-            background: white;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #DAA520;
-        }
-        
-        .score-item-rank {
-            font-weight: 700;
-            color: #DAA520;
-            margin-right: 15px;
-            min-width: 40px;
-        }
-        
-        .score-item-details {
-            flex: 1;
-        }
-        
-        .score-item-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 3px;
-        }
-        
-        .score-item-meta {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .score-item-score {
-            font-weight: 700;
-            color: #CC5500;
-            font-size: 1.2rem;
-        }
-        
-        .game-history-list {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .history-item {
-            padding: 15px;
-            margin: 10px 0;
-            background: white;
-            border-radius: 8px;
-            border-left: 4px solid #DAA520;
-        }
-        
-        .history-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-        
-        .history-item-players {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .history-item-result {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        
-        .history-item-meta {
-            font-size: 0.85rem;
-            color: #666;
         }
     </style>
 </head>
@@ -214,35 +119,73 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <!-- Snake Game Statistics -->
-            <div class="stats-section">
-                <h2>🐍 Snake Game Statistics</h2>
-                <div id="snakeStats" class="snake-stats">
-                    <div class="loading">Loading statistics...</div>
-                </div>
-                <div id="snakeHighScores" style="margin-top: 30px;">
-                    <h3 style="margin-bottom: 15px; color: #333;">Top 10 High Scores</h3>
-                    <div id="snakeHighScoresList" class="loading">Loading high scores...</div>
+            <!-- Tab Navigation -->
+            <div class="stats-tabs">
+                <button class="stats-tab active" data-tab="snake" id="snakeTabBtn">🐍 Snake</button>
+                <button class="stats-tab" data-tab="tictactoe" id="tictactoeTabBtn">⭕❌ Tic Tac Toe</button>
+                <button class="stats-tab" data-tab="bibletrivia" id="bibletriviaTabBtn">📖 Bible Trivia</button>
+                <button class="stats-tab" data-tab="hangman" id="hangmanTabBtn">🚷 Hangman</button>
+                <button class="stats-tab" data-tab="galaga" id="galagaTabBtn">🛸 Galaga</button>
+                <button class="stats-tab" data-tab="breakout" id="breakoutTabBtn">🎾 Breakout</button>
+            </div>
+            
+            <!-- Snake Tab -->
+            <div id="snakeTab" class="tab-content active">
+                <div class="stats-section">
+                    <h2>🐍 Snake Game Statistics</h2>
+                    <div id="snakeStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Tic Tac Toe Statistics -->
-            <div class="stats-section">
-                <h2>⭕❌ Tic Tac Toe Statistics</h2>
-                <div id="tttStats">
-                    <div class="loading">Loading statistics...</div>
-                </div>
-                <div id="tttGameHistory" style="margin-top: 30px;">
-                    <h3 style="margin-bottom: 15px; color: #333;">Recent Game History</h3>
-                    <div id="tttGameHistoryList" class="loading">Loading game history...</div>
+            <!-- Tic Tac Toe Tab -->
+            <div id="tictactoeTab" class="tab-content">
+                <div class="stats-section">
+                    <h2>⭕❌ Tic Tac Toe Statistics</h2>
+                    <div id="tttStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Bible Trivia Statistics -->
-            <div class="stats-section">
-                <h2>📖 Bible Trivia Statistics</h2>
-                <div id="bibleTriviaStats">
-                    <div class="loading">Loading statistics...</div>
+            <!-- Bible Trivia Tab -->
+            <div id="bibletriviaTab" class="tab-content">
+                <div class="stats-section">
+                    <h2>📖 Bible Trivia Statistics</h2>
+                    <div id="bibleTriviaStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hangman Tab -->
+            <div id="hangmanTab" class="tab-content">
+                <div class="stats-section">
+                    <h2>🚷 Hangman Statistics</h2>
+                    <div id="hangmanStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Galaga Tab -->
+            <div id="galagaTab" class="tab-content">
+                <div class="stats-section">
+                    <h2>🛸 Galaga Statistics</h2>
+                    <div id="galagaStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Breakout Tab -->
+            <div id="breakoutTab" class="tab-content">
+                <div class="stats-section">
+                    <h2>🎾 Breakout Statistics</h2>
+                    <div id="breakoutStats">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -257,4 +200,3 @@
     <script type="module" src="../js/stats.js"></script>
 </body>
 </html>
-
