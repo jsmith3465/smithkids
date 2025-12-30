@@ -31,6 +31,53 @@
             overflow: hidden;
         }
         
+        @media (max-width: 768px) {
+            .checklist-container {
+                border: 20px solid #DAA520;
+                padding: 8px;
+            }
+            
+            .checklist-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 1fr);
+            }
+            
+            .checklist-header {
+                padding: 8px 10px;
+            }
+            
+            #dateTimeDisplay {
+                font-size: 0.8rem !important;
+            }
+            
+            #countdownDisplay {
+                font-size: 2rem !important;
+            }
+            
+            #launchTimeDisplay {
+                font-size: 2rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .checklist-container {
+                border: 10px solid #DAA520;
+                padding: 5px;
+            }
+            
+            #countdownDisplay {
+                font-size: 1.5rem !important;
+            }
+            
+            #launchTimeDisplay {
+                font-size: 1.5rem !important;
+            }
+            
+            header h1 {
+                font-size: 1.2rem !important;
+            }
+        }
+        
         .checklist-header {
             background: white;
             border-radius: 10px;

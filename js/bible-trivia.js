@@ -2852,6 +2852,7 @@ class BibleTrivia {
     }
     
     startGame() {
+        // Note: Bible Trivia is free to play - no credits are required or deducted
         this.gameStarted = true;
         document.getElementById('startScreen').classList.add('hidden');
         document.getElementById('gameScreen').classList.remove('hidden');
@@ -2975,15 +2976,24 @@ class BibleTrivia {
         let creditsEarned = 0;
         let message = '';
         
-        if (this.score < 5) {
+        if (this.score < 3) {
             creditsEarned = 0;
             message = "Keep studying! Read the Bible stories to learn more and try again.";
-        } else if (this.score >= 6 && this.score <= 8) {
+        } else if (this.score >= 3 && this.score <= 4) {
+            creditsEarned = 1;
+            message = "Good start! Keep learning!";
+        } else if (this.score >= 5 && this.score <= 6) {
+            creditsEarned = 3;
+            message = "Nice work! You're getting better!";
+        } else if (this.score === 7) {
+            creditsEarned = 5;
+            message = "Great job! You know your Bible stories!";
+        } else if (this.score >= 8 && this.score <= 9) {
             creditsEarned = 10;
-            message = "Good job! You're learning!";
-        } else if (this.score >= 9) {
+            message = "Excellent! You're really learning!";
+        } else if (this.score === 10) {
             creditsEarned = 20;
-            message = "Excellent! You know your Bible stories well!";
+            message = "Perfect score! You're a Bible expert!";
         }
         
         document.getElementById('resultsMessage').textContent = message;
@@ -3174,7 +3184,11 @@ class BibleTrivia {
                     user_uid: session.uid,
                     score: this.score,
                     total_questions: 10,
-                    credits_earned: this.score < 5 ? 0 : (this.score >= 9 ? 20 : 10)
+                    credits_earned: this.score < 3 ? 0 : 
+                                    (this.score >= 3 && this.score <= 4) ? 1 :
+                                    (this.score >= 5 && this.score <= 6) ? 3 :
+                                    (this.score === 7) ? 5 :
+                                    (this.score >= 8 && this.score <= 9) ? 10 : 20
                 });
         } catch (error) {
             // Table might not exist yet, that's okay

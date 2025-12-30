@@ -215,13 +215,44 @@
             
             <!-- Tab Navigation -->
             <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="general">General Settings</button>
-                <button class="settings-tab" data-tab="users">User Management</button>
+                <button class="settings-tab active" data-tab="password">Change Password</button>
+                <button class="settings-tab" data-tab="general" id="generalTabBtn">General Settings</button>
+                <button class="settings-tab" data-tab="users" id="usersTabBtn">User Management</button>
                 <!-- Future tabs can be added here -->
             </div>
             
+            <!-- Change Password Tab -->
+            <div id="passwordTab" class="tab-content active">
+                <div class="settings-section">
+                    <h2>Change Password</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Update your account password. You'll need to enter your current password to make changes.
+                    </p>
+                    
+                    <div class="input-group">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" placeholder="Enter your current password" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password" required>
+                        <div class="help-text">Choose a strong password that you haven't used before.</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirmNewPassword">Confirm New Password:</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password" required>
+                    </div>
+                    
+                    <button id="savePasswordBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                        Change Password
+                    </button>
+                </div>
+            </div>
+            
             <!-- General Settings Tab -->
-            <div id="generalTab" class="tab-content active">
+            <div id="generalTab" class="tab-content">
                 <div class="settings-section">
                     <h2>Pin Code</h2>
                     <p style="color: #666; margin-bottom: 20px;">

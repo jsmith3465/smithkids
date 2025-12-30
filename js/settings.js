@@ -51,36 +51,42 @@ async function checkAdminAccess() {
         return;
     }
     
-    if (session.userType !== 'admin') {
-        alert('Admin access required.');
-        window.location.href = '../index.html';
-        return;
-    }
-    
-    // Show main content
+    // Show main content (both admin and standard users can access settings)
     document.getElementById('authCheck').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
+    
+    // Hide admin-only tabs for standard users
+    if (session.userType !== 'admin') {
+        document.getElementById('generalTabBtn').style.display = 'none';
+        document.getElementById('usersTabBtn').style.display = 'none';
+    }
     
     // Initialize tabs
     initializeTabs();
     
-    // Load current settings
-    await loadSettings();
+    // Load current settings (only for admins)
+    if (session.userType === 'admin') {
+        await loadSettings();
+        // Load users for User Management tab
+        await loadAllUsers();
+        
+        // Add save button listeners for admin settings
+        document.getElementById('saveCodeBtn').addEventListener('click', async () => {
+            await saveCode();
+        });
+        
+        document.getElementById('saveLaunchTimeBtn').addEventListener('click', async () => {
+            await saveLaunchTime();
+        });
+        
+        // Add user management listeners
+        setupUserManagementListeners();
+    }
     
-    // Load users for User Management tab
-    await loadAllUsers();
-    
-    // Add save button listeners
-    document.getElementById('saveCodeBtn').addEventListener('click', async () => {
-        await saveCode();
+    // Add password change listener (for all users)
+    document.getElementById('savePasswordBtn').addEventListener('click', async () => {
+        await changePassword();
     });
-    
-    document.getElementById('saveLaunchTimeBtn').addEventListener('click', async () => {
-        await saveLaunchTime();
-    });
-    
-    // Add user management listeners
-    setupUserManagementListeners();
 }
 
 // Tab Management
@@ -525,6 +531,77 @@ window.deleteUser = async function(userId, username) {
         showError('An error occurred while deleting user. Please try again.');
     }
 };
+
+// Password Change Function
+async function changePassword() {
+    const session = window.authStatus?.getSession();
+    if (!session) {
+        showError('Session expired. Please log in again.');
+        return;
+    }
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    
+    // Validation
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+        showError('All fields are required.');
+        return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+        showError('New passwords do not match.');
+        return;
+    }
+    
+    if (newPassword.length < 4) {
+        showError('New password must be at least 4 characters long.');
+        return;
+    }
+    
+    const savePasswordBtn = document.getElementById('savePasswordBtn');
+    savePasswordBtn.disabled = true;
+    savePasswordBtn.textContent = 'Changing Password...';
+    
+    try {
+        // Verify current password
+        const { data: user, error: fetchError } = await supabase
+            .from('Users')
+            .select('Password')
+            .eq('UID', session.uid)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        if (user.Password !== currentPassword) {
+            showError('Current password is incorrect.');
+            return;
+        }
+        
+        // Update password
+        const { error: updateError } = await supabase
+            .from('Users')
+            .update({ Password: newPassword })
+            .eq('UID', session.uid);
+        
+        if (updateError) throw updateError;
+        
+        showSuccess('Password changed successfully!');
+        
+        // Clear form
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmNewPassword').value = '';
+        
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showError('An error occurred while changing password. Please try again.');
+    } finally {
+        savePasswordBtn.disabled = false;
+        savePasswordBtn.textContent = 'Change Password';
+    }
+}
 
 // Message Functions
 function showSuccess(message) {
