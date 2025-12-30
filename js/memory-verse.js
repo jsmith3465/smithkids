@@ -301,6 +301,9 @@ async function loadMemoryVerse() {
         
         verseContainer.innerHTML = `
             <div style="padding: 40px; background: #f8f9fa; border-radius: 10px; max-width: 800px; margin: 0 auto;">
+                <p style="color: #666; font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                    Memorize this verse and click the button below when you're ready to recite it!
+                </p>
                 <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                     <div id="verseTextDisplay" style="font-size: 1.3rem; font-weight: 600; color: #333; font-style: italic; line-height: 1.6; padding: 0 10px; margin-bottom: 20px;">
                         ${verseText || 'Loading verse text...'}
@@ -308,9 +311,6 @@ async function loadMemoryVerse() {
                     <div style="font-size: 1.2rem; font-weight: 700; color: #28a745; margin-top: 10px; text-align: center;">
                         ${reference}
                     </div>
-                    <p style="color: #666; font-size: 1.1rem; line-height: 1.6; margin-top: 20px;">
-                        Memorize this verse and click the button below when you're ready to recite it!
-                    </p>
                 </div>
                 
                 ${hasApprovedSubmission ? `
