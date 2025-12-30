@@ -247,6 +247,13 @@ async function updateCreditDisplays() {
         if (breakoutEl) {
             breakoutEl.textContent = `💰 Costs ${breakoutCost} credit${breakoutCost !== 1 ? 's' : ''} to play`;
         }
+        
+        // Update Tetris
+        const tetrisCost = await getCreditAmount('Tetris', 'debit', 5);
+        const tetrisEl = document.querySelector('a[href="pages/tetris.html"] .game-card-credits');
+        if (tetrisEl) {
+            tetrisEl.textContent = `💰 Costs ${tetrisCost} credit${tetrisCost !== 1 ? 's' : ''} to play`;
+        }
     } catch (error) {
         console.error('Error updating credit displays:', error);
     }
