@@ -130,7 +130,7 @@ async function createProfileMenu() {
                 text-align: left;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                📊 Account Information (AI)
+                📊 Account Information
             </a>
             <a href="${getPagePath('badges.html')}" style="
                 display: block;

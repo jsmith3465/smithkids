@@ -205,6 +205,27 @@ function handleLogout() {
 // Export handleLogout for use in other scripts
 window.handleLogout = handleLogout;
 
+// Scroll to top of page (except login pages)
+function scrollToTop() {
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath.includes('login.html') || currentPath.includes('guest-login.html');
+    
+    if (!isLoginPage) {
+        // Scroll to top immediately
+        window.scrollTo(0, 0);
+        
+        // Also scroll to top after a short delay to handle any dynamic content loading
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+        
+        // Force scroll to top one more time after content loads
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 500);
+    }
+}
+
 // Initialize authentication check when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
     // Set up logout button
@@ -224,5 +245,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return sessionData ? JSON.parse(sessionData) : null;
         }
     };
+    
+    // Scroll to top for all pages except login
+    scrollToTop();
+});
+
+// Also scroll to top on page load (for pages that might load before DOMContentLoaded)
+window.addEventListener('load', () => {
+    scrollToTop();
 });
 
