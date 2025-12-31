@@ -219,58 +219,190 @@ async function loadChapter(book, chapter) {
     updateURL();
     
     try {
-        // Use Bible Gateway's passage display
-        // Format: https://www.biblegateway.com/passage/?search=Book+Chapter&version=NIV
-        const bookFormatted = book.replace(/\s+/g, '+');
-        const passageUrl = `https://www.biblegateway.com/passage/?search=${bookFormatted}+${chapter}&version=NIV`;
+        // Use bible-api.com to fetch the entire chapter natively (no iframe)
+        // Format: https://bible-api.com/book+chapter:verseRange (e.g., john+3:1-21)
+        // For full chapters, we'll try fetching a large verse range
+        const bookFormatted = book.toLowerCase().replace(/\s+/g, '+');
         
-        // Create a container with Bible Gateway embed
-        // Using their widget/embed which allows reading on the site
-        const passageContainer = document.createElement('div');
-        passageContainer.style.width = '100%';
-        passageContainer.style.minHeight = '600px';
-        passageContainer.style.background = 'transparent';
+        // Try fetching as a full chapter first (book+chapter format)
+        // If that doesn't work, we'll try with a verse range
+        let apiUrl = `https://bible-api.com/${bookFormatted}+${chapter}`;
+        let data = null;
+        let response = null;
         
-        // Create iframe for Bible Gateway passage
-        const iframe = document.createElement('iframe');
-        iframe.src = passageUrl;
-        iframe.style.width = '100%';
-        iframe.style.minHeight = '600px';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '0';
-        iframe.style.background = 'white';
-        iframe.allowFullscreen = true;
-        iframe.loading = 'lazy';
+        // Fetch chapter with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        // Add a link to open in new tab as fallback
-        const linkContainer = document.createElement('div');
-        linkContainer.style.textAlign = 'center';
-        linkContainer.style.marginTop = '15px';
-        linkContainer.style.padding = '10px';
-        linkContainer.style.background = '#f8f9fa';
-        linkContainer.style.borderRadius = '8px';
+        try {
+            response = await fetch(apiUrl, { 
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                data = await response.json();
+            } else {
+                // Try with verse range format (1-200 should cover most chapters)
+                apiUrl = `https://bible-api.com/${bookFormatted}+${chapter}:1-200`;
+                const controller2 = new AbortController();
+                const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
+                
+                response = await fetch(apiUrl, { 
+                    signal: controller2.signal,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId2);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                data = await response.json();
+            }
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            throw fetchError;
+        }
         
-        const externalLink = document.createElement('a');
-        externalLink.href = passageUrl;
-        externalLink.target = '_blank';
-        externalLink.rel = 'noopener noreferrer';
-        externalLink.textContent = 'Open in Bible Gateway (opens in new tab)';
-        externalLink.style.color = '#CC5500';
-        externalLink.style.textDecoration = 'none';
-        externalLink.style.fontWeight = '600';
-        externalLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
-        externalLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+        // Create container for verses
+        const versesContainer = document.createElement('div');
+        versesContainer.style.textAlign = 'left';
+        versesContainer.style.maxWidth = '900px';
+        versesContainer.style.margin = '0 auto';
+        versesContainer.style.padding = '20px';
+        versesContainer.style.lineHeight = '1.8';
+        versesContainer.style.fontSize = '1.1rem';
         
-        linkContainer.appendChild(externalLink);
+        // Parse and display verses
+        // The bible-api.com returns data in different formats depending on the request
+        // For full chapters, it may return verses array or a text field with verse numbers
+        if (data.verses && Array.isArray(data.verses)) {
+            // Format: verses array with verse objects
+            data.verses.forEach(verse => {
+                const verseElement = document.createElement('div');
+                verseElement.className = 'bible-verse';
+                
+                // Check if this verse should be highlighted
+                const verseNum = parseInt(verse.verse) || verse.verse;
+                if (highlightVerse && verseNum === highlightVerse) {
+                    verseElement.classList.add('highlighted-verse');
+                }
+                
+                // Create verse number
+                const verseNumber = document.createElement('span');
+                verseNumber.className = 'verse-number';
+                verseNumber.textContent = verseNum;
+                
+                // Create verse text
+                const verseText = document.createElement('span');
+                verseText.textContent = ` ${verse.text || ''}`;
+                
+                verseElement.appendChild(verseNumber);
+                verseElement.appendChild(verseText);
+                versesContainer.appendChild(verseElement);
+            });
+        } else if (data.text) {
+            // Format: single text field with verse numbers embedded
+            // Parse the text to extract individual verses
+            const text = data.text;
+            // Split by verse numbers (format: "1 text 2 text 3 text" or "[1] text [2] text")
+            const versePattern = /(\d+)\s+/g;
+            const verses = [];
+            let lastIndex = 0;
+            let match;
+            
+            while ((match = versePattern.exec(text)) !== null) {
+                if (match.index > lastIndex) {
+                    verses.push({
+                        verse: match[1],
+                        text: text.substring(lastIndex, match.index).trim()
+                    });
+                }
+                lastIndex = match.index + match[0].length;
+            }
+            
+            // Add the last verse
+            if (lastIndex < text.length) {
+                const lastVerseNum = verses.length > 0 ? parseInt(verses[verses.length - 1].verse) + 1 : 1;
+                verses.push({
+                    verse: lastVerseNum.toString(),
+                    text: text.substring(lastIndex).trim()
+                });
+            }
+            
+            // If parsing failed, display as-is
+            if (verses.length === 0) {
+                const verseElement = document.createElement('div');
+                verseElement.className = 'bible-verse';
+                verseElement.style.whiteSpace = 'pre-wrap';
+                verseElement.textContent = text;
+                versesContainer.appendChild(verseElement);
+            } else {
+                // Display parsed verses
+                verses.forEach(verse => {
+                    if (!verse.text) return; // Skip empty verses
+                    
+                    const verseElement = document.createElement('div');
+                    verseElement.className = 'bible-verse';
+                    
+                    // Check if this verse should be highlighted
+                    const verseNum = parseInt(verse.verse);
+                    if (highlightVerse && verseNum === highlightVerse) {
+                        verseElement.classList.add('highlighted-verse');
+                    }
+                    
+                    // Create verse number
+                    const verseNumber = document.createElement('span');
+                    verseNumber.className = 'verse-number';
+                    verseNumber.textContent = verse.verse;
+                    
+                    // Create verse text
+                    const verseText = document.createElement('span');
+                    verseText.textContent = ` ${verse.text}`;
+                    
+                    verseElement.appendChild(verseNumber);
+                    verseElement.appendChild(verseText);
+                    versesContainer.appendChild(verseElement);
+                });
+            }
+        } else {
+            throw new Error('Invalid API response format');
+        }
         
-        passageContainer.appendChild(iframe);
-        passageContainer.appendChild(linkContainer);
+        // Add reference information
+        if (data.reference) {
+            const referenceDiv = document.createElement('div');
+            referenceDiv.style.textAlign = 'center';
+            referenceDiv.style.marginTop = '20px';
+            referenceDiv.style.padding = '15px';
+            referenceDiv.style.background = '#f8f9fa';
+            referenceDiv.style.borderRadius = '8px';
+            referenceDiv.style.fontSize = '0.9rem';
+            referenceDiv.style.color = '#666';
+            referenceDiv.textContent = `${data.reference} (${data.translation_name || 'NIV'})`;
+            versesContainer.appendChild(referenceDiv);
+        }
         
         bibleContent.innerHTML = '';
-        bibleContent.appendChild(passageContainer);
+        bibleContent.appendChild(versesContainer);
         
-        // Note: Highlighting specific verses in iframe is limited by CORS
-        // The iframe will show the full chapter, and users can navigate within it
+        // Scroll to highlighted verse if present
+        if (highlightVerse) {
+            const highlightedVerse = versesContainer.querySelector('.highlighted-verse');
+            if (highlightedVerse) {
+                setTimeout(() => {
+                    highlightedVerse.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
         
     } catch (error) {
         console.error('Error loading chapter:', error);
