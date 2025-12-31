@@ -32,12 +32,15 @@
         
         .game-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
             margin-bottom: 20px;
             padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .score-display {
@@ -246,11 +249,6 @@
                     <div class="score-label">Length</div>
                     <div class="score-value" id="lengthDisplay">1</div>
                 </div>
-            </div>
-            
-            <div class="game-info">
-                <p><strong>Use arrow keys or buttons to control the snake</strong></p>
-                <p>Eat the food to grow and increase your score!</p>
             </div>
             
             <div class="snake-canvas-container">

@@ -110,9 +110,13 @@ class TicTacToe {
         this.closeMemeBtn = document.getElementById('closeMemeBtn');
         this.winnerNameSpan = document.getElementById('winnerNameSpan');
         this.gameBoard = document.getElementById('gameBoard');
+        this.gameInfoSection = document.getElementById('gameInfoSection');
         this.currentPlayerName = document.getElementById('currentPlayerName');
+        this.currentPlayerDisplay = document.getElementById('currentPlayerDisplay');
         this.player1Display = document.getElementById('player1Display');
         this.player2Display = document.getElementById('player2Display');
+        this.player1ScoreDisplay = document.getElementById('player1ScoreDisplay');
+        this.player2ScoreDisplay = document.getElementById('player2ScoreDisplay');
         this.player1Wins = document.getElementById('player1Wins');
         this.player1Losses = document.getElementById('player1Losses');
         this.player1Draws = document.getElementById('player1Draws');
@@ -443,6 +447,11 @@ class TicTacToe {
 
         this.playerSetup.classList.add('hidden');
         this.gameSection.classList.remove('hidden');
+        
+        // Show game info section
+        if (this.gameInfoSection) {
+            this.gameInfoSection.classList.remove('hidden');
+        }
         
         const hasComputer = this.isComputerPlayer(p1Id) || this.isComputerPlayer(p2Id);
         if (hasComputer && this.gameDifficultyGroup) {
@@ -1041,10 +1050,17 @@ class TicTacToe {
     
     updateDisplay() {
         const currentName = this.currentPlayer === 'X' ? this.player1Name : this.player2Name;
-        this.currentPlayerName.textContent = currentName;
+        if (this.currentPlayerName) {
+            this.currentPlayerName.textContent = currentName;
+        }
+        if (this.currentPlayerDisplay) {
+            this.currentPlayerDisplay.textContent = currentName;
+        }
         
-        const currentPlayerEl = this.currentPlayerName.parentElement;
-        currentPlayerEl.className = `current-player active-${this.currentPlayer.toLowerCase()}`;
+        if (this.currentPlayerName) {
+            const currentPlayerEl = this.currentPlayerName.parentElement;
+            currentPlayerEl.className = `current-player active-${this.currentPlayer.toLowerCase()}`;
+        }
     }
 
     updatePlayerStats() {
@@ -1058,20 +1074,42 @@ class TicTacToe {
         if (!this.isAdmin && this.player1Id !== this.COMPUTER_ID && p1.credits !== undefined && p1.credits < 1) {
             p1Text += ' (No remaining credits - go workout)';
         }
-        this.player1Display.textContent = p1Text;
-        this.player1Wins.textContent = p1.wins;
-        this.player1Losses.textContent = p1.losses;
-        this.player1Draws.textContent = p1.draws;
+        if (this.player1Display) {
+            this.player1Display.textContent = p1Text;
+        }
+        if (this.player1ScoreDisplay) {
+            this.player1ScoreDisplay.textContent = `${p1.wins}W ${p1.losses}L ${p1.draws}D`;
+        }
+        if (this.player1Wins) {
+            this.player1Wins.textContent = p1.wins;
+        }
+        if (this.player1Losses) {
+            this.player1Losses.textContent = p1.losses;
+        }
+        if (this.player1Draws) {
+            this.player1Draws.textContent = p1.draws;
+        }
         
         // Update Player 2 display with credit status (skip for admins)
         let p2Text = p2.name;
         if (!this.isAdmin && this.player2Id !== this.COMPUTER_ID && p2.credits !== undefined && p2.credits < 1) {
             p2Text += ' (No remaining credits - go workout)';
         }
-        this.player2Display.textContent = p2Text;
-        this.player2Wins.textContent = p2.wins;
-        this.player2Losses.textContent = p2.losses;
-        this.player2Draws.textContent = p2.draws;
+        if (this.player2Display) {
+            this.player2Display.textContent = p2Text;
+        }
+        if (this.player2ScoreDisplay) {
+            this.player2ScoreDisplay.textContent = `${p2.wins}W ${p2.losses}L ${p2.draws}D`;
+        }
+        if (this.player2Wins) {
+            this.player2Wins.textContent = p2.wins;
+        }
+        if (this.player2Losses) {
+            this.player2Losses.textContent = p2.losses;
+        }
+        if (this.player2Draws) {
+            this.player2Draws.textContent = p2.draws;
+        }
     }
     
     updatePlayerDisplays() {
@@ -1085,6 +1123,11 @@ class TicTacToe {
     }
 
     async newPlayers() {
+        // Hide game info section
+        if (this.gameInfoSection) {
+            this.gameInfoSection.classList.add('hidden');
+        }
+        
         // Reload credit balances before showing player selection
         await this.refreshCreditBalances();
         this.gameSection.classList.add('hidden');

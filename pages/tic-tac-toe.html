@@ -61,6 +61,22 @@
         </div>
 
         <div id="mainContent" class="hidden">
+            <div id="gameInfoSection" class="game-info hidden" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #DAA520; border-radius: 15px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="font-size: 0.9rem; color: #666; font-weight: 600;">Current Player</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #DAA520;" id="currentPlayerDisplay"></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="font-size: 0.9rem; color: #666; font-weight: 600;">Player 1 (X)</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #DAA520;" id="player1ScoreDisplay">0</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="font-size: 0.9rem; color: #666; font-weight: 600;">Player 2 (O)</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #DAA520;" id="player2ScoreDisplay">0</div>
+                    </div>
+                </div>
+            </div>
         <div id="playerSetup" class="player-setup">
             <div class="game-setup">
                 <h2>Start Game</h2>

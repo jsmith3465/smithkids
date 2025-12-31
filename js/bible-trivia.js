@@ -2876,6 +2876,7 @@ class BibleTrivia {
         // Note: Bible Trivia is free to play - no credits are required or deducted
         this.gameStarted = true;
         document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameInfoSection').classList.remove('hidden');
         document.getElementById('gameScreen').classList.remove('hidden');
         this.currentQuestion = 0;
         this.score = 0;
@@ -3331,9 +3332,9 @@ class BibleTrivia {
             const percentageCorrect = (this.score / 10) * 100;
             
             const gameData = {
-                user_uid: session.uid,
-                score: this.score,
-                total_questions: 10,
+                    user_uid: session.uid,
+                    score: this.score,
+                    total_questions: 10,
                 credits_earned: creditsEarned,
                 percentage_correct: percentageCorrect,
                 easy_questions: this.answersByDifficulty.easy?.total || 0,
@@ -3451,6 +3452,7 @@ class BibleTrivia {
         };
         
         document.getElementById('resultsScreen').classList.remove('show');
+        document.getElementById('gameInfoSection').classList.add('hidden');
         document.getElementById('startScreen').classList.remove('hidden');
         document.getElementById('gameScreen').classList.add('hidden');
     }
