@@ -3024,7 +3024,7 @@ class BibleTrivia {
         
         document.getElementById('finalScore').textContent = this.score;
         
-        // Get maximum credits from Credit_Manager table
+        // Get maximum credits from Credit_Manager table (for perfect score of 10)
         let MAX_CREDITS = 20; // Default fallback
         try {
             const { data: creditData, error: creditError } = await supabase
@@ -3041,37 +3041,29 @@ class BibleTrivia {
             console.warn('Could not fetch max credits from Credit_Manager, using default:', error);
         }
         
-        // Calculate credits based on percentage of maximum
+        // Calculate credits based on tiered system
         let creditsEarned = 0;
         let message = '';
         
-        if (this.score < 3) {
+        if (this.score >= 0 && this.score <= 4) {
             creditsEarned = 0;
             message = "Keep studying! Read the Bible stories to learn more and try again.";
-        } else {
-            // Calculate credits as percentage of maximum, rounded to nearest whole number
-            // Percentage = (score / 10) * 100
-            // Credits = (percentage / 100) * MAX_CREDITS, rounded
-            const percentage = (this.score / 10) * 100;
-            creditsEarned = Math.round((percentage / 100) * MAX_CREDITS);
-            
-            // Ensure minimum of 1 credit if score is 3 or more
-            if (creditsEarned < 1 && this.score >= 3) {
-                creditsEarned = 1;
-            }
-            
-            // Set message based on score
-            if (this.score >= 3 && this.score <= 4) {
-                message = "Good start! Keep learning!";
-            } else if (this.score >= 5 && this.score <= 6) {
+        } else if (this.score >= 5 && this.score <= 7) {
+            creditsEarned = 1;
+            if (this.score >= 5 && this.score <= 6) {
                 message = "Nice work! You're getting better!";
-            } else if (this.score === 7) {
+            } else {
                 message = "Great job! You know your Bible stories!";
-            } else if (this.score >= 8 && this.score <= 9) {
-                message = "Excellent! You're really learning!";
-            } else if (this.score === 10) {
-                message = "Perfect score! You're a Bible expert!";
             }
+        } else if (this.score === 8) {
+            creditsEarned = 3;
+            message = "Excellent! You're really learning!";
+        } else if (this.score === 9) {
+            creditsEarned = 10;
+            message = "Outstanding! You're a Bible expert!";
+        } else if (this.score === 10) {
+            creditsEarned = MAX_CREDITS;
+            message = "Perfect score! You're a Bible master!";
         }
         
         document.getElementById('resultsMessage').textContent = message;
@@ -3319,8 +3311,8 @@ class BibleTrivia {
                 };
             }
             
-            // Calculate credits earned based on percentage of maximum
-            // Get maximum credits from Credit_Manager table
+            // Calculate credits earned based on tiered system
+            // Get maximum credits from Credit_Manager table (for perfect score of 10)
             let MAX_CREDITS = 20; // Default fallback
             try {
                 const { data: creditData, error: creditError } = await supabase
@@ -3339,15 +3331,22 @@ class BibleTrivia {
             
             let creditsEarned = 0;
             
-            if (this.score >= 3) {
-                // Calculate credits as percentage of maximum, rounded to nearest whole number
-                const percentage = (this.score / 10) * 100;
-                creditsEarned = Math.round((percentage / 100) * MAX_CREDITS);
-                
-                // Ensure minimum of 1 credit if score is 3 or more
-                if (creditsEarned < 1) {
-                    creditsEarned = 1;
-                }
+            // Tiered credit system:
+            // 0-4 correct: 0 credits
+            // 5-7 correct: 1 credit
+            // 8 correct: 3 credits
+            // 9 correct: 10 credits
+            // 10 correct: MAX_CREDITS from database
+            if (this.score >= 0 && this.score <= 4) {
+                creditsEarned = 0;
+            } else if (this.score >= 5 && this.score <= 7) {
+                creditsEarned = 1;
+            } else if (this.score === 8) {
+                creditsEarned = 3;
+            } else if (this.score === 9) {
+                creditsEarned = 10;
+            } else if (this.score === 10) {
+                creditsEarned = MAX_CREDITS;
             }
             
             // Calculate percentage correct
