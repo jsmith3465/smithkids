@@ -115,3 +115,34 @@ export async function getBibleTriviaCreditDisplay() {
     return `💎 Earn 1-${maxCredits} credits (Free to play!)`;
 }
 
+/**
+ * Update all credit displays on the page that have data-app-name and data-transaction-type attributes
+ * This function automatically finds all elements with these attributes and updates their text content
+ * @param {Object} defaultValues - Optional object with default values for specific apps (e.g., { 'Tetris': 5 })
+ */
+export async function updateCreditDisplaysFromAttributes(defaultValues = {}) {
+    try {
+        // Load cache first
+        await loadCreditCache();
+        
+        // Find all elements with data-app-name and data-transaction-type
+        const elements = document.querySelectorAll('[data-app-name][data-transaction-type]');
+        
+        for (const element of elements) {
+            const appName = element.getAttribute('data-app-name');
+            const transactionType = element.getAttribute('data-transaction-type');
+            const defaultValue = defaultValues[appName] || 0;
+            
+            const amount = await getCreditAmount(appName, transactionType, defaultValue);
+            
+            if (transactionType === 'debit') {
+                element.textContent = `💰 Costs ${amount} credit${amount !== 1 ? 's' : ''} to play`;
+            } else if (transactionType === 'credit') {
+                element.textContent = `💎 Earn ${amount} credit${amount !== 1 ? 's' : ''}`;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating credit displays:', error);
+    }
+}
+

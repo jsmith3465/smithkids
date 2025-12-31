@@ -185,88 +185,73 @@ async function initializeLanding() {
 // Update all credit displays on the homepage
 async function updateCreditDisplays() {
     try {
-        // Update Memory Verse
+        // Import the utility function
+        const { updateCreditDisplaysFromAttributes, getBibleTriviaCreditDisplay, getCreditAmount } = await import('./credit-display-utils.js');
+        
+        // Update all elements with data-app-name and data-transaction-type attributes
+        // This includes Tetris, Pac-Man, Block Blast, Breakout, and any other games with these attributes
+        // These will automatically pull from the credit_manager table
+        await updateCreditDisplaysFromAttributes({
+            'Tetris': 5,
+            'Pac-Man': 3,
+            'Block Blast': 5,
+            'Breakout': 3
+        });
+        
+        // Update Memory Verse (doesn't have data attributes)
         const memoryVerseCredits = await getCreditAmount('Memory Verse', 'credit', 50);
         const memoryVerseEl = document.querySelector('a[href="pages/memory-verse.html"] .game-card-credits');
         if (memoryVerseEl) {
             memoryVerseEl.textContent = `💎 Earn ${memoryVerseCredits} credits`;
         }
         
-        // Update Workout
+        // Update Workout (doesn't have data attributes)
         const workoutCredits = await getCreditAmount('Workout', 'credit', 10);
         const workoutEl = document.querySelector('a[href="pages/add-workout.html"] .game-card-credits');
         if (workoutEl) {
             workoutEl.textContent = `💎 Earn ${workoutCredits} Credits`;
         }
         
-        // Update Chore
+        // Update Chore (doesn't have data attributes)
         const choreCredits = await getCreditAmount('Chore', 'credit', 10);
         const choreEl = document.querySelector('a[href="pages/submit-chores.html"] .game-card-credits');
         if (choreEl) {
             choreEl.textContent = `💎 Earn ${choreCredits} Credits`;
         }
         
-        // Update Tic Tac Toe
+        // Update Tic Tac Toe (doesn't have data attributes)
         const tttCost = await getCreditAmount('Tic Tac Toe', 'debit', 1);
         const tttEl = document.querySelector('a[href="pages/tic-tac-toe.html"] .game-card-credits');
         if (tttEl) {
             tttEl.textContent = `💰 Costs ${tttCost} credit${tttCost !== 1 ? 's' : ''} to play`;
         }
         
-        // Update Snake
+        // Update Snake (doesn't have data attributes)
         const snakeCost = await getCreditAmount('Snake Game', 'debit', 1);
         const snakeEl = document.querySelector('a[href="pages/snake.html"] .game-card-credits');
         if (snakeEl) {
             snakeEl.textContent = `💰 Costs ${snakeCost} credit${snakeCost !== 1 ? 's' : ''} to play`;
         }
         
-        // Update Bible Trivia
+        // Update Bible Trivia (special case - has range)
         const bibleTriviaText = await getBibleTriviaCreditDisplay();
         const bibleTriviaEl = document.querySelector('a[href="pages/bible-trivia.html"] .game-card-credits');
         if (bibleTriviaEl) {
             bibleTriviaEl.textContent = bibleTriviaText;
         }
         
-        // Update Hangman
+        // Update Hangman (doesn't have data attributes)
         const hangmanCost = await getCreditAmount('Hangman', 'debit', 1);
         const hangmanEl = document.querySelector('a[href="pages/hangman.html"] .game-card-credits');
         if (hangmanEl) {
             hangmanEl.textContent = `💰 Costs ${hangmanCost} credit${hangmanCost !== 1 ? 's' : ''} to play`;
         }
         
-        // Update Galaga
+        // Update Galaga (doesn't have data attributes)
         const galagaCost = await getCreditAmount('Galaga', 'debit', 3);
         const galagaEl = document.querySelector('a[href="pages/galaga.html"] .game-card-credits');
         if (galagaEl) {
             galagaEl.textContent = `💰 Costs ${galagaCost} credit${galagaCost !== 1 ? 's' : ''} to play`;
-        }
-        
-        // Update Breakout
-        const breakoutCost = await getCreditAmount('Breakout', 'debit', 3);
-        const breakoutEl = document.querySelector('a[href="pages/breakout.html"] .game-card-credits');
-        if (breakoutEl) {
-            breakoutEl.textContent = `💰 Costs ${breakoutCost} credit${breakoutCost !== 1 ? 's' : ''} to play`;
-        }
-        
-        // Update Tetris
-        const tetrisCost = await getCreditAmount('Tetris', 'debit', 5);
-        const tetrisEl = document.querySelector('a[href="pages/tetris.html"] .game-card-credits');
-        if (tetrisEl) {
-            tetrisEl.textContent = `💰 Costs ${tetrisCost} credit${tetrisCost !== 1 ? 's' : ''} to play`;
-        }
-        
-        // Update Pac-Man
-        const pacmanCost = await getCreditAmount('Pac-Man', 'debit', 3);
-        const pacmanEl = document.querySelector('a[href="pages/pacman.html"] .game-card-credits');
-        if (pacmanEl) {
-            pacmanEl.textContent = `💰 Costs ${pacmanCost} credit${pacmanCost !== 1 ? 's' : ''} to play`;
-        }
-        
-        // Update Block Blast
-        const blockBlastCost = await getCreditAmount('Block Blast', 'debit', 5);
-        const blockBlastEl = document.querySelector('a[href="pages/block-blast.html"] .game-card-credits');
-        if (blockBlastEl) {
-            blockBlastEl.textContent = `💰 Costs ${blockBlastCost} credit${blockBlastCost !== 1 ? 's' : ''} to play`;
         }
     } catch (error) {
         console.error('Error updating credit displays:', error);
