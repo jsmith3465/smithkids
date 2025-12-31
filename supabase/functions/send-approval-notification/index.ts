@@ -26,7 +26,185 @@ Deno.serve(async (req) => {
     // Get the notification data from the request
     const requestBody = await req.json();
     console.log('Request body:', requestBody);
-    const { notification_type, approval_id, approval_type, user_name, description, credits_amount, badge_name, earned_at } = requestBody;
+    const { notification_type, approval_id, approval_type, user_name, description, credits_amount, badge_name, earned_at, purchase_id, item_name, cost, purchase_date } = requestBody;
+
+    // Handle marketplace purchase notifications
+    if (notification_type === 'marketplace_purchase') {
+      if (!purchase_id || !user_name || !item_name || !cost) {
+        console.error('Missing required fields for marketplace purchase notification');
+        return new Response(
+          JSON.stringify({ error: 'Missing required fields' }),
+          { 
+            status: 400, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      console.log('Processing marketplace purchase notification:', { purchase_id, user_name, item_name, cost, purchase_date });
+      
+      // Check environment variables
+      if (!RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is not set!');
+        return new Response(
+          JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Supabase credentials not set!');
+        return new Response(
+          JSON.stringify({ error: 'Supabase credentials not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Get Supabase client with service role key for admin access
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      console.log('Supabase client created');
+
+      // Get all admin users with email addresses
+      console.log('Fetching admin users...');
+      const { data: admins, error: adminError } = await supabase
+        .from('Users')
+        .select('UID, First_Name, Last_Name, Username, EmailAddress')
+        .eq('user_type', 'admin')
+        .not('EmailAddress', 'is', null);
+
+      if (adminError) {
+        console.error('Error fetching admins:', adminError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch admins', details: adminError.message }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      if (!admins || admins.length === 0) {
+        console.warn('No admin users with email addresses found');
+        return new Response(
+          JSON.stringify({ error: 'No admin users with email addresses found' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Generate approval and denial tokens
+      const approveToken = Array.from(globalThis.crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      const denyToken = Array.from(globalThis.crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      // Store tokens in database
+      const SITE_URL = Deno.env.get('SITE_URL') || 'https://smithfamjam.com';
+      const approveUrl = `${SITE_URL}/pages/approve-marketplace.html?token=${approveToken}&purchase_id=${purchase_id}`;
+      const denyUrl = `${SITE_URL}/pages/approve-marketplace.html?token=${denyToken}&purchase_id=${purchase_id}&action=deny`;
+
+      // Store tokens with purchase_id
+      await supabase.from('approval_tokens').insert([
+        {
+          approval_id: null,
+          purchase_id: purchase_id,
+          token: approveToken,
+          action: 'approve',
+          used: false,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          approval_id: null,
+          purchase_id: purchase_id,
+          token: denyToken,
+          action: 'deny',
+          used: false,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ]);
+
+      // Format purchase date
+      const formattedDate = purchase_date ? new Date(purchase_date).toLocaleString() : new Date().toLocaleString();
+
+      // Send emails to all admins
+      const emailResults = [];
+      for (const admin of admins) {
+        try {
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'Smith Team Six <notifications@email.smithfamjam.com>',
+              to: admin.EmailAddress,
+              subject: `Marketplace Purchase Request - ${item_name}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #DAA520;">Marketplace Purchase Request</h2>
+                  <p><strong>User:</strong> ${user_name}</p>
+                  <p><strong>Item:</strong> ${item_name}</p>
+                  <p><strong>Cost:</strong> ${cost} Credits</p>
+                  <p><strong>Date:</strong> ${formattedDate}</p>
+                  <div style="margin: 30px 0;">
+                    <a href="${approveUrl}" style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Approve Purchase</a>
+                    <a href="${denyUrl}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Deny Purchase</a>
+                  </div>
+                </div>
+              `,
+            }),
+          });
+
+          const emailData = await emailResponse.json();
+          emailResults.push({ admin: admin.EmailAddress, success: emailResponse.ok, data: emailData });
+          console.log(`Email sent to ${admin.EmailAddress}:`, emailData);
+        } catch (error) {
+          console.error(`Error sending email to ${admin.EmailAddress}:`, error);
+          emailResults.push({ admin: admin.EmailAddress, success: false, error: error.message });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Marketplace purchase notification sent to ${admins.length} admin(s)`,
+          results: emailResults,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
 
     // Handle badge notifications differently
     if (notification_type === 'badge_unlocked') {

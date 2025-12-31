@@ -384,6 +384,12 @@ async function loadTransactions() {
             } else if (trans.transaction_type === 'savings_withdrawal') {
                 typeText = 'Transfer from Savings';
                 description = trans.description || 'Transferred from Savings Account';
+            } else if (trans.transaction_type === 'marketplace_purchase') {
+                typeText = 'Marketplace Purchase';
+                description = trans.description || 'Marketplace purchase';
+            } else if (trans.transaction_type === 'marketplace_reversal') {
+                typeText = 'Marketplace Reversal';
+                description = trans.description || 'Marketplace purchase reversal';
             }
             
             // Calculate changes for this transaction
@@ -402,6 +408,12 @@ async function loadTransactions() {
             } else if (trans.transaction_type === 'savings_withdrawal') {
                 availableDisplay = `<span class="transaction-credit">+${trans.amount}</span>`;
                 savingsDisplay = `<span class="transaction-debit">-${trans.amount}</span>`;
+            } else if (trans.transaction_type === 'marketplace_purchase') {
+                availableDisplay = '<span style="color: #999;">—</span>';
+                savingsDisplay = `<span class="transaction-debit">-${trans.amount}</span>`;
+            } else if (trans.transaction_type === 'marketplace_reversal') {
+                availableDisplay = '<span style="color: #999;">—</span>';
+                savingsDisplay = `<span class="transaction-credit">+${trans.amount}</span>`;
             }
             
             row.innerHTML = `

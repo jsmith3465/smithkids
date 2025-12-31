@@ -110,6 +110,17 @@ async function createProfileMenu() {
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 🏆 Badges
             </a>
+            <a href="${getPagePath('admin-marketplace.html')}" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+                text-align: left;
+                white-space: nowrap;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                🛍️ Marketplace
+            </a>
         `;
     } else {
         menuItems = `
@@ -131,6 +142,17 @@ async function createProfileMenu() {
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 📊 Account Information
+            </a>
+            <a href="${getPagePath('marketplace.html')}" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+                text-align: left;
+                white-space: nowrap;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                🛍️ Marketplace
             </a>
             <a href="${getPagePath('badges.html')}" style="
                 display: block;
