@@ -2816,7 +2816,7 @@ class BibleTrivia {
         }, 200);
     }
     
-    setupGame() {
+    async setupGame() {
         const session = window.authStatus?.getSession();
         if (!session) {
             window.location.href = getPagePath('login.html');
@@ -2840,10 +2840,28 @@ class BibleTrivia {
         }
         
         // Event listeners
-        document.getElementById('startGameBtn').addEventListener('click', () => this.startGame());
-        document.getElementById('nextQuestionBtn').addEventListener('click', () => this.nextQuestion());
-        document.getElementById('finishGameBtn').addEventListener('click', () => this.finishGame());
-        document.getElementById('playAgainBtn').addEventListener('click', () => this.resetGame());
+        const startGameBtn = document.getElementById('startGameBtn');
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        const finishGameBtn = document.getElementById('finishGameBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        
+        if (startGameBtn) {
+            startGameBtn.addEventListener('click', () => this.startGame());
+        } else {
+            console.error('startGameBtn not found');
+        }
+        
+        if (nextQuestionBtn) {
+            nextQuestionBtn.addEventListener('click', () => this.nextQuestion());
+        }
+        
+        if (finishGameBtn) {
+            finishGameBtn.addEventListener('click', () => this.finishGame());
+        }
+        
+        if (playAgainBtn) {
+            playAgainBtn.addEventListener('click', () => this.resetGame());
+        }
     }
     
     shuffleQuestions(questions) {
