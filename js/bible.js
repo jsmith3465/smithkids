@@ -213,7 +213,13 @@ async function loadChapter(book, chapter) {
     
     bibleContent.innerHTML = '<div class="loading">Loading chapter...</div>';
     errorMsg.style.display = 'none';
+    
+    // Update title with verse if present (format: "Book 1:2")
+    if (highlightVerse) {
+        bibleTitle.textContent = `${book} ${chapter}:${highlightVerse}`;
+    } else {
     bibleTitle.textContent = `${book} ${chapter}`;
+    }
     
     updateChapterSelector();
     updateURL();
