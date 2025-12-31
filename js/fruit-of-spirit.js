@@ -53,14 +53,35 @@ async function checkUserAccess() {
         return;
     }
     
-    document.getElementById('authCheck').classList.add('hidden');
-    document.getElementById('mainContent').classList.remove('hidden');
+    const authCheck = document.getElementById('authCheck');
+    const mainContent = document.getElementById('mainContent');
     
-    await loadFruitsOfSpirit(session.uid);
+    if (!authCheck || !mainContent) {
+        console.error('Required DOM elements not found');
+        return;
+    }
+    
+    authCheck.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+    
+    try {
+        await loadFruitsOfSpirit(session.uid);
+    } catch (error) {
+        console.error('Error loading fruits of spirit:', error);
+        const fruitList = document.getElementById('fruitList');
+        if (fruitList) {
+            fruitList.innerHTML = '<div class="error-message" style="color: #dc3545; padding: 20px;">Error loading fruits. Please refresh the page.</div>';
+        }
+    }
 }
 
 async function loadFruitsOfSpirit(userUid) {
     const fruitList = document.getElementById('fruitList');
+    
+    if (!fruitList) {
+        console.error('fruitList element not found');
+        return;
+    }
     
     // Define the 9 Fruits of the Spirit
     const fruits = [
@@ -143,28 +164,35 @@ async function loadFruitsOfSpirit(userUid) {
     const badgeMap = new Map(); // Map badge_type to badge data
     
     try {
+        const fruitBadgeTypes = fruits.map(f => f.id);
+        console.log('Fetching badges for types:', fruitBadgeTypes);
+        
         const { data: userBadges, error } = await supabase
             .from('User_Badges')
             .select('badge_type, badge_name, earned_at')
             .eq('user_uid', userUid)
-            .in('badge_type', fruits.map(f => f.id));
+            .in('badge_type', fruitBadgeTypes);
         
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
             console.error('Error fetching user badges:', error);
-        } else if (userBadges) {
-            // Create a map of earned badges
-            userBadges.forEach(badge => {
-                badgeMap.set(badge.badge_type, badge);
-                earnedCount++;
-            });
+        } else {
+            console.log('User badges fetched:', userBadges);
             
-            // Mark earned badges
-            fruits.forEach(fruit => {
-                if (badgeMap.has(fruit.id)) {
-                    fruit.earned = true;
-                    fruit.badgeData = badgeMap.get(fruit.id);
-                }
-            });
+            if (userBadges && userBadges.length > 0) {
+                // Create a map of earned badges
+                userBadges.forEach(badge => {
+                    badgeMap.set(badge.badge_type, badge);
+                    earnedCount++;
+                });
+                
+                // Mark earned badges
+                fruits.forEach(fruit => {
+                    if (badgeMap.has(fruit.id)) {
+                        fruit.earned = true;
+                        fruit.badgeData = badgeMap.get(fruit.id);
+                    }
+                });
+            }
         }
     } catch (error) {
         console.error('Error loading badges:', error);
@@ -213,41 +241,69 @@ async function loadFruitsOfSpirit(userUid) {
         </div>
     `;
     
+    // Clear the loading message and set progress HTML
     fruitList.innerHTML = progressHtml;
     
-    fruits.forEach(fruit => {
-        const fruitRow = document.createElement('div');
-        fruitRow.className = `fruit-row ${fruit.earned ? 'earned' : 'fruit-locked'}`;
-        
-        // Create badge indicators (horizontal stack if multiple badges)
-        let badgeIndicatorsHtml = '';
-        if (fruit.earned && fruit.badgeData) {
-            const earnedDate = new Date(fruit.badgeData.earned_at);
-            const dateStr = earnedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            badgeIndicatorsHtml = `
-                <div class="badge-indicators">
-                    <div>
-                        <div class="badge-indicator">✓</div>
-                        <div class="badge-date">${dateStr}</div>
+    // Use for...of loop to properly handle async operations
+    for (const fruit of fruits) {
+        try {
+            const fruitRow = document.createElement('div');
+            fruitRow.className = `fruit-row ${fruit.earned ? 'earned' : 'fruit-locked'}`;
+            
+            // Create badge indicators (horizontal stack if multiple badges)
+            let badgeIndicatorsHtml = '';
+            if (fruit.earned && fruit.badgeData) {
+                const earnedDate = new Date(fruit.badgeData.earned_at);
+                const dateStr = earnedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                badgeIndicatorsHtml = `
+                    <div class="badge-indicators">
+                        <div>
+                            <div class="badge-indicator">✓</div>
+                            <div class="badge-date">${dateStr}</div>
+                        </div>
                     </div>
+                `;
+            }
+            
+            // Get credit amount from database for this fruit
+            let fruitCreditAmount = 0;
+            if (fruit.earned) {
+                try {
+                    fruitCreditAmount = await getCreditAmount(fruit.name, 'credit', 20);
+                } catch (error) {
+                    console.error(`Error getting credit amount for ${fruit.name}:`, error);
+                    fruitCreditAmount = 20; // Fallback to default
+                }
+            }
+            
+            fruitRow.innerHTML = `
+                <span class="fruit-icon">${fruit.icon}</span>
+                <div class="fruit-content">
+                    <div class="fruit-name">${fruit.name}</div>
+                    <div class="fruit-verse">${fruit.verse}</div>
+                    <div class="fruit-description">${fruit.description}</div>
+                    ${fruit.earned ? `<div class="credit-box">💰 Earn ${fruitCreditAmount} Credits</div>` : ''}
+                </div>
+                ${badgeIndicatorsHtml}
+            `;
+            fruitList.appendChild(fruitRow);
+        } catch (error) {
+            console.error(`Error creating fruit row for ${fruit.name}:`, error);
+            // Still create a basic row even if there's an error
+            const fruitRow = document.createElement('div');
+            fruitRow.className = `fruit-row ${fruit.earned ? 'earned' : 'fruit-locked'}`;
+            fruitRow.innerHTML = `
+                <span class="fruit-icon">${fruit.icon}</span>
+                <div class="fruit-content">
+                    <div class="fruit-name">${fruit.name}</div>
+                    <div class="fruit-verse">${fruit.verse}</div>
+                    <div class="fruit-description">${fruit.description}</div>
                 </div>
             `;
+            fruitList.appendChild(fruitRow);
         }
-        
-        // Get credit amount from database for this fruit
-        const fruitCreditAmount = fruit.earned ? await getCreditAmount(fruit.name, 'credit', 20) : 0;
-        
-        fruitRow.innerHTML = `
-            <span class="fruit-icon">${fruit.icon}</span>
-            <div class="fruit-content">
-                <div class="fruit-name">${fruit.name}</div>
-                <div class="fruit-verse">${fruit.verse}</div>
-                <div class="fruit-description">${fruit.description}</div>
-                ${fruit.earned ? `<div class="credit-box">💰 Earn ${fruitCreditAmount} Credits</div>` : ''}
-            </div>
-            ${badgeIndicatorsHtml}
-        `;
-        fruitList.appendChild(fruitRow);
-    });
+    }
+    
+    console.log(`Displayed ${fruits.length} fruits, ${earnedCount} earned`);
 }
 
