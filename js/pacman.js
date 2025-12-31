@@ -373,12 +373,60 @@ class PacManGame {
         return { canMove: tile !== 1 && tile !== 4, wrap: null };
     }
     
+    snapToCenter(x, y, direction) {
+        // Snap to center of tile when aligned
+        const tileX = Math.floor(x);
+        const tileY = Math.floor(y);
+        const centerX = tileX + 0.5;
+        const centerY = tileY + 0.5;
+        const threshold = 0.1;
+        
+        // Check if close enough to center to snap
+        if (direction === 0 || direction === 2) {
+            // Moving horizontally - snap Y
+            if (Math.abs(y - centerY) < threshold) {
+                return { x: x, y: centerY };
+            }
+        } else if (direction === 1 || direction === 3) {
+            // Moving vertically - snap X
+            if (Math.abs(x - centerX) < threshold) {
+                return { x: centerX, y: y };
+            }
+        }
+        
+        return { x: x, y: y };
+    }
+    
     updatePacman() {
+        // Snap to center when aligned (helps keep Pac-Man in path)
+        const snapped = this.snapToCenter(this.pacman.x, this.pacman.y, this.pacman.direction);
+        this.pacman.x = snapped.x;
+        this.pacman.y = snapped.y;
+        
         // Try next direction first
         if (this.pacman.nextDirection !== this.pacman.direction) {
             const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.nextDirection);
             if (check.canMove) {
-                this.pacman.direction = this.pacman.nextDirection;
+                // Only change direction if we're aligned to center
+                const tileX = Math.floor(this.pacman.x);
+                const tileY = Math.floor(this.pacman.y);
+                const centerX = tileX + 0.5;
+                const centerY = tileY + 0.5;
+                
+                // Check if aligned (horizontal movement needs Y aligned, vertical needs X aligned)
+                const isAligned = (this.pacman.nextDirection === 0 || this.pacman.nextDirection === 2) 
+                    ? Math.abs(this.pacman.y - centerY) < 0.15
+                    : Math.abs(this.pacman.x - centerX) < 0.15;
+                
+                if (isAligned) {
+                    this.pacman.direction = this.pacman.nextDirection;
+                    // Snap to exact center when changing direction
+                    if (this.pacman.direction === 0 || this.pacman.direction === 2) {
+                        this.pacman.y = centerY;
+                    } else {
+                        this.pacman.x = centerX;
+                    }
+                }
             }
         }
         
@@ -428,6 +476,7 @@ class PacManGame {
     
     updateGhosts() {
         this.ghosts.forEach((ghost, index) => {
+            // Ghosts always move, even when Pac-Man is paused
             // Simple AI: move towards Pac-Man or away if scared
             const targetX = this.powerPelletActive && ghost.scared ? 0 : this.pacman.x;
             const targetY = this.powerPelletActive && ghost.scared ? MAZE_HEIGHT : this.pacman.y;
@@ -443,18 +492,32 @@ class PacManGame {
                 newDirection = dy > 0 ? 1 : 3;
             }
             
-            const check = this.canMove(ghost.x, ghost.y, newDirection);
-            if (check.canMove) {
-                ghost.direction = newDirection;
-            } else {
-                // Try random direction
-                const dirs = [0, 1, 2, 3];
-                dirs.splice(dirs.indexOf(ghost.direction), 1);
-                for (const dir of dirs) {
-                    const check2 = this.canMove(ghost.x, ghost.y, dir);
-                    if (check2.canMove) {
-                        ghost.direction = dir;
-                        break;
+            // Only change direction at intersections (when aligned to tile center)
+            const tileX = Math.floor(ghost.x);
+            const tileY = Math.floor(ghost.y);
+            const centerX = tileX + 0.5;
+            const centerY = tileY + 0.5;
+            const isAtIntersection = Math.abs(ghost.x - centerX) < 0.1 && Math.abs(ghost.y - centerY) < 0.1;
+            
+            if (isAtIntersection) {
+                const check = this.canMove(ghost.x, ghost.y, newDirection);
+                if (check.canMove) {
+                    ghost.direction = newDirection;
+                    // Snap to exact center when changing direction
+                    ghost.x = centerX;
+                    ghost.y = centerY;
+                } else {
+                    // Try random direction
+                    const dirs = [0, 1, 2, 3];
+                    dirs.splice(dirs.indexOf(ghost.direction), 1);
+                    for (const dir of dirs) {
+                        const check2 = this.canMove(ghost.x, ghost.y, dir);
+                        if (check2.canMove) {
+                            ghost.direction = dir;
+                            ghost.x = centerX;
+                            ghost.y = centerY;
+                            break;
+                        }
                     }
                 }
             }
@@ -635,10 +698,16 @@ class PacManGame {
     }
     
     gameLoop() {
-        if (!this.gameRunning || this.gamePaused) return;
+        if (!this.gameRunning) return;
         
-        this.updatePacman();
+        // Always update ghosts (they keep moving even when paused)
         this.updateGhosts();
+        
+        // Only update Pac-Man if not paused
+        if (!this.gamePaused) {
+            this.updatePacman();
+        }
+        
         this.draw();
         
         requestAnimationFrame(() => this.gameLoop());
