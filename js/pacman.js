@@ -363,11 +363,17 @@ class PacManGame {
         const tileX = Math.floor(newX);
         const tileY = Math.floor(newY);
         
-        // Check tunnel wrap
-        if (tileX < 0) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: tileY } };
-        if (tileX >= MAZE_WIDTH) return { canMove: true, wrap: { x: 0, y: tileY } };
+        // Check tunnel wrap (only for horizontal movement at tunnel row - row 14)
+        // The tunnel allows wrapping from left edge to right edge and vice versa
+        if (tileY === 14) {
+            if (tileX < 0) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: tileY } };
+            if (tileX >= MAZE_WIDTH) return { canMove: true, wrap: { x: 0, y: tileY } };
+        }
         
-        if (tileY < 0 || tileY >= MAZE_HEIGHT) return { canMove: false };
+        // Ensure we're within bounds (except for tunnel wrap which is handled above)
+        if (tileX < 0 || tileX >= MAZE_WIDTH || tileY < 0 || tileY >= MAZE_HEIGHT) {
+            return { canMove: false };
+        }
         
         const tile = this.maze[tileY][tileX];
         return { canMove: tile !== 1 && tile !== 4, wrap: null };
@@ -398,6 +404,10 @@ class PacManGame {
     }
     
     updatePacman() {
+        // Clamp current position to valid bounds
+        this.pacman.x = Math.max(0, Math.min(MAZE_WIDTH - 1, this.pacman.x));
+        this.pacman.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, this.pacman.y));
+        
         // Snap to center when aligned (helps keep Pac-Man in path)
         const snapped = this.snapToCenter(this.pacman.x, this.pacman.y, this.pacman.direction);
         this.pacman.x = snapped.x;
@@ -439,6 +449,10 @@ class PacManGame {
             else if (this.pacman.direction === 1) this.pacman.y += this.pacman.speed;
             else if (this.pacman.direction === 2) this.pacman.x -= this.pacman.speed;
             else if (this.pacman.direction === 3) this.pacman.y -= this.pacman.speed;
+            
+            // Clamp position after movement to ensure we stay in bounds
+            this.pacman.x = Math.max(0, Math.min(MAZE_WIDTH - 1, this.pacman.x));
+            this.pacman.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, this.pacman.y));
         }
         
         // Animate mouth
@@ -476,6 +490,10 @@ class PacManGame {
     
     updateGhosts() {
         this.ghosts.forEach((ghost, index) => {
+            // Clamp ghost position to valid bounds
+            ghost.x = Math.max(0, Math.min(MAZE_WIDTH - 1, ghost.x));
+            ghost.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, ghost.y));
+            
             // Ghosts always move, even when Pac-Man is paused
             // Simple AI: move towards Pac-Man or away if scared
             const targetX = this.powerPelletActive && ghost.scared ? 0 : this.pacman.x;
@@ -532,6 +550,10 @@ class PacManGame {
                 else if (ghost.direction === 1) ghost.y += speed;
                 else if (ghost.direction === 2) ghost.x -= speed;
                 else if (ghost.direction === 3) ghost.y -= speed;
+                
+                // Clamp ghost position after movement to ensure we stay in bounds
+                ghost.x = Math.max(0, Math.min(MAZE_WIDTH - 1, ghost.x));
+                ghost.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, ghost.y));
             }
             
             // Check collision with Pac-Man
@@ -656,26 +678,30 @@ class PacManGame {
             }
         }
         
-        // Draw Pac-Man
-        const pacX = this.pacman.x * TILE_SIZE;
-        const pacY = this.pacman.y * TILE_SIZE;
-        this.ctx.fillStyle = '#FFFF00';
-        this.ctx.beginPath();
-        const startAngle = [0, Math.PI / 2, Math.PI, -Math.PI / 2][this.pacman.direction];
-        const mouthAngle = this.pacman.mouthOpen ? Math.PI / 4 : 0;
-        this.ctx.arc(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 
-                     startAngle + mouthAngle, startAngle + Math.PI * 2 - mouthAngle);
-        this.ctx.lineTo(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2);
-        this.ctx.fill();
-        
-        // Draw ghosts
-        this.ghosts.forEach(ghost => {
-            const ghostX = ghost.x * TILE_SIZE;
-            const ghostY = ghost.y * TILE_SIZE;
-            this.ctx.fillStyle = ghost.scared ? '#2121DE' : ghost.color;
+        // Draw Pac-Man (only if within valid bounds)
+        if (this.pacman.x >= 0 && this.pacman.x < MAZE_WIDTH && this.pacman.y >= 0 && this.pacman.y < MAZE_HEIGHT) {
+            const pacX = this.pacman.x * TILE_SIZE;
+            const pacY = this.pacman.y * TILE_SIZE;
+            this.ctx.fillStyle = '#FFFF00';
             this.ctx.beginPath();
-            this.ctx.arc(ghostX + TILE_SIZE / 2, ghostY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0, Math.PI * 2);
+            const startAngle = [0, Math.PI / 2, Math.PI, -Math.PI / 2][this.pacman.direction];
+            const mouthAngle = this.pacman.mouthOpen ? Math.PI / 4 : 0;
+            this.ctx.arc(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 
+                         startAngle + mouthAngle, startAngle + Math.PI * 2 - mouthAngle);
+            this.ctx.lineTo(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2);
             this.ctx.fill();
+        }
+        
+        // Draw ghosts (only if within valid bounds)
+        this.ghosts.forEach(ghost => {
+            if (ghost.x >= 0 && ghost.x < MAZE_WIDTH && ghost.y >= 0 && ghost.y < MAZE_HEIGHT) {
+                const ghostX = ghost.x * TILE_SIZE;
+                const ghostY = ghost.y * TILE_SIZE;
+                this.ctx.fillStyle = ghost.scared ? '#2121DE' : ghost.color;
+                this.ctx.beginPath();
+                this.ctx.arc(ghostX + TILE_SIZE / 2, ghostY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
         });
         
         this.ctx.restore();

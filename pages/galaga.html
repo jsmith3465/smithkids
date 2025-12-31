@@ -31,13 +31,22 @@
             }
         }
         
+        #mainContent {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
         .game-header {
             background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             border: 3px solid #DAA520;
             border-radius: 15px;
             padding: 20px;
-            margin-bottom: 30px;
+            width: 20%;
+            min-width: 150px;
             text-align: center;
+            position: sticky;
+            top: 20px;
         }
         
         .game-title {
@@ -80,6 +89,8 @@
             margin-bottom: 30px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            width: 80%;
+            flex: 1;
         }
         
         .game-canvas-container {
@@ -174,6 +185,22 @@
             text-align: left;
             position: relative;
             display: none;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            #mainContent {
+                flex-direction: column;
+            }
+            
+            .game-header {
+                width: 100%;
+                position: static;
+            }
+            
+            .game-section {
+                width: 100%;
+            }
         }
         
         .instructions.show {
@@ -300,19 +327,19 @@
                 </div>
                 
                 <a href="#" id="instructionsLink" class="instructions-link">View details on how to play</a>
-                
-                <div class="instructions" id="instructions">
-                    <button class="instructions-close" id="instructionsClose">×</button>
-                    <h3>How to Play:</h3>
-                    <ul>
-                        <li>Use ← → arrow keys or buttons to move your ship</li>
-                        <li>Press SPACE or click "Shoot" to fire</li>
-                        <li>Destroy all enemy ships to advance to the next level</li>
-                        <li>Avoid enemy bullets and collisions</li>
-                        <li>You have 3 lives - use them wisely!</li>
-                    </ul>
-                </div>
             </div>
+        </div>
+        
+        <div class="instructions" id="instructions">
+            <button class="instructions-close" id="instructionsClose">×</button>
+            <h3>How to Play:</h3>
+            <ul>
+                <li>Use ← → arrow keys or buttons to move your ship</li>
+                <li>Press SPACE or click "Shoot" to fire</li>
+                <li>Destroy all enemy ships to advance to the next level</li>
+                <li>Avoid enemy bullets and collisions</li>
+                <li>You have 3 lives - use them wisely!</li>
+            </ul>
         </div>
     </div>
 

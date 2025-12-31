@@ -31,13 +31,22 @@
             }
         }
         
+        #mainContent {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
         .game-header {
             background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             border: 3px solid #DAA520;
             border-radius: 15px;
             padding: 20px;
-            margin-bottom: 30px;
+            width: 20%;
+            min-width: 150px;
             text-align: center;
+            position: sticky;
+            top: 20px;
         }
         
         .game-title {
@@ -80,6 +89,8 @@
             margin-bottom: 30px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            width: 80%;
+            flex: 1;
         }
         
         .game-wrapper {
@@ -190,6 +201,22 @@
             padding: 20px;
             margin-top: 20px;
             text-align: left;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            #mainContent {
+                flex-direction: column;
+            }
+            
+            .game-header {
+                width: 100%;
+                position: static;
+            }
+            
+            .game-section {
+                width: 100%;
+            }
         }
         
         .instructions h3 {
@@ -278,8 +305,9 @@
                 
                 <div id="gameMessage" class="game-message hidden"></div>
             </div>
-            
-            <div class="instructions">
+        </div>
+        
+        <div class="instructions">
                 <h3>How to Play:</h3>
                 <ul>
                     <li><strong>Arrow Keys:</strong> Move left/right, rotate, and drop pieces</li>

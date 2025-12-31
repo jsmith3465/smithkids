@@ -120,10 +120,16 @@ async function loadTransactions() {
                 typeText = 'Game Payment';
                 const gameType = trans.game_type || 'game';
                 description = `Played ${gameType.replace('_', ' ')}`;
+            } else if (trans.transaction_type === 'savings_transfer') {
+                typeText = 'Savings Transfer';
+                description = trans.description || 'Transferred to Savings Account';
+            } else if (trans.transaction_type === 'savings_withdrawal') {
+                typeText = 'Savings Withdrawal';
+                description = trans.description || 'Transferred from Savings Account';
             }
             
-            const amountClass = trans.transaction_type === 'credit_added' ? 'transaction-credit' : 'transaction-debit';
-            const amountSign = trans.transaction_type === 'credit_added' ? '+' : '-';
+            const amountClass = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'savings_withdrawal') ? 'transaction-credit' : 'transaction-debit';
+            const amountSign = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'savings_withdrawal') ? '+' : '-';
             
             row.innerHTML = `
                 <td>${dateStr}</td>

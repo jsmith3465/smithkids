@@ -20,10 +20,13 @@ async function createProfileMenu() {
     const userType = session.userType || 'standard';
     const isAdmin = userType === 'admin';
     
-    // Get credit balance for standard users
+    // Get credit balance and savings balance for standard users
     let creditBalance = null;
+    let savingsBalance = null;
     if (!isAdmin) {
-        creditBalance = await getCreditBalance(session.uid);
+        const balances = await getCreditBalances(session.uid);
+        creditBalance = balances.available;
+        savingsBalance = balances.savings;
     }
     
     // Get pending approvals count for admins
@@ -111,8 +114,12 @@ async function createProfileMenu() {
     } else {
         menuItems = `
             <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #fff3cd; text-align: center;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Credit Balance</div>
+                <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Available Balance</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: #CC5500;">${creditBalance !== null ? creditBalance : 0}</div>
+            </div>
+            <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #d4edda; text-align: center;">
+                <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Savings Account</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #155724;">${savingsBalance !== null ? savingsBalance : 0}</div>
             </div>
             <a href="${getPagePath('credit-balance.html')}" style="
                 display: block;
@@ -124,6 +131,17 @@ async function createProfileMenu() {
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 💳 View Credit Balance
+            </a>
+            <a href="${getPagePath('savings-account.html')}" style="
+                display: block;
+                padding: 12px 15px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.2s ease;
+                text-align: left;
+                white-space: nowrap;
+            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                🏦 Savings Account
             </a>
             <a href="${getPagePath('badges.html')}" style="
                 display: block;
@@ -285,8 +303,8 @@ async function createProfileMenu() {
     });
 }
 
-// Get credit balance for a user
-async function getCreditBalance(userUid) {
+// Get credit balances (available and savings) for a user
+async function getCreditBalances(userUid) {
     try {
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
         const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
@@ -295,19 +313,22 @@ async function getCreditBalance(userUid) {
         
         const { data, error } = await supabase
             .from('User_Credits')
-            .select('balance')
+            .select('balance, savings_balance')
             .eq('user_uid', userUid)
             .single();
         
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-            console.error('Error fetching credit balance:', error);
-            return 0;
+            console.error('Error fetching credit balances:', error);
+            return { available: 0, savings: 0 };
         }
         
-        return data ? data.balance : 0;
+        return {
+            available: data ? (data.balance || 0) : 0,
+            savings: data ? (data.savings_balance || 0) : 0
+        };
     } catch (error) {
-        console.error('Error fetching credit balance:', error);
-        return 0;
+        console.error('Error fetching credit balances:', error);
+        return { available: 0, savings: 0 };
     }
 }
 
