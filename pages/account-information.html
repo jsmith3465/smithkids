@@ -157,6 +157,30 @@
             min-width: 200px;
         }
         
+        .btn-transfer-available {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #CC5500;
+            border: 2px solid #DAA520;
+        }
+        
+        .btn-transfer-available:hover {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fff3cd 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.4);
+        }
+        
+        .btn-transfer-savings {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        
+        .btn-transfer-savings:hover {
+            background: linear-gradient(135deg, #c3e6cb 0%, #d4edda 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+        
         .transactions-section {
             background: white;
             border-radius: 15px;
@@ -302,8 +326,8 @@
                             <input type="number" id="transferAmount" min="1" placeholder="Enter amount" required>
                         </div>
                         <div class="transfer-buttons">
-                            <button class="btn btn-primary btn-transfer" id="transferToSavingsBtn">Transfer to Savings</button>
-                            <button class="btn btn-secondary btn-transfer" id="transferFromSavingsBtn">Transfer to Available</button>
+                            <button class="btn btn-transfer btn-transfer-available" id="transferFromSavingsBtn">Transfer to Available</button>
+                            <button class="btn btn-transfer btn-transfer-savings" id="transferToSavingsBtn">Transfer to Savings</button>
                         </div>
                     </div>
                 </div>
@@ -322,7 +346,7 @@
     </div>
 
     <footer class="page-footer">
-        <p>Designed in Orlando by the Smith Kids</p>
+        <p>Copyright 2026 by The Smith Family</p>
     </footer>
 
     <script type="module" src="../js/auth.js"></script>

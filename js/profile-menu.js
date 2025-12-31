@@ -124,13 +124,15 @@ async function createProfileMenu() {
         `;
     } else {
         menuItems = `
-            <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #fff3cd; text-align: center;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Available Balance</div>
-                <div style="font-size: 1.2rem; font-weight: 700; color: #CC5500;">${creditBalance !== null ? creditBalance : 0}</div>
-            </div>
-            <div style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: #d4edda; text-align: center;">
-                <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Savings Account</div>
-                <div style="font-size: 1.2rem; font-weight: 700; color: #155724;">${savingsBalance !== null ? savingsBalance : 0}</div>
+            <div style="display: flex; border-bottom: 1px solid #e0e0e0;">
+                <div style="flex: 1; padding: 12px 15px; background: #fff3cd; text-align: center; border-right: 1px solid #e0e0e0;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Available Balance</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: #CC5500;">${creditBalance !== null ? creditBalance : 0}</div>
+                </div>
+                <div style="flex: 1; padding: 12px 15px; background: #d4edda; text-align: center;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Savings Balance</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: #155724;">${savingsBalance !== null ? savingsBalance : 0}</div>
+                </div>
             </div>
             <a href="${getPagePath('account-information.html')}" style="
                 display: block;

@@ -100,7 +100,7 @@ async function loadMarketplaceItems() {
             .from('marketplace_items')
             .select('*')
             .eq('is_active', true)
-            .order('name', { ascending: true });
+            .order('cost', { ascending: false });
         
         if (error) throw error;
         
