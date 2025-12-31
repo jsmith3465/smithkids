@@ -58,7 +58,7 @@ async function loadTransactions() {
     const transactionsList = document.getElementById('transactionsList');
     
     try {
-        // Get transactions for this user
+        // Get transactions for this user (both as sender and receiver)
         const { data: transactions, error } = await supabase
             .from('Credit_Transactions')
             .select(`
@@ -72,7 +72,7 @@ async function loadTransactions() {
                 created_at,
                 Users!Credit_Transactions_from_user_uid_fkey(First_Name, Last_Name, Username)
             `)
-            .eq('to_user_uid', session.uid)
+            .or(`to_user_uid.eq.${session.uid},from_user_uid.eq.${session.uid}`)
             .order('created_at', { ascending: false })
             .limit(100);
         
@@ -93,12 +93,13 @@ async function loadTransactions() {
             <th>Date/Time</th>
             <th>Type</th>
             <th>Description</th>
-            <th>Amount</th>
+            <th>Available Balance</th>
+            <th>Savings Balance</th>
         `;
         table.appendChild(headerRow);
         
         // Transaction rows
-        transactions.forEach(trans => {
+        transactions.forEach((trans) => {
             const row = document.createElement('tr');
             
             const date = new Date(trans.created_at);
@@ -121,21 +122,47 @@ async function loadTransactions() {
                 const gameType = trans.game_type || 'game';
                 description = `Played ${gameType.replace('_', ' ')}`;
             } else if (trans.transaction_type === 'savings_transfer') {
-                typeText = 'Savings Transfer';
+                typeText = 'Transfer to Savings';
                 description = trans.description || 'Transferred to Savings Account';
             } else if (trans.transaction_type === 'savings_withdrawal') {
-                typeText = 'Savings Withdrawal';
+                typeText = 'Transfer from Savings';
                 description = trans.description || 'Transferred from Savings Account';
             }
             
-            const amountClass = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'savings_withdrawal') ? 'transaction-credit' : 'transaction-debit';
-            const amountSign = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'savings_withdrawal') ? '+' : '-';
+            // Calculate changes for this transaction
+            let availableChange = 0;
+            let savingsChange = 0;
+            let availableDisplay = '';
+            let savingsDisplay = '';
+            
+            if (trans.transaction_type === 'credit_added') {
+                availableChange = trans.amount;
+                savingsChange = 0;
+                availableDisplay = `<span class="transaction-credit">+${trans.amount}</span>`;
+                savingsDisplay = '<span style="color: #999;">—</span>';
+            } else if (trans.transaction_type === 'game_payment') {
+                availableChange = -trans.amount;
+                savingsChange = 0;
+                availableDisplay = `<span class="transaction-debit">-${trans.amount}</span>`;
+                savingsDisplay = '<span style="color: #999;">—</span>';
+            } else if (trans.transaction_type === 'savings_transfer') {
+                availableChange = -trans.amount;
+                savingsChange = trans.amount;
+                availableDisplay = `<span class="transaction-debit">-${trans.amount}</span>`;
+                savingsDisplay = `<span class="transaction-credit">+${trans.amount}</span>`;
+            } else if (trans.transaction_type === 'savings_withdrawal') {
+                availableChange = trans.amount;
+                savingsChange = -trans.amount;
+                availableDisplay = `<span class="transaction-credit">+${trans.amount}</span>`;
+                savingsDisplay = `<span class="transaction-debit">-${trans.amount}</span>`;
+            }
             
             row.innerHTML = `
                 <td>${dateStr}</td>
                 <td>${typeText}</td>
                 <td>${description}</td>
-                <td class="${amountClass}">${amountSign}${trans.amount}</td>
+                <td>${availableDisplay}</td>
+                <td>${savingsDisplay}</td>
             `;
             table.appendChild(row);
         });

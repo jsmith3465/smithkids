@@ -121,7 +121,7 @@ async function createProfileMenu() {
                 <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Savings Account</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: #155724;">${savingsBalance !== null ? savingsBalance : 0}</div>
             </div>
-            <a href="${getPagePath('credit-balance.html')}" style="
+            <a href="${getPagePath('account-information.html')}" style="
                 display: block;
                 padding: 12px 15px;
                 color: #333;
@@ -130,18 +130,7 @@ async function createProfileMenu() {
                 text-align: left;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                💳 View Credit Balance
-            </a>
-            <a href="${getPagePath('savings-account.html')}" style="
-                display: block;
-                padding: 12px 15px;
-                color: #333;
-                text-decoration: none;
-                transition: background 0.2s ease;
-                text-align: left;
-                white-space: nowrap;
-            " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                🏦 Savings Account
+                📊 Account Information (AI)
             </a>
             <a href="${getPagePath('badges.html')}" style="
                 display: block;
