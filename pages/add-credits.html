@@ -375,19 +375,37 @@
                             </form>
                         </div>
                         
-                        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
-                            <label for="sortCategory" style="font-weight: 600; color: #333;">Sort by:</label>
-                            <select id="sortCategory" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 1rem; cursor: pointer; min-width: 200px;">
-                                <option value="all">All Items</option>
-                                <option value="fruit">Fruit of the Spirit</option>
-                                <option value="badge">Badges</option>
-                                <option value="game">Games</option>
-                                <option value="app">Apps</option>
-                            </select>
+                        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="sortCategory" style="font-weight: 600; color: #333;">Sort by:</label>
+                                <select id="sortCategory" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 1rem; cursor: pointer; min-width: 200px;">
+                                    <option value="all">All Items</option>
+                                    <option value="fruit">Fruit of the Spirit</option>
+                                    <option value="badge">Badges</option>
+                                    <option value="game">Games</option>
+                                    <option value="app">Apps</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+                                <label for="pageSizeSelect" style="font-weight: 600; color: #333;">Show:</label>
+                                <select id="pageSizeSelect" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 1rem; cursor: pointer; min-width: 100px;">
+                                    <option value="10">10</option>
+                                    <option value="20" selected>20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span style="color: #666; font-size: 0.9rem;" id="resultsCount"></span>
+                            </div>
                         </div>
                         
                         <div id="creditTrackingTableContainer" style="margin-top: 20px;">
                             <div class="loading">Loading credit manager data...</div>
+                        </div>
+                        
+                        <div id="paginationControls" style="display: none; margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <button id="prevPageBtn" class="btn btn-secondary" style="padding: 8px 15px;">Previous</button>
+                            <span id="pageInfo" style="color: #666; font-weight: 600;"></span>
+                            <button id="nextPageBtn" class="btn btn-secondary" style="padding: 8px 15px;">Next</button>
                         </div>
                         
                         <div style="margin-top: 20px; text-align: center;">

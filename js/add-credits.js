@@ -123,6 +123,9 @@ async function loadManagerOverview() {
 // Store original values for comparison
 let creditTrackingData = {};
 let allCreditManagerData = []; // Store all data for sorting
+let currentPage = 1; // Current page for pagination
+let pageSize = 20; // Default page size
+let filteredData = []; // Store filtered/sorted data for pagination
 
 async function loadCreditTrackingTable() {
     const container = document.getElementById('creditTrackingTableContainer');
@@ -157,17 +160,44 @@ async function loadCreditTrackingTable() {
         // Store all data for sorting
         allCreditManagerData = creditManagerData;
         
-        // Render table with current sort
-        renderCreditManagerTable(container, creditManagerData);
+        // Reset to first page when loading new data
+        currentPage = 1;
+        
+        // Apply current sort and render
+        filteredData = sortCreditManagerData('all');
+        renderCreditManagerTable(container, filteredData);
         
         // Setup sort event listener
         const sortSelect = document.getElementById('sortCategory');
         if (sortSelect) {
-            sortSelect.addEventListener('change', function() {
-                const sortedData = sortCreditManagerData(this.value);
-                renderCreditManagerTable(container, sortedData);
+            // Remove existing listeners to avoid duplicates
+            const newSortSelect = sortSelect.cloneNode(true);
+            sortSelect.parentNode.replaceChild(newSortSelect, sortSelect);
+            newSortSelect.addEventListener('change', function() {
+                currentPage = 1; // Reset to first page on sort change
+                filteredData = sortCreditManagerData(this.value);
+                const tableContainer = document.getElementById('creditTrackingTableContainer');
+                renderCreditManagerTable(tableContainer, filteredData);
             });
         }
+        
+        // Setup page size event listener
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        if (pageSizeSelect) {
+            // Remove existing listeners to avoid duplicates
+            const newPageSizeSelect = pageSizeSelect.cloneNode(true);
+            pageSizeSelect.parentNode.replaceChild(newPageSizeSelect, pageSizeSelect);
+            newPageSizeSelect.value = pageSize.toString(); // Set current value
+            newPageSizeSelect.addEventListener('change', function() {
+                pageSize = parseInt(this.value);
+                currentPage = 1; // Reset to first page on page size change
+                const tableContainer = document.getElementById('creditTrackingTableContainer');
+                renderCreditManagerTable(tableContainer, filteredData);
+            });
+        }
+        
+        // Setup pagination controls
+        setupPaginationControls();
         
         // Show save button
         saveBtn.style.display = 'inline-block';
@@ -247,11 +277,25 @@ function getCategory(appName, fruitNames, badgeNames, gameNames) {
     return '4_app';
 }
 
-// Render the credit manager table
+// Render the credit manager table with pagination
 function renderCreditManagerTable(container, data) {
     if (!data || data.length === 0) {
         container.innerHTML = '<div class="no-data">No items found for this category.</div>';
+        document.getElementById('paginationControls').style.display = 'none';
+        document.getElementById('resultsCount').textContent = '';
         return;
+    }
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(data.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, data.length);
+    const paginatedData = data.slice(startIndex, endIndex);
+    
+    // Update results count
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+        resultsCount.textContent = `Showing ${startIndex + 1}-${endIndex} of ${data.length}`;
     }
     
     // Create table
@@ -269,14 +313,72 @@ function renderCreditManagerTable(container, data) {
     `;
     table.appendChild(headerRow);
     
-    // Data rows
-    data.forEach(item => {
+    // Data rows (only for current page)
+    paginatedData.forEach(item => {
         const row = createCreditManagerRow(item);
         table.appendChild(row);
     });
     
     container.innerHTML = '';
     container.appendChild(table);
+    
+    // Update pagination controls
+    updatePaginationControls(totalPages);
+}
+
+// Setup pagination controls
+function setupPaginationControls() {
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    
+    if (prevBtn) {
+        // Remove existing listeners to avoid duplicates
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        newPrevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderCreditManagerTable(document.getElementById('creditTrackingTableContainer'), filteredData);
+            }
+        });
+    }
+    
+    if (nextBtn) {
+        // Remove existing listeners to avoid duplicates
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderCreditManagerTable(document.getElementById('creditTrackingTableContainer'), filteredData);
+            }
+        });
+    }
+}
+
+// Update pagination controls visibility and state
+function updatePaginationControls(totalPages) {
+    const paginationControls = document.getElementById('paginationControls');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    
+    if (!paginationControls || !prevBtn || !nextBtn || !pageInfo) return;
+    
+    // Show pagination if more than one page
+    if (totalPages > 1) {
+        paginationControls.style.display = 'flex';
+    } else {
+        paginationControls.style.display = 'none';
+    }
+    
+    // Update button states
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+    
+    // Update page info
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 }
 
 function createCreditManagerRow(item) {
