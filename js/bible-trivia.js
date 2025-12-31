@@ -2905,9 +2905,13 @@ class BibleTrivia {
         const question = this.questions[this.currentQuestion];
         const questionNum = this.currentQuestion + 1;
         
+        // Capitalize difficulty for display
+        const difficultyDisplay = question.difficulty ? 
+            question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1) : '';
+        
         document.getElementById('currentQuestionNum').textContent = questionNum;
         document.getElementById('currentScore').textContent = this.score;
-        document.getElementById('questionNumber').textContent = `Question ${questionNum} of 10`;
+        document.getElementById('questionNumber').textContent = `Question ${questionNum} - ${difficultyDisplay}`;
         document.getElementById('questionText').textContent = question.question;
         
         // Clear previous answers
