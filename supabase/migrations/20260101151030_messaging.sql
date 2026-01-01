@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 ALTER TABLE messages
+  ADD COLUMN IF NOT EXISTS from_user_uid BIGINT,
   ADD COLUMN IF NOT EXISTS sender_uid BIGINT,
   ADD COLUMN IF NOT EXISTS recipient_uids BIGINT[],
   ADD COLUMN IF NOT EXISTS subject TEXT,
@@ -27,6 +28,19 @@ BEGIN
     ALTER TABLE messages
       ADD CONSTRAINT messages_sender_uid_fkey
       FOREIGN KEY (sender_uid) REFERENCES "Users"("UID");
+  END IF;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'messages_from_user_uid_fkey'
+  ) THEN
+    ALTER TABLE messages
+      ADD CONSTRAINT messages_from_user_uid_fkey
+      FOREIGN KEY (from_user_uid) REFERENCES "Users"("UID");
   END IF;
 EXCEPTION WHEN duplicate_object THEN
   NULL;
@@ -189,6 +203,7 @@ BEGIN
   END IF;
 
   INSERT INTO messages (
+    from_user_uid,
     sender_uid,
     recipient_uids,
     subject,
@@ -197,6 +212,7 @@ BEGIN
     forwarded_from_message_id
   )
   VALUES (
+    p_sender_uid,
     p_sender_uid,
     p_recipient_uids,
     NULLIF(TRIM(p_subject), ''),
