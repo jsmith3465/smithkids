@@ -886,15 +886,20 @@ async function loadTetrisStatistics() {
                 };
             }
             userStats[score.user_uid].gamesPlayed++;
-            userStats[score.user_uid].totalScore += score.score;
-            if (score.score > userStats[score.user_uid].highestScore) {
-                userStats[score.user_uid].highestScore = score.score;
+            const scoreValue = Number(score.score || 0);
+            const levelValue = Number(score.level || 0);
+            const linesValue = Number(score.lines_cleared || 0);
+            const durationValue = Number(score.game_duration_seconds || 0);
+            
+            userStats[score.user_uid].totalScore += scoreValue;
+            if (scoreValue > userStats[score.user_uid].highestScore) {
+                userStats[score.user_uid].highestScore = scoreValue;
             }
-            if (score.level > userStats[score.user_uid].highestLevel) {
-                userStats[score.user_uid].highestLevel = score.level;
+            if (levelValue > userStats[score.user_uid].highestLevel) {
+                userStats[score.user_uid].highestLevel = levelValue;
             }
-            userStats[score.user_uid].totalLinesCleared += score.lines_cleared || 0;
-            userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
+            userStats[score.user_uid].totalLinesCleared += linesValue;
+            userStats[score.user_uid].totalTime += durationValue;
         });
         
         // Calculate additional metrics
@@ -947,8 +952,9 @@ async function loadTetrisStatistics() {
         recentGames.forEach(score => {
             const user = userMap[score.user_uid];
             const userName = getUserDisplayName(user);
-            const gameMinutes = Math.floor((score.game_duration_seconds || 0) / 60);
-            const gameSeconds = (score.game_duration_seconds || 0) % 60;
+            const durationValue = Number(score.game_duration_seconds || 0);
+            const gameMinutes = Math.floor(durationValue / 60);
+            const gameSeconds = durationValue % 60;
             const gameTimeStr = gameMinutes > 0 ? `${gameMinutes}m ${gameSeconds}s` : `${gameSeconds}s`;
             const gameDate = new Date(score.created_at).toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -958,11 +964,15 @@ async function loadTetrisStatistics() {
                 minute: '2-digit'
             });
             
+            const scoreValue = Number(score.score || 0);
+            const levelValue = Number(score.level || 0);
+            const linesValue = Number(score.lines_cleared || 0);
+            
             html += `<tr>
                 <td>${userName}</td>
-                <td>${score.score.toLocaleString()}</td>
-                <td>${score.level}</td>
-                <td>${score.lines_cleared || 0}</td>
+                <td>${scoreValue.toLocaleString()}</td>
+                <td>${levelValue}</td>
+                <td>${linesValue}</td>
                 <td>${gameTimeStr}</td>
                 <td>${gameDate}</td>
             </tr>`;
@@ -972,7 +982,11 @@ async function loadTetrisStatistics() {
         tetrisStatsDiv.innerHTML = html;
     } catch (error) {
         console.error('Error loading Tetris statistics:', error);
-        tetrisStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
+        const msg = error?.message || String(error);
+        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        tetrisStatsDiv.innerHTML = isMissingTable
+            ? '<div class="no-data">Tetris statistics table is not set up yet.<br><small>Run <code>create_tetris_table.sql</code> in Supabase, then play a game.</small></div>'
+            : `<div class="no-data">Error loading Tetris statistics: ${msg}</div>`;
     }
 }
 
@@ -1020,15 +1034,20 @@ async function loadPacmanStatistics() {
                 };
             }
             userStats[score.user_uid].gamesPlayed++;
-            userStats[score.user_uid].totalScore += score.score;
-            if (score.score > userStats[score.user_uid].highestScore) {
-                userStats[score.user_uid].highestScore = score.score;
+            const scoreValue = Number(score.score || 0);
+            const levelValue = Number(score.level || 0);
+            const dotsValue = Number(score.dots_eaten || 0);
+            const durationValue = Number(score.game_duration_seconds || 0);
+            
+            userStats[score.user_uid].totalScore += scoreValue;
+            if (scoreValue > userStats[score.user_uid].highestScore) {
+                userStats[score.user_uid].highestScore = scoreValue;
             }
-            if (score.level > userStats[score.user_uid].highestLevel) {
-                userStats[score.user_uid].highestLevel = score.level;
+            if (levelValue > userStats[score.user_uid].highestLevel) {
+                userStats[score.user_uid].highestLevel = levelValue;
             }
-            userStats[score.user_uid].totalDotsEaten += score.dots_eaten || 0;
-            userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
+            userStats[score.user_uid].totalDotsEaten += dotsValue;
+            userStats[score.user_uid].totalTime += durationValue;
         });
         
         let html = '<table class="stats-table">';
@@ -1064,7 +1083,11 @@ async function loadPacmanStatistics() {
         pacmanStatsDiv.innerHTML = html;
     } catch (error) {
         console.error('Error loading Pac-Man statistics:', error);
-        pacmanStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
+        const msg = error?.message || String(error);
+        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        pacmanStatsDiv.innerHTML = isMissingTable
+            ? '<div class="no-data">Pac-Man statistics table is not set up yet.<br><small>Run <code>create_pacman_table.sql</code> in Supabase, then play a game.</small></div>'
+            : `<div class="no-data">Error loading Pac-Man statistics: ${msg}</div>`;
     }
 }
 
@@ -1112,15 +1135,20 @@ async function loadBlockBlastStatistics() {
                 };
             }
             userStats[score.user_uid].gamesPlayed++;
-            userStats[score.user_uid].totalScore += score.score;
-            if (score.score > userStats[score.user_uid].highestScore) {
-                userStats[score.user_uid].highestScore = score.score;
+            const scoreValue = Number(score.score || 0);
+            const levelValue = Number(score.level || 0);
+            const blocksValue = Number(score.blocks_cleared || 0);
+            const durationValue = Number(score.game_duration_seconds || 0);
+            
+            userStats[score.user_uid].totalScore += scoreValue;
+            if (scoreValue > userStats[score.user_uid].highestScore) {
+                userStats[score.user_uid].highestScore = scoreValue;
             }
-            if (score.level > userStats[score.user_uid].highestLevel) {
-                userStats[score.user_uid].highestLevel = score.level;
+            if (levelValue > userStats[score.user_uid].highestLevel) {
+                userStats[score.user_uid].highestLevel = levelValue;
             }
-            userStats[score.user_uid].totalBlocksCleared += score.blocks_cleared || 0;
-            userStats[score.user_uid].totalTime += score.game_duration_seconds || 0;
+            userStats[score.user_uid].totalBlocksCleared += blocksValue;
+            userStats[score.user_uid].totalTime += durationValue;
         });
         
         let html = '<h3 style="margin-bottom: 20px; color: #333;">Player Statistics</h3>';
@@ -1165,8 +1193,9 @@ async function loadBlockBlastStatistics() {
         recentGames.forEach(score => {
             const user = userMap[score.user_uid];
             const userName = getUserDisplayName(user);
-            const gameMinutes = Math.floor((score.game_duration_seconds || 0) / 60);
-            const gameSeconds = (score.game_duration_seconds || 0) % 60;
+            const durationValue = Number(score.game_duration_seconds || 0);
+            const gameMinutes = Math.floor(durationValue / 60);
+            const gameSeconds = durationValue % 60;
             const gameTimeStr = gameMinutes > 0 ? `${gameMinutes}m ${gameSeconds}s` : `${gameSeconds}s`;
             const gameDate = new Date(score.created_at).toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -1176,11 +1205,15 @@ async function loadBlockBlastStatistics() {
                 minute: '2-digit'
             });
             
+            const scoreValue = Number(score.score || 0);
+            const levelValue = Number(score.level || 0);
+            const blocksValue = Number(score.blocks_cleared || 0);
+            
             html += `<tr>
                 <td>${userName}</td>
-                <td>${score.score.toLocaleString()}</td>
-                <td>${score.level}</td>
-                <td>${score.blocks_cleared || 0}</td>
+                <td>${scoreValue.toLocaleString()}</td>
+                <td>${levelValue}</td>
+                <td>${blocksValue}</td>
                 <td>${gameTimeStr}</td>
                 <td>${gameDate}</td>
             </tr>`;
@@ -1190,7 +1223,11 @@ async function loadBlockBlastStatistics() {
         blockBlastStatsDiv.innerHTML = html;
     } catch (error) {
         console.error('Error loading Block Blast statistics:', error);
-        blockBlastStatsDiv.innerHTML = '<div class="error">Error loading statistics. Please try again.</div>';
+        const msg = error?.message || String(error);
+        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        blockBlastStatsDiv.innerHTML = isMissingTable
+            ? '<div class="no-data">Block Blast statistics table is not set up yet.<br><small>Run <code>create_block_blast_table.sql</code> in Supabase, then play a game.</small></div>'
+            : `<div class="no-data">Error loading Block Blast statistics: ${msg}</div>`;
     }
 }
 

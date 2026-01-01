@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages - Smith Team Six</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .messages-wrap { max-width: 1200px; margin: 0 auto; width: 100%; }
+    .messages-layout { display: grid; grid-template-columns: 420px 1fr; gap: 18px; margin-top: 16px; }
+    @media (max-width: 1000px) { .messages-layout { grid-template-columns: 1fr; } }
+
+    .panel { background: white; border: 2px solid #e0e0e0; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden; }
+    .panel-header { padding: 14px 16px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-bottom: 2px solid #DAA520; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .panel-title { font-size: 1.2rem; font-weight: 800; color: #333; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .filters { padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+    .filter-btn { border: 2px solid #DAA520; background: white; color: #333; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 700; }
+    .filter-btn.active { background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; }
+
+    .list { max-height: 70vh; overflow: auto; }
+    .msg-row { padding: 12px 14px; border-bottom: 1px solid #eee; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .msg-row:hover { background: #f8f9fa; }
+    .msg-row.unread .msg-subject { font-weight: 900; }
+    .msg-subject { font-weight: 700; color: #333; }
+    .msg-meta { font-size: 0.85rem; color: #666; margin-top: 2px; }
+    .msg-time { font-size: 0.8rem; color: #666; white-space: nowrap; }
+    .empty { padding: 16px; color: #666; text-align: center; }
+
+    .viewer { padding: 14px 16px; }
+    .viewer h2 { margin: 0 0 6px; font-size: 1.35rem; }
+    .viewer-meta { color: #666; font-size: 0.9rem; margin-bottom: 12px; }
+    .viewer-body { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 14px; min-height: 200px; }
+
+    /* Compose modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 2000; }
+    .modal { width: 100%; max-width: 900px; background: white; border-radius: 16px; border: 2px solid #DAA520; box-shadow: 0 12px 40px rgba(0,0,0,0.3); overflow: hidden; }
+    .modal-header { padding: 14px 16px; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .modal-header-title { font-weight: 900; font-size: 1.15rem; }
+    .modal-body { padding: 14px 16px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-weight: 800; margin-bottom: 6px; color: #333; }
+    .field input, .field select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+    .editor-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .tool-btn { border: 2px solid #DAA520; background: white; color: #333; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 800; }
+    .tool-btn:hover { background: #fff3cd; }
+    .editor { border: 2px solid #e0e0e0; border-radius: 12px; padding: 12px; min-height: 180px; outline: none; }
+    .picker { display: none; gap: 8px; flex-wrap: wrap; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; margin-top: 8px; }
+    .emoji-btn { font-size: 20px; padding: 6px 8px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .sticker-btn { padding: 6px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .sticker-btn img { width: 64px; height: 64px; }
+    .modal-footer { padding: 14px 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="container messages-wrap">
+    <header>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h1 style="margin: 0; font-size: 3.2rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Messages</h1>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
+          <button id="logoutBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem; min-height: 44px;">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="authCheck" style="text-align: center; padding: 40px;">
+      <p>Checking authentication...</p>
+    </div>
+
+    <div id="mainContent" class="hidden">
+      <div class="messages-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📬 Mailbox</div>
+            <div class="toolbar">
+              <button id="composeBtn" class="btn btn-primary" style="min-height: 40px;">✍️ Compose</button>
+              <button id="refreshBtn" class="btn btn-secondary" style="min-height: 40px;">🔄 Refresh</button>
+            </div>
+          </div>
+          <div class="filters">
+            <button class="filter-btn active" data-folder="inbox">Inbox</button>
+            <button class="filter-btn" data-folder="sent">Sent</button>
+            <button class="filter-btn" data-folder="trash">Trash</button>
+          </div>
+          <div id="messageList" class="list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📖 Message</div>
+            <div class="toolbar">
+              <button id="markReadBtn" class="btn btn-secondary" style="min-height: 40px;">✅ Mark Read</button>
+              <button id="replyBtn" class="btn btn-secondary" style="min-height: 40px;">↩️ Reply</button>
+              <button id="forwardBtn" class="btn btn-secondary" style="min-height: 40px;">📤 Forward</button>
+              <button id="deleteBtn" class="btn btn-danger" style="min-height: 40px;">🗑️ Delete</button>
+              <button id="restoreBtn" class="btn btn-primary" style="min-height: 40px; display:none;">♻️ Restore</button>
+              <button id="deleteForeverBtn" class="btn btn-danger" style="min-height: 40px; display:none;">🔥 Delete Forever</button>
+            </div>
+          </div>
+          <div class="viewer">
+            <div id="viewerEmpty" class="empty">Select a message to view it.</div>
+            <div id="viewerContent" class="hidden">
+              <h2 id="viewSubject"></h2>
+              <div class="viewer-meta" id="viewMeta"></div>
+              <div class="viewer-body" id="viewBody"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compose modal -->
+  <div id="composeBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
+      <div class="modal-header">
+        <div class="modal-header-title" id="composeTitle">✍️ New Message</div>
+        <button id="closeComposeBtn" class="btn btn-secondary" style="min-height: 40px;">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="toSelect">To</label>
+          <select id="toSelect" multiple size="6"></select>
+          <div style="color:#666; font-size:0.85rem; margin-top:6px;">Tip: Hold Ctrl (or Cmd) to pick multiple people.</div>
+        </div>
+        <div class="field">
+          <label for="subjectInput">Subject</label>
+          <input id="subjectInput" type="text" placeholder="(optional)" />
+        </div>
+        <div class="field">
+          <label>Message (HTML)</label>
+          <div class="editor-toolbar">
+            <button class="tool-btn" data-cmd="bold"><b>B</b></button>
+            <button class="tool-btn" data-cmd="italic"><i>I</i></button>
+            <button class="tool-btn" data-cmd="underline"><u>U</u></button>
+            <button class="tool-btn" id="emojiToggleBtn" type="button">😀 Emoji</button>
+            <button class="tool-btn" id="stickerToggleBtn" type="button">🖼️ Stickers</button>
+            <button class="tool-btn" id="clearBtn" type="button">🧽 Clear</button>
+          </div>
+          <div id="emojiPicker" class="picker"></div>
+          <div id="stickerPicker" class="picker"></div>
+          <div id="bodyEditor" class="editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="sendBtn" class="btn btn-primary" style="min-height: 44px;">Send</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../js/auth.js"></script>
+  <script type="module" src="../js/profile-menu.js"></script>
+  <script type="module" src="../js/messages.js"></script>
+</body>
+</html>
+
