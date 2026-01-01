@@ -351,32 +351,57 @@ class PacManGame {
         }
     }
     
-    canMove(x, y, direction) {
-        let newX = x;
-        let newY = y;
-        
-        if (direction === 0) newX += this.pacman.speed; // Right
-        else if (direction === 1) newY += this.pacman.speed; // Down
-        else if (direction === 2) newX -= this.pacman.speed; // Left
-        else if (direction === 3) newY -= this.pacman.speed; // Up
-        
-        const tileX = Math.floor(newX);
-        const tileY = Math.floor(newY);
-        
-        // Check tunnel wrap (only for horizontal movement at tunnel row - row 14)
-        // The tunnel allows wrapping from left edge to right edge and vice versa
-        if (tileY === 14) {
-            if (tileX < 0) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: tileY } };
-            if (tileX >= MAZE_WIDTH) return { canMove: true, wrap: { x: 0, y: tileY } };
-        }
-        
-        // Ensure we're within bounds (except for tunnel wrap which is handled above)
-        if (tileX < 0 || tileX >= MAZE_WIDTH || tileY < 0 || tileY >= MAZE_HEIGHT) {
-            return { canMove: false };
-        }
-        
+    isBlockedTile(tileX, tileY) {
+        // Treat out-of-bounds as blocked (except tunnel wrap which is handled in canMove)
+        if (tileX < 0 || tileX >= MAZE_WIDTH || tileY < 0 || tileY >= MAZE_HEIGHT) return true;
         const tile = this.maze[tileY][tileX];
-        return { canMove: tile !== 1 && tile !== 4, wrap: null };
+        return tile === 1 || tile === 4;
+    }
+
+    /**
+     * Collision-safe movement check.
+     * Positions are in tile units where integer = tile origin, center is (x+0.5, y+0.5).
+     * We check the leading edge of the entity (two sample points) so it can't clip through corners.
+     */
+    canMove(x, y, direction, speed, radius = 0.42) {
+        const dx = direction === 0 ? speed : direction === 2 ? -speed : 0;
+        const dy = direction === 1 ? speed : direction === 3 ? -speed : 0;
+
+        const newX = x + dx;
+        const newY = y + dy;
+
+        const centerX = newX + 0.5;
+        const centerY = newY + 0.5;
+
+        // Tunnel wrap (row 14). Allow wrapping based on center position.
+        if (Math.floor(centerY) === 14) {
+            if (centerX < -0.5) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: Math.floor(newY) } };
+            if (centerX > MAZE_WIDTH - 0.5) return { canMove: true, wrap: { x: 0, y: Math.floor(newY) } };
+        }
+
+        // Sample points at the leading edge (two points) to prevent corner clipping
+        const samples = [];
+        if (direction === 0) { // right
+            samples.push({ x: centerX + radius, y: centerY - radius * 0.85 });
+            samples.push({ x: centerX + radius, y: centerY + radius * 0.85 });
+        } else if (direction === 2) { // left
+            samples.push({ x: centerX - radius, y: centerY - radius * 0.85 });
+            samples.push({ x: centerX - radius, y: centerY + radius * 0.85 });
+        } else if (direction === 1) { // down
+            samples.push({ x: centerX - radius * 0.85, y: centerY + radius });
+            samples.push({ x: centerX + radius * 0.85, y: centerY + radius });
+        } else if (direction === 3) { // up
+            samples.push({ x: centerX - radius * 0.85, y: centerY - radius });
+            samples.push({ x: centerX + radius * 0.85, y: centerY - radius });
+        }
+
+        for (const p of samples) {
+            const tileX = Math.floor(p.x);
+            const tileY = Math.floor(p.y);
+            if (this.isBlockedTile(tileX, tileY)) return { canMove: false, wrap: null };
+        }
+
+        return { canMove: true, wrap: null };
     }
     
     snapToCenter(x, y, direction) {
@@ -404,10 +429,6 @@ class PacManGame {
     }
     
     updatePacman() {
-        // Clamp current position to valid bounds
-        this.pacman.x = Math.max(0, Math.min(MAZE_WIDTH - 1, this.pacman.x));
-        this.pacman.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, this.pacman.y));
-        
         // Snap to center when aligned (helps keep Pac-Man in path)
         const snapped = this.snapToCenter(this.pacman.x, this.pacman.y, this.pacman.direction);
         this.pacman.x = snapped.x;
@@ -415,7 +436,7 @@ class PacManGame {
         
         // Try next direction first
         if (this.pacman.nextDirection !== this.pacman.direction) {
-            const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.nextDirection);
+            const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.nextDirection, this.pacman.speed);
             if (check.canMove) {
                 // Only change direction if we're aligned to center
                 const tileX = Math.floor(this.pacman.x);
@@ -440,7 +461,7 @@ class PacManGame {
             }
         }
         
-        const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.direction);
+        const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.direction, this.pacman.speed);
         if (check.wrap) {
             this.pacman.x = check.wrap.x;
             this.pacman.y = check.wrap.y;
@@ -449,10 +470,6 @@ class PacManGame {
             else if (this.pacman.direction === 1) this.pacman.y += this.pacman.speed;
             else if (this.pacman.direction === 2) this.pacman.x -= this.pacman.speed;
             else if (this.pacman.direction === 3) this.pacman.y -= this.pacman.speed;
-            
-            // Clamp position after movement to ensure we stay in bounds
-            this.pacman.x = Math.max(0, Math.min(MAZE_WIDTH - 1, this.pacman.x));
-            this.pacman.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, this.pacman.y));
         }
         
         // Animate mouth
@@ -490,10 +507,6 @@ class PacManGame {
     
     updateGhosts() {
         this.ghosts.forEach((ghost, index) => {
-            // Clamp ghost position to valid bounds
-            ghost.x = Math.max(0, Math.min(MAZE_WIDTH - 1, ghost.x));
-            ghost.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, ghost.y));
-            
             // Ghosts always move, even when Pac-Man is paused
             // Simple AI: move towards Pac-Man or away if scared
             const targetX = this.powerPelletActive && ghost.scared ? 0 : this.pacman.x;
@@ -518,7 +531,8 @@ class PacManGame {
             const isAtIntersection = Math.abs(ghost.x - centerX) < 0.1 && Math.abs(ghost.y - centerY) < 0.1;
             
             if (isAtIntersection) {
-                const check = this.canMove(ghost.x, ghost.y, newDirection);
+                const ghostSpeed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
+                const check = this.canMove(ghost.x, ghost.y, newDirection, ghostSpeed);
                 if (check.canMove) {
                     ghost.direction = newDirection;
                     // Snap to exact center when changing direction
@@ -529,7 +543,8 @@ class PacManGame {
                     const dirs = [0, 1, 2, 3];
                     dirs.splice(dirs.indexOf(ghost.direction), 1);
                     for (const dir of dirs) {
-                        const check2 = this.canMove(ghost.x, ghost.y, dir);
+                        const ghostSpeed2 = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
+                        const check2 = this.canMove(ghost.x, ghost.y, dir, ghostSpeed2);
                         if (check2.canMove) {
                             ghost.direction = dir;
                             ghost.x = centerX;
@@ -540,20 +555,16 @@ class PacManGame {
                 }
             }
             
-            const moveCheck = this.canMove(ghost.x, ghost.y, ghost.direction);
+            const speed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
+            const moveCheck = this.canMove(ghost.x, ghost.y, ghost.direction, speed);
             if (moveCheck.wrap) {
                 ghost.x = moveCheck.wrap.x;
                 ghost.y = moveCheck.wrap.y;
             } else if (moveCheck.canMove) {
-                const speed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
                 if (ghost.direction === 0) ghost.x += speed;
                 else if (ghost.direction === 1) ghost.y += speed;
                 else if (ghost.direction === 2) ghost.x -= speed;
                 else if (ghost.direction === 3) ghost.y -= speed;
-                
-                // Clamp ghost position after movement to ensure we stay in bounds
-                ghost.x = Math.max(0, Math.min(MAZE_WIDTH - 1, ghost.x));
-                ghost.y = Math.max(0, Math.min(MAZE_HEIGHT - 1, ghost.y));
             }
             
             // Check collision with Pac-Man
