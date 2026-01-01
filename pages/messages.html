@@ -152,6 +152,39 @@
   <script type="module" src="../js/auth.js"></script>
   <script type="module" src="../js/profile-menu.js"></script>
   <script type="module" src="../js/messages.js"></script>
+  <script>
+    // Fallback: ensure Compose modal opens even if module scripts fail to load.
+    document.addEventListener('DOMContentLoaded', () => {
+      const composeBtn = document.getElementById('composeBtn');
+      const closeBtn = document.getElementById('closeComposeBtn');
+      const backdrop = document.getElementById('composeBackdrop');
+      if (!composeBtn || !backdrop) return;
+
+      const open = () => {
+        if (typeof window.openMessagesComposeModal === 'function') {
+          window.openMessagesComposeModal();
+          return;
+        }
+        backdrop.style.display = 'flex';
+        backdrop.setAttribute('aria-hidden', 'false');
+      };
+
+      const close = () => {
+        if (typeof window.closeMessagesComposeModal === 'function') {
+          window.closeMessagesComposeModal();
+          return;
+        }
+        backdrop.style.display = 'none';
+        backdrop.setAttribute('aria-hidden', 'true');
+      };
+
+      composeBtn.addEventListener('click', open);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) close();
+      });
+    });
+  </script>
 </body>
 </html>
 

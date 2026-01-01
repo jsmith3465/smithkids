@@ -324,6 +324,18 @@ function closeComposeModal() {
   backdrop.setAttribute('aria-hidden', 'true');
 }
 
+// Expose safe helpers for non-module fallback bindings
+window.openMessagesComposeModal = () => {
+  openComposeModal({
+    title: '✍️ New Message',
+    toUids: [],
+    subject: '',
+    bodyHtml: '',
+    mode: { type: 'new', parent_message_id: null, forwarded_from_message_id: null },
+  });
+};
+window.closeMessagesComposeModal = () => closeComposeModal();
+
 function insertHtmlAtCursor(html) {
   const editor = $('bodyEditor');
   if (!editor) return;
