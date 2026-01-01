@@ -35,8 +35,11 @@ async function createProfileMenu() {
         pendingApprovalsCount = await getPendingApprovalsCount();
     }
     
-    // Find the header area where we'll add the profile menu
-    const headerRight = document.querySelector('header > div > div:last-child');
+    // Find the header area where we'll add the profile menu (different pages use different header layouts)
+    const headerRight =
+        document.getElementById('profileMenuContainer') ||
+        document.querySelector('header > div > div:last-child') ||
+        document.querySelector('header');
     if (!headerRight) return;
     
     // Remove old userInfo and logoutBtn if they exist
