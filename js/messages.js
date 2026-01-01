@@ -18,6 +18,18 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function onClick(id, handler) {
+  const el = $(id);
+  if (!el) return false;
+  el.addEventListener('click', handler);
+  return true;
+}
+
+function safeSetText(id, text) {
+  const el = $(id);
+  if (el) el.textContent = text;
+}
+
 function escapeHtml(text) {
   return (text ?? '')
     .replaceAll('&', '&amp;')
@@ -282,34 +294,47 @@ async function loadMailbox() {
 
 function openComposeModal({ title, toUids = [], subject = '', bodyHtml = '', mode }) {
   composeMode = mode;
-  $('composeTitle').textContent = title;
+  safeSetText('composeTitle', title);
 
   // reset selections
   const toSelect = $('toSelect');
-  for (const opt of Array.from(toSelect.options)) {
-    opt.selected = toUids.includes(Number(opt.value));
+  if (toSelect) {
+    for (const opt of Array.from(toSelect.options)) {
+      opt.selected = toUids.includes(Number(opt.value));
+    }
   }
 
-  $('subjectInput').value = subject || '';
-  $('bodyEditor').innerHTML = bodyHtml || '';
+  const subjectInput = $('subjectInput');
+  if (subjectInput) subjectInput.value = subject || '';
+  const bodyEditor = $('bodyEditor');
+  if (bodyEditor) bodyEditor.innerHTML = bodyHtml || '';
 
-  $('composeBackdrop').style.display = 'flex';
-  $('composeBackdrop').setAttribute('aria-hidden', 'false');
-  $('bodyEditor').focus();
+  const backdrop = $('composeBackdrop');
+  if (backdrop) {
+    backdrop.style.display = 'flex';
+    backdrop.setAttribute('aria-hidden', 'false');
+  }
+  if (bodyEditor) bodyEditor.focus();
 }
 
 function closeComposeModal() {
-  $('composeBackdrop').style.display = 'none';
-  $('composeBackdrop').setAttribute('aria-hidden', 'true');
+  const backdrop = $('composeBackdrop');
+  if (!backdrop) return;
+  backdrop.style.display = 'none';
+  backdrop.setAttribute('aria-hidden', 'true');
 }
 
 function insertHtmlAtCursor(html) {
-  $('bodyEditor').focus();
+  const editor = $('bodyEditor');
+  if (!editor) return;
+  editor.focus();
   document.execCommand('insertHTML', false, html);
 }
 
 function insertTextAtCursor(text) {
-  $('bodyEditor').focus();
+  const editor = $('bodyEditor');
+  if (!editor) return;
+  editor.focus();
   document.execCommand('insertText', false, text);
 }
 
@@ -480,11 +505,11 @@ function setupEventHandlers() {
     });
   });
 
-  $('refreshBtn').addEventListener('click', async () => {
+  onClick('refreshBtn', async () => {
     await loadMailbox();
   });
 
-  $('composeBtn').addEventListener('click', () => {
+  onClick('composeBtn', () => {
     openComposeModal({
       title: '✍️ New Message',
       toUids: [],
@@ -494,49 +519,53 @@ function setupEventHandlers() {
     });
   });
 
-  $('closeComposeBtn').addEventListener('click', closeComposeModal);
-  $('composeBackdrop').addEventListener('click', (e) => {
-    if (e.target === $('composeBackdrop')) closeComposeModal();
-  });
+  onClick('closeComposeBtn', closeComposeModal);
+  const backdrop = $('composeBackdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) closeComposeModal();
+    });
+  }
 
-  $('sendBtn').addEventListener('click', sendCurrentDraft);
+  onClick('sendBtn', sendCurrentDraft);
 
   // editor toolbar
   document.querySelectorAll('.tool-btn[data-cmd]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const cmd = btn.getAttribute('data-cmd');
-      $('bodyEditor').focus();
+      const editor = $('bodyEditor');
+      if (editor) editor.focus();
       document.execCommand(cmd, false, null);
     });
   });
 
-  $('emojiToggleBtn').addEventListener('click', () => {
+  onClick('emojiToggleBtn', () => {
     const p = $('emojiPicker');
     p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
   });
 
-  $('stickerToggleBtn').addEventListener('click', () => {
+  onClick('stickerToggleBtn', () => {
     const p = $('stickerPicker');
     p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
   });
 
-  $('clearBtn').addEventListener('click', () => {
+  onClick('clearBtn', () => {
     const ok = confirm('Clear the message editor?');
     if (!ok) return;
     $('bodyEditor').innerHTML = '';
   });
 
-  $('markReadBtn').addEventListener('click', async () => {
+  onClick('markReadBtn', async () => {
     const box = selectedMessageId ? boxByMessageId.get(selectedMessageId) : null;
     if (!box || box.folder !== 'inbox') return;
     await setReadState(!box.is_read);
   });
 
-  $('deleteBtn').addEventListener('click', trashSelected);
-  $('restoreBtn').addEventListener('click', restoreSelected);
-  $('deleteForeverBtn').addEventListener('click', purgeSelected);
+  onClick('deleteBtn', trashSelected);
+  onClick('restoreBtn', restoreSelected);
+  onClick('deleteForeverBtn', purgeSelected);
 
-  $('replyBtn').addEventListener('click', () => {
+  onClick('replyBtn', () => {
     if (!selectedMessageId) return;
     const msg = messageById.get(selectedMessageId);
     if (!msg) return;
@@ -552,7 +581,7 @@ function setupEventHandlers() {
     });
   });
 
-  $('forwardBtn').addEventListener('click', () => {
+  onClick('forwardBtn', () => {
     if (!selectedMessageId) return;
     const msg = messageById.get(selectedMessageId);
     if (!msg) return;
@@ -570,6 +599,14 @@ function setupEventHandlers() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Bind compose early so the modal opens even if stats/users haven't loaded yet.
+  // This also prevents a missing element from breaking the entire script.
+  try {
+    setupEventHandlers();
+  } catch (e) {
+    console.error('Message page event binding failed:', e);
+  }
+
   const ready = await ensureAuthReady();
   if (!ready || !window.authStatus?.isAuthenticated) return;
 
@@ -578,7 +615,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   buildEmojiPicker();
   buildStickerPicker();
-  setupEventHandlers();
 
   try {
     await loadUsers();
