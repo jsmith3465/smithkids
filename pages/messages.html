@@ -35,7 +35,7 @@
 
     /* Compose modal */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 2000; }
-    .modal { width: 100%; max-width: 900px; background: white; border-radius: 16px; border: 2px solid #DAA520; box-shadow: 0 12px 40px rgba(0,0,0,0.3); overflow: hidden; }
+    .compose-modal { width: 100%; max-width: 900px; background: white; border-radius: 16px; border: 2px solid #DAA520; box-shadow: 0 12px 40px rgba(0,0,0,0.3); overflow: hidden; }
     .modal-header { padding: 14px 16px; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .modal-header-title { font-weight: 900; font-size: 1.15rem; }
     .modal-body { padding: 14px 16px; }
@@ -114,7 +114,7 @@
 
   <!-- Compose modal -->
   <div id="composeBackdrop" class="modal-backdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
+    <div class="compose-modal" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
       <div class="modal-header">
         <div class="modal-header-title" id="composeTitle">✍️ New Message</div>
         <button id="closeComposeBtn" class="btn btn-secondary" style="min-height: 40px;">Close</button>
