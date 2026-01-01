@@ -16,6 +16,25 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+async function getBibleTriviaMaxCredits() {
+    let maxCredits = 20; // Default fallback
+    try {
+        const { data: creditData, error: creditError } = await supabase
+            .from('credit_manager')
+            .select('credit_amount')
+            .eq('app_name', 'Bible Trivia')
+            .eq('transaction_type', 'credit')
+            .maybeSingle();
+        
+        if (!creditError && creditData && creditData.credit_amount > 0) {
+            maxCredits = creditData.credit_amount;
+        }
+    } catch (error) {
+        console.warn('Could not fetch max credits from credit_manager, using default:', error);
+    }
+    return maxCredits;
+}
+
 // Bible Trivia Questions - 300 questions total (100 easy, 100 moderate, 100 hard)
 // Last Updated: January 2025
 // NOTE: Questions should be updated at least monthly to keep content fresh and engaging
@@ -2776,6 +2795,8 @@ class BibleTrivia {
         this.selectedAnswer = null;
         this.questions = this.shuffleQuestions([...triviaQuestions]);
         this.gameStarted = false;
+        this.maxCredits = 20;
+        this._maxCreditsPromise = null;
         
         // Track answers by difficulty
         this.answersByDifficulty = {
@@ -2837,6 +2858,16 @@ class BibleTrivia {
             } catch (error) {
                 console.error('Error initializing badge notifications:', error);
             }
+        }
+
+        // Populate "10 correct" max credits label on start screen
+        this._maxCreditsPromise = this._maxCreditsPromise || getBibleTriviaMaxCredits();
+        try {
+            this.maxCredits = await this._maxCreditsPromise;
+            const maxCreditsEl = document.getElementById('maxCreditsValue');
+            if (maxCreditsEl) maxCreditsEl.textContent = String(this.maxCredits);
+        } catch (e) {
+            // leave default value in UI
         }
         
         // Event listeners
@@ -3024,21 +3055,12 @@ class BibleTrivia {
         
         document.getElementById('finalScore').textContent = this.score;
         
-        // Get maximum credits from Credit_Manager table (for perfect score of 10)
-        let MAX_CREDITS = 20; // Default fallback
+        // Ensure max credits is loaded (for perfect score of 10)
+        this._maxCreditsPromise = this._maxCreditsPromise || getBibleTriviaMaxCredits();
         try {
-            const { data: creditData, error: creditError } = await supabase
-                .from('credit_manager')
-                .select('credit_amount')
-                .eq('app_name', 'Bible Trivia')
-                .eq('transaction_type', 'credit')
-                .maybeSingle();
-            
-            if (!creditError && creditData && creditData.credit_amount > 0) {
-                MAX_CREDITS = creditData.credit_amount;
-            }
-        } catch (error) {
-            console.warn('Could not fetch max credits from Credit_Manager, using default:', error);
+            this.maxCredits = await this._maxCreditsPromise;
+        } catch (e) {
+            // keep fallback
         }
         
         // Calculate credits based on tiered system
@@ -3062,7 +3084,7 @@ class BibleTrivia {
             creditsEarned = 10;
             message = "Outstanding! You're a Bible expert!";
         } else if (this.score === 10) {
-            creditsEarned = MAX_CREDITS;
+            creditsEarned = this.maxCredits;
             message = "Perfect score! You're a Bible master!";
         }
         
@@ -3311,22 +3333,12 @@ class BibleTrivia {
                 };
             }
             
-            // Calculate credits earned based on tiered system
-            // Get maximum credits from Credit_Manager table (for perfect score of 10)
-            let MAX_CREDITS = 20; // Default fallback
+            // Ensure max credits is loaded (for perfect score of 10)
+            this._maxCreditsPromise = this._maxCreditsPromise || getBibleTriviaMaxCredits();
             try {
-                const { data: creditData, error: creditError } = await supabase
-                    .from('credit_manager')
-                    .select('credit_amount')
-                    .eq('app_name', 'Bible Trivia')
-                    .eq('transaction_type', 'credit')
-                    .maybeSingle();
-                
-                if (!creditError && creditData && creditData.credit_amount > 0) {
-                    MAX_CREDITS = creditData.credit_amount;
-                }
-            } catch (error) {
-                console.warn('Could not fetch max credits from Credit_Manager, using default:', error);
+                this.maxCredits = await this._maxCreditsPromise;
+            } catch (e) {
+                // keep fallback
             }
             
             let creditsEarned = 0;
@@ -3336,7 +3348,7 @@ class BibleTrivia {
             // 5-7 correct: 1 credit
             // 8 correct: 3 credits
             // 9 correct: 10 credits
-            // 10 correct: MAX_CREDITS from database
+            // 10 correct: max credits from database
             if (this.score >= 0 && this.score <= 4) {
                 creditsEarned = 0;
             } else if (this.score >= 5 && this.score <= 7) {
@@ -3346,7 +3358,7 @@ class BibleTrivia {
             } else if (this.score === 9) {
                 creditsEarned = 10;
             } else if (this.score === 10) {
-                creditsEarned = MAX_CREDITS;
+                creditsEarned = this.maxCredits;
             }
             
             // Calculate percentage correct
