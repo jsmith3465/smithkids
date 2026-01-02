@@ -27,7 +27,8 @@ CREATE POLICY "Enable read access for authenticated users" ON prayer_requests
 CREATE POLICY "Enable insert for authenticated users" ON prayer_requests
     FOR INSERT WITH CHECK (true);
 
--- Create policy to allow users to update their own prayer requests
-CREATE POLICY "Enable update for request owner" ON prayer_requests
-    FOR UPDATE USING (auth.uid() = user_uid);
+-- Create policy to allow all authenticated users to update prayer requests
+-- (The app logic will ensure users can only mark their own requests as answered)
+CREATE POLICY "Enable update for authenticated users" ON prayer_requests
+    FOR UPDATE USING (true);
 

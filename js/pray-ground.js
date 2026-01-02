@@ -304,10 +304,20 @@ async function loadPrayerRequests(currentUserUid) {
     } catch (error) {
         console.error('Error loading prayer requests:', error);
         const errorMsg = error?.message || String(error);
-        prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
-            Error loading prayer requests: ${errorMsg}<br>
-            <small style="color: #666; margin-top: 10px; display: block;">Please make sure the prayer_requests table exists in Supabase.</small>
-        </div>`;
+        const errorCode = error?.code || '';
+        const isMissingTable = /does not exist/i.test(errorMsg) || /schema cache/i.test(errorMsg) || errorCode === '42P01' || errorCode === 'PGRST116';
+        
+        if (isMissingTable) {
+            prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
+                Prayer requests table is not set up yet.<br>
+                <small style="color: #666; margin-top: 10px; display: block;">Run <code>create_pray_ground_table.sql</code> in Supabase SQL Editor to create the table.</small>
+            </div>`;
+        } else {
+            prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
+                Error loading prayer requests: ${errorMsg}<br>
+                <small style="color: #666; margin-top: 10px; display: block;">Error code: ${errorCode || 'N/A'}</small>
+            </div>`;
+        }
     }
 }
 
