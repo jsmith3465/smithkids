@@ -362,25 +362,150 @@ function buildEmojiPicker() {
 }
 
 function buildStickerPicker() {
-  const stickers = [
-    { name: 'Smile', src: '../assets/stickers/smile.svg' },
-    { name: 'Thumbs Up', src: '../assets/stickers/thumbs-up.svg' },
-    { name: 'Trophy', src: '../assets/stickers/trophy.svg' },
+  // Kid-friendly meme images using SVG data URIs
+  const memes = [
+    {
+      name: 'Success Kid',
+      html: `<div style="background: #fff; border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">👶</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">YES!</div>
+        <div style="color: #666; font-size: 0.8rem;">I did it!</div>
+      </div>`
+    },
+    {
+      name: 'Happy Dance',
+      html: `<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🎉</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Celebration Time!</div>
+      </div>`
+    },
+    {
+      name: 'Thumbs Up',
+      html: `<div style="background: #fff; border: 3px solid #28a745; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">👍</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Awesome!</div>
+      </div>`
+    },
+    {
+      name: 'Star Power',
+      html: `<div style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">⭐</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">You\'re a Star!</div>
+      </div>`
+    },
+    {
+      name: 'Cool Shades',
+      html: `<div style="background: #fff; border: 3px solid #007bff; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">😎</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Too Cool!</div>
+      </div>`
+    },
+    {
+      name: 'Fire',
+      html: `<div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); border: 3px solid #dc3545; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🔥</div>
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">On Fire!</div>
+      </div>`
+    },
+    {
+      name: 'Trophy Winner',
+      html: `<div style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🏆</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Winner!</div>
+      </div>`
+    },
+    {
+      name: 'Mind Blown',
+      html: `<div style="background: #fff; border: 3px solid #6f42c1; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🤯</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Mind Blown!</div>
+      </div>`
+    },
+    {
+      name: 'Party Time',
+      html: `<div style="background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🎊</div>
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">Party Time!</div>
+      </div>`
+    },
+    {
+      name: 'Super Hero',
+      html: `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🦸</div>
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">Super Hero!</div>
+      </div>`
+    },
+    {
+      name: 'High Five',
+      html: `<div style="background: #fff; border: 3px solid #28a745; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🙌</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">High Five!</div>
+      </div>`
+    },
+    {
+      name: 'Epic Win',
+      html: `<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">💪</div>
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">Epic Win!</div>
+      </div>`
+    },
+    {
+      name: 'Rainbow Magic',
+      html: `<div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🌈</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">So Magical!</div>
+      </div>`
+    },
+    {
+      name: 'Rock Star',
+      html: `<div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🎸</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Rock Star!</div>
+      </div>`
+    },
+    {
+      name: 'Champion',
+      html: `<div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🥇</div>
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">Champion!</div>
+      </div>`
+    },
+    {
+      name: 'Awesome',
+      html: `<div style="background: #fff; border: 3px solid #17a2b8; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">✨</div>
+        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">Awesome!</div>
+      </div>`
+    }
   ];
+  
   const picker = $('stickerPicker');
-  picker.innerHTML = stickers
+  picker.innerHTML = memes
     .map(
-      (s) => `
-        <button class="sticker-btn" type="button" title="${escapeHtml(s.name)}" data-src="${escapeHtml(s.src)}">
-          <img alt="${escapeHtml(s.name)}" src="${escapeHtml(s.src)}" />
+      (meme, index) => `
+        <button class="sticker-btn" type="button" title="${escapeHtml(meme.name)}" data-index="${index}" style="padding: 8px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s;">
+          <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px;">
+            ${meme.html}
+          </div>
+          <div style="font-size: 0.7rem; color: #666; margin-top: 4px; text-align: center;">${escapeHtml(meme.name)}</div>
         </button>
       `,
     )
     .join('');
+  
   picker.querySelectorAll('.sticker-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const src = btn.getAttribute('data-src');
-      insertHtmlAtCursor(`<img src="${src}" alt="sticker" style="width:96px; height:96px; vertical-align:middle;" />`);
+      const index = parseInt(btn.getAttribute('data-index'));
+      const meme = memes[index];
+      insertHtmlAtCursor(`<div style="margin: 10px 0;">${meme.html}</div>`);
+    });
+    btn.addEventListener('mouseenter', () => {
+      btn.style.borderColor = '#DAA520';
+      btn.style.transform = 'scale(1.05)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.borderColor = '#ddd';
+      btn.style.transform = 'scale(1)';
     });
   });
 }

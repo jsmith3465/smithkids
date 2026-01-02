@@ -46,9 +46,10 @@
     .tool-btn { border: 2px solid #DAA520; background: white; color: #333; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 800; }
     .tool-btn:hover { background: #fff3cd; }
     .editor { border: 2px solid #e0e0e0; border-radius: 12px; padding: 12px; min-height: 180px; outline: none; }
-    .picker { display: none; gap: 8px; flex-wrap: wrap; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; margin-top: 8px; }
+    .picker { display: none; gap: 8px; flex-wrap: wrap; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; margin-top: 8px; max-height: 300px; overflow-y: auto; }
     .emoji-btn { font-size: 20px; padding: 6px 8px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; }
-    .sticker-btn { padding: 6px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .sticker-btn { padding: 6px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; transition: all 0.2s; }
+    .sticker-btn:hover { border-color: #DAA520; transform: scale(1.05); }
     .sticker-btn img { width: 64px; height: 64px; }
     .modal-footer { padding: 14px 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
   </style>
@@ -136,7 +137,7 @@
             <button class="tool-btn" data-cmd="italic"><i>I</i></button>
             <button class="tool-btn" data-cmd="underline"><u>U</u></button>
             <button class="tool-btn" id="emojiToggleBtn" type="button">😀 Emoji</button>
-            <button class="tool-btn" id="stickerToggleBtn" type="button">🖼️ Stickers</button>
+            <button class="tool-btn" id="stickerToggleBtn" type="button">😄 Memes</button>
             <button class="tool-btn" id="clearBtn" type="button">🧽 Clear</button>
           </div>
           <div id="emojiPicker" class="picker"></div>

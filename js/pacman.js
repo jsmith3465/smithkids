@@ -150,6 +150,8 @@ class PacManGame {
         this.dotsRemaining = 0;
         this.powerPelletActive = false;
         this.powerPelletTimer = 0;
+        this.lastFrameTime = 0;
+        this.frameDelay = 1000 / 60; // 60 FPS
         
         // Pac-Man
         this.pacman = {
@@ -159,15 +161,15 @@ class PacManGame {
             nextDirection: 0,
             mouthOpen: true,
             mouthAngle: 0,
-            speed: 0.125  // Reduced by 50% from 0.25
+            speed: 0.15
         };
         
         // Ghosts
         this.ghosts = [
-            { x: 13.5, y: 11, direction: 0, color: '#FF0000', name: 'Blinky', scared: false, inHouse: false },
-            { x: 13.5, y: 14, direction: 0, color: '#FFB8FF', name: 'Pinky', scared: false, inHouse: true },
-            { x: 11.5, y: 14, direction: 0, color: '#00FFFF', name: 'Inky', scared: false, inHouse: true },
-            { x: 15.5, y: 14, direction: 0, color: '#FFB851', name: 'Clyde', scared: false, inHouse: true }
+            { x: 13.5, y: 11, direction: 0, color: '#FF0000', name: 'Blinky', scared: false, inHouse: false, speed: 0.12 },
+            { x: 13.5, y: 14, direction: 0, color: '#FFB8FF', name: 'Pinky', scared: false, inHouse: true, speed: 0.12 },
+            { x: 11.5, y: 14, direction: 0, color: '#00FFFF', name: 'Inky', scared: false, inHouse: true, speed: 0.12 },
+            { x: 15.5, y: 14, direction: 0, color: '#FFB851', name: 'Clyde', scared: false, inHouse: true, speed: 0.12 }
         ];
         
         this.init();
@@ -221,6 +223,9 @@ class PacManGame {
                 }
             }, 100);
         }, 100);
+        
+        this.countDots();
+        this.draw();
     }
     
     async checkUserAccess() {
@@ -270,6 +275,7 @@ class PacManGame {
         this.hideMessage();
         
         this.countDots();
+        this.lastFrameTime = performance.now();
         this.gameLoop();
     }
     
@@ -280,12 +286,12 @@ class PacManGame {
         this.level = 1;
         this.lives = 3;
         this.maze = JSON.parse(JSON.stringify(MAZE_LAYOUT));
-        this.pacman = { x: 14, y: 23, direction: 0, nextDirection: 0, mouthOpen: true, mouthAngle: 0, speed: 0.125 };  // Reduced by 50% from 0.25
+        this.pacman = { x: 14, y: 23, direction: 0, nextDirection: 0, mouthOpen: true, mouthAngle: 0, speed: 0.15 };
         this.ghosts = [
-            { x: 13.5, y: 11, direction: 0, color: '#FF0000', name: 'Blinky', scared: false, inHouse: false },
-            { x: 13.5, y: 14, direction: 0, color: '#FFB8FF', name: 'Pinky', scared: false, inHouse: true },
-            { x: 11.5, y: 14, direction: 0, color: '#00FFFF', name: 'Inky', scared: false, inHouse: true },
-            { x: 15.5, y: 14, direction: 0, color: '#FFB851', name: 'Clyde', scared: false, inHouse: true }
+            { x: 13.5, y: 11, direction: 0, color: '#FF0000', name: 'Blinky', scared: false, inHouse: false, speed: 0.12 },
+            { x: 13.5, y: 14, direction: 0, color: '#FFB8FF', name: 'Pinky', scared: false, inHouse: true, speed: 0.12 },
+            { x: 11.5, y: 14, direction: 0, color: '#00FFFF', name: 'Inky', scared: false, inHouse: true, speed: 0.12 },
+            { x: 15.5, y: 14, direction: 0, color: '#FFB851', name: 'Clyde', scared: false, inHouse: true, speed: 0.12 }
         ];
         this.powerPelletActive = false;
         this.powerPelletTimer = 0;
@@ -302,6 +308,7 @@ class PacManGame {
         this.gamePaused = !this.gamePaused;
         if (!this.gamePaused) {
             this.hideMessage();
+            this.lastFrameTime = performance.now();
             this.gameLoop();
         } else {
             this.showMessage('Game Paused', 'paused');
@@ -351,107 +358,68 @@ class PacManGame {
         }
     }
     
-    isBlockedTile(tileX, tileY) {
-        // Treat out-of-bounds as blocked (except tunnel wrap which is handled in canMove)
+    isWall(tileX, tileY) {
         if (tileX < 0 || tileX >= MAZE_WIDTH || tileY < 0 || tileY >= MAZE_HEIGHT) return true;
         const tile = this.maze[tileY][tileX];
         return tile === 1 || tile === 4;
     }
-
-    /**
-     * Collision-safe movement check.
-     * Positions are in tile units where integer = tile origin, center is (x+0.5, y+0.5).
-     * We check the leading edge of the entity (two sample points) so it can't clip through corners.
-     */
-    canMove(x, y, direction, speed, radius = 0.42) {
-        const dx = direction === 0 ? speed : direction === 2 ? -speed : 0;
-        const dy = direction === 1 ? speed : direction === 3 ? -speed : 0;
-
-        const newX = x + dx;
-        const newY = y + dy;
-
-        const centerX = newX + 0.5;
-        const centerY = newY + 0.5;
-
-        // Tunnel wrap (row 14). Allow wrapping based on center position.
-        if (Math.floor(centerY) === 14) {
-            if (centerX < -0.5) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: Math.floor(newY) } };
-            if (centerX > MAZE_WIDTH - 0.5) return { canMove: true, wrap: { x: 0, y: Math.floor(newY) } };
+    
+    canMove(x, y, direction) {
+        const tileX = Math.floor(x);
+        const tileY = Math.floor(y);
+        
+        // Check tunnel wrap (row 14)
+        if (tileY === 14) {
+            if (x < -0.5) return { canMove: true, wrap: { x: MAZE_WIDTH - 1, y: tileY } };
+            if (x >= MAZE_WIDTH - 0.5) return { canMove: true, wrap: { x: 0, y: tileY } };
         }
-
-        // Sample points at the leading edge (two points) to prevent corner clipping
-        const samples = [];
-        if (direction === 0) { // right
-            samples.push({ x: centerX + radius, y: centerY - radius * 0.85 });
-            samples.push({ x: centerX + radius, y: centerY + radius * 0.85 });
-        } else if (direction === 2) { // left
-            samples.push({ x: centerX - radius, y: centerY - radius * 0.85 });
-            samples.push({ x: centerX - radius, y: centerY + radius * 0.85 });
-        } else if (direction === 1) { // down
-            samples.push({ x: centerX - radius * 0.85, y: centerY + radius });
-            samples.push({ x: centerX + radius * 0.85, y: centerY + radius });
-        } else if (direction === 3) { // up
-            samples.push({ x: centerX - radius * 0.85, y: centerY - radius });
-            samples.push({ x: centerX + radius * 0.85, y: centerY - radius });
+        
+        // Check if we're at a tile center (within threshold)
+        const centerX = tileX + 0.5;
+        const centerY = tileY + 0.5;
+        const threshold = 0.05;
+        
+        const isAlignedX = Math.abs(x - centerX) < threshold;
+        const isAlignedY = Math.abs(y - centerY) < threshold;
+        
+        // Calculate next position
+        let nextX = x;
+        let nextY = y;
+        
+        if (direction === 0) nextX += this.pacman.speed; // right
+        else if (direction === 1) nextY += this.pacman.speed; // down
+        else if (direction === 2) nextX -= this.pacman.speed; // left
+        else if (direction === 3) nextY -= this.pacman.speed; // up
+        
+        const nextTileX = Math.floor(nextX);
+        const nextTileY = Math.floor(nextY);
+        
+        // Check if moving into a wall
+        if (this.isWall(nextTileX, nextTileY)) {
+            return { canMove: false, wrap: null };
         }
-
-        for (const p of samples) {
-            const tileX = Math.floor(p.x);
-            const tileY = Math.floor(p.y);
-            if (this.isBlockedTile(tileX, tileY)) return { canMove: false, wrap: null };
-        }
-
+        
         return { canMove: true, wrap: null };
     }
     
-    snapToCenter(x, y, direction) {
-        // Snap to center of tile when aligned
-        const tileX = Math.floor(x);
-        const tileY = Math.floor(y);
-        const centerX = tileX + 0.5;
-        const centerY = tileY + 0.5;
-        const threshold = 0.1;
-        
-        // Check if close enough to center to snap
-        if (direction === 0 || direction === 2) {
-            // Moving horizontally - snap Y
-            if (Math.abs(y - centerY) < threshold) {
-                return { x: x, y: centerY };
-            }
-        } else if (direction === 1 || direction === 3) {
-            // Moving vertically - snap X
-            if (Math.abs(x - centerX) < threshold) {
-                return { x: centerX, y: y };
-            }
-        }
-        
-        return { x: x, y: y };
-    }
-    
     updatePacman() {
-        // Snap to center when aligned (helps keep Pac-Man in path)
-        const snapped = this.snapToCenter(this.pacman.x, this.pacman.y, this.pacman.direction);
-        this.pacman.x = snapped.x;
-        this.pacman.y = snapped.y;
-        
-        // Try next direction first
+        // Try to change direction if requested
         if (this.pacman.nextDirection !== this.pacman.direction) {
-            const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.nextDirection, this.pacman.speed);
+            const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.nextDirection);
             if (check.canMove) {
-                // Only change direction if we're aligned to center
+                // Only change if we're aligned to center
                 const tileX = Math.floor(this.pacman.x);
                 const tileY = Math.floor(this.pacman.y);
                 const centerX = tileX + 0.5;
                 const centerY = tileY + 0.5;
                 
-                // Check if aligned (horizontal movement needs Y aligned, vertical needs X aligned)
                 const isAligned = (this.pacman.nextDirection === 0 || this.pacman.nextDirection === 2) 
-                    ? Math.abs(this.pacman.y - centerY) < 0.15
-                    : Math.abs(this.pacman.x - centerX) < 0.15;
+                    ? Math.abs(this.pacman.y - centerY) < 0.1
+                    : Math.abs(this.pacman.x - centerX) < 0.1;
                 
                 if (isAligned) {
                     this.pacman.direction = this.pacman.nextDirection;
-                    // Snap to exact center when changing direction
+                    // Snap to center
                     if (this.pacman.direction === 0 || this.pacman.direction === 2) {
                         this.pacman.y = centerY;
                     } else {
@@ -461,7 +429,8 @@ class PacManGame {
             }
         }
         
-        const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.direction, this.pacman.speed);
+        // Move in current direction
+        const check = this.canMove(this.pacman.x, this.pacman.y, this.pacman.direction);
         if (check.wrap) {
             this.pacman.x = check.wrap.x;
             this.pacman.y = check.wrap.y;
@@ -473,7 +442,7 @@ class PacManGame {
         }
         
         // Animate mouth
-        this.pacman.mouthAngle += 0.3;
+        this.pacman.mouthAngle += 0.2;
         this.pacman.mouthOpen = Math.sin(this.pacman.mouthAngle) > 0;
         
         // Check for dot collection
@@ -491,7 +460,7 @@ class PacManGame {
                 this.score += 50;
                 this.dotsRemaining--;
                 this.powerPelletActive = true;
-                this.powerPelletTimer = 300; // ~5 seconds at 60fps
+                this.powerPelletTimer = 300;
                 this.ghosts.forEach(ghost => {
                     if (!ghost.inHouse) ghost.scared = true;
                 });
@@ -507,77 +476,113 @@ class PacManGame {
     
     updateGhosts() {
         this.ghosts.forEach((ghost, index) => {
-            // Ghosts always move, even when Pac-Man is paused
-            // Simple AI: move towards Pac-Man or away if scared
-            const targetX = this.powerPelletActive && ghost.scared ? 0 : this.pacman.x;
-            const targetY = this.powerPelletActive && ghost.scared ? MAZE_HEIGHT : this.pacman.y;
-            
-            // Simple movement towards target
-            const dx = targetX - ghost.x;
-            const dy = targetY - ghost.y;
-            
-            let newDirection = ghost.direction;
-            if (Math.abs(dx) > Math.abs(dy)) {
-                newDirection = dx > 0 ? 0 : 2;
-            } else {
-                newDirection = dy > 0 ? 1 : 3;
-            }
-            
-            // Only change direction at intersections (when aligned to tile center)
-            const tileX = Math.floor(ghost.x);
-            const tileY = Math.floor(ghost.y);
-            const centerX = tileX + 0.5;
-            const centerY = tileY + 0.5;
-            const isAtIntersection = Math.abs(ghost.x - centerX) < 0.1 && Math.abs(ghost.y - centerY) < 0.1;
-            
-            if (isAtIntersection) {
-                const ghostSpeed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
-                const check = this.canMove(ghost.x, ghost.y, newDirection, ghostSpeed);
-                if (check.canMove) {
-                    ghost.direction = newDirection;
-                    // Snap to exact center when changing direction
-                    ghost.x = centerX;
-                    ghost.y = centerY;
+            // Ghost house logic
+            if (ghost.inHouse) {
+                if (ghost.y > 11) {
+                    ghost.y -= 0.1;
                 } else {
-                    // Try random direction
-                    const dirs = [0, 1, 2, 3];
-                    dirs.splice(dirs.indexOf(ghost.direction), 1);
-                    for (const dir of dirs) {
-                        const ghostSpeed2 = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
-                        const check2 = this.canMove(ghost.x, ghost.y, dir, ghostSpeed2);
-                        if (check2.canMove) {
-                            ghost.direction = dir;
-                            ghost.x = centerX;
-                            ghost.y = centerY;
-                            break;
+                    ghost.inHouse = false;
+                }
+            } else {
+                // Simple AI: move towards or away from Pac-Man
+                const targetX = this.powerPelletActive && ghost.scared ? 0 : this.pacman.x;
+                const targetY = this.powerPelletActive && ghost.scared ? MAZE_HEIGHT : this.pacman.y;
+                
+                const dx = targetX - ghost.x;
+                const dy = targetY - ghost.y;
+                
+                // Check if at intersection (aligned to tile center)
+                const tileX = Math.floor(ghost.x);
+                const tileY = Math.floor(ghost.y);
+                const centerX = tileX + 0.5;
+                const centerY = tileY + 0.5;
+                const isAtIntersection = Math.abs(ghost.x - centerX) < 0.1 && Math.abs(ghost.y - centerY) < 0.1;
+                
+                if (isAtIntersection) {
+                    // Choose direction based on target
+                    let newDirection = ghost.direction;
+                    const dirs = [];
+                    
+                    // Try all directions
+                    for (let dir = 0; dir < 4; dir++) {
+                        let testX = centerX;
+                        let testY = centerY;
+                        if (dir === 0) testX += 0.5;
+                        else if (dir === 1) testY += 0.5;
+                        else if (dir === 2) testX -= 0.5;
+                        else if (dir === 3) testY -= 0.5;
+                        
+                        if (!this.isWall(Math.floor(testX), Math.floor(testY))) {
+                            dirs.push(dir);
                         }
                     }
+                    
+                    if (dirs.length > 0) {
+                        // Choose best direction
+                        let bestDir = dirs[0];
+                        let bestDist = Infinity;
+                        
+                        for (const dir of dirs) {
+                            let testX = centerX;
+                            let testY = centerY;
+                            if (dir === 0) testX += 1;
+                            else if (dir === 1) testY += 1;
+                            else if (dir === 2) testX -= 1;
+                            else if (dir === 3) testY -= 1;
+                            
+                            const dist = Math.sqrt(Math.pow(testX - targetX, 2) + Math.pow(testY - targetY, 2));
+                            if (dist < bestDist) {
+                                bestDist = dist;
+                                bestDir = dir;
+                            }
+                        }
+                        
+                        ghost.direction = bestDir;
+                        ghost.x = centerX;
+                        ghost.y = centerY;
+                    }
                 }
-            }
-            
-            const speed = ghost.scared ? 0.075 : 0.1;  // Reduced by 50% (was 0.15/0.2)
-            const moveCheck = this.canMove(ghost.x, ghost.y, ghost.direction, speed);
-            if (moveCheck.wrap) {
-                ghost.x = moveCheck.wrap.x;
-                ghost.y = moveCheck.wrap.y;
-            } else if (moveCheck.canMove) {
-                if (ghost.direction === 0) ghost.x += speed;
-                else if (ghost.direction === 1) ghost.y += speed;
-                else if (ghost.direction === 2) ghost.x -= speed;
-                else if (ghost.direction === 3) ghost.y -= speed;
+                
+                // Move ghost
+                const speed = ghost.scared ? 0.08 : ghost.speed;
+                let moveX = ghost.x;
+                let moveY = ghost.y;
+                
+                if (ghost.direction === 0) moveX += speed;
+                else if (ghost.direction === 1) moveY += speed;
+                else if (ghost.direction === 2) moveX -= speed;
+                else if (ghost.direction === 3) moveY -= speed;
+                
+                // Check tunnel wrap
+                if (Math.floor(moveY) === 14) {
+                    if (moveX < -0.5) {
+                        ghost.x = MAZE_WIDTH - 1;
+                        ghost.y = moveY;
+                    } else if (moveX >= MAZE_WIDTH - 0.5) {
+                        ghost.x = 0;
+                        ghost.y = moveY;
+                    } else if (!this.isWall(Math.floor(moveX), Math.floor(moveY))) {
+                        ghost.x = moveX;
+                        ghost.y = moveY;
+                    }
+                } else if (!this.isWall(Math.floor(moveX), Math.floor(moveY))) {
+                    ghost.x = moveX;
+                    ghost.y = moveY;
+                }
             }
             
             // Check collision with Pac-Man
             const dist = Math.sqrt(Math.pow(ghost.x - this.pacman.x, 2) + Math.pow(ghost.y - this.pacman.y, 2));
-            if (dist < 0.5) {
-                if (ghost.scared) {
+            if (dist < 0.6) {
+                if (ghost.scared && !ghost.inHouse) {
                     // Eat ghost
                     ghost.x = 13.5;
-                    ghost.y = 11;
+                    ghost.y = 14;
+                    ghost.inHouse = true;
                     ghost.scared = false;
                     this.score += 200;
                     this.updateDisplay();
-                } else {
+                } else if (!ghost.inHouse) {
                     // Pac-Man dies
                     this.pacmanDies();
                 }
@@ -642,7 +647,7 @@ class PacManGame {
         });
         this.powerPelletActive = false;
         this.powerPelletTimer = 0;
-        this.pacman.speed = Math.min(0.175, 0.125 + (this.level - 1) * 0.01);  // Reduced by 50% (was 0.35 max, 0.25 base, 0.02 increment)
+        this.pacman.speed = Math.min(0.2, 0.15 + (this.level - 1) * 0.01);
         this.countDots();
         this.updateDisplay();
     }
@@ -689,30 +694,26 @@ class PacManGame {
             }
         }
         
-        // Draw Pac-Man (only if within valid bounds)
-        if (this.pacman.x >= 0 && this.pacman.x < MAZE_WIDTH && this.pacman.y >= 0 && this.pacman.y < MAZE_HEIGHT) {
-            const pacX = this.pacman.x * TILE_SIZE;
-            const pacY = this.pacman.y * TILE_SIZE;
-            this.ctx.fillStyle = '#FFFF00';
-            this.ctx.beginPath();
-            const startAngle = [0, Math.PI / 2, Math.PI, -Math.PI / 2][this.pacman.direction];
-            const mouthAngle = this.pacman.mouthOpen ? Math.PI / 4 : 0;
-            this.ctx.arc(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 
-                         startAngle + mouthAngle, startAngle + Math.PI * 2 - mouthAngle);
-            this.ctx.lineTo(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2);
-            this.ctx.fill();
-        }
+        // Draw Pac-Man
+        const pacX = this.pacman.x * TILE_SIZE;
+        const pacY = this.pacman.y * TILE_SIZE;
+        this.ctx.fillStyle = '#FFFF00';
+        this.ctx.beginPath();
+        const startAngle = [0, Math.PI / 2, Math.PI, -Math.PI / 2][this.pacman.direction];
+        const mouthAngle = this.pacman.mouthOpen ? Math.PI / 3 : 0;
+        this.ctx.arc(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 
+                     startAngle + mouthAngle, startAngle + Math.PI * 2 - mouthAngle);
+        this.ctx.lineTo(pacX + TILE_SIZE / 2, pacY + TILE_SIZE / 2);
+        this.ctx.fill();
         
-        // Draw ghosts (only if within valid bounds)
+        // Draw ghosts
         this.ghosts.forEach(ghost => {
-            if (ghost.x >= 0 && ghost.x < MAZE_WIDTH && ghost.y >= 0 && ghost.y < MAZE_HEIGHT) {
-                const ghostX = ghost.x * TILE_SIZE;
-                const ghostY = ghost.y * TILE_SIZE;
-                this.ctx.fillStyle = ghost.scared ? '#2121DE' : ghost.color;
-                this.ctx.beginPath();
-                this.ctx.arc(ghostX + TILE_SIZE / 2, ghostY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
+            const ghostX = ghost.x * TILE_SIZE;
+            const ghostY = ghost.y * TILE_SIZE;
+            this.ctx.fillStyle = ghost.scared ? '#2121DE' : ghost.color;
+            this.ctx.beginPath();
+            this.ctx.arc(ghostX + TILE_SIZE / 2, ghostY + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0, Math.PI * 2);
+            this.ctx.fill();
         });
         
         this.ctx.restore();
@@ -734,20 +735,25 @@ class PacManGame {
         this.gameMessage.classList.add('hidden');
     }
     
-    gameLoop() {
+    gameLoop(currentTime = performance.now()) {
         if (!this.gameRunning) return;
         
-        // Always update ghosts (they keep moving even when paused)
-        this.updateGhosts();
+        const deltaTime = currentTime - this.lastFrameTime;
         
-        // Only update Pac-Man if not paused
-        if (!this.gamePaused) {
-            this.updatePacman();
+        if (deltaTime >= this.frameDelay) {
+            // Update ghosts (always moving)
+            this.updateGhosts();
+            
+            // Update Pac-Man if not paused
+            if (!this.gamePaused) {
+                this.updatePacman();
+            }
+            
+            this.draw();
+            this.lastFrameTime = currentTime;
         }
         
-        this.draw();
-        
-        requestAnimationFrame(() => this.gameLoop());
+        requestAnimationFrame((time) => this.gameLoop(time));
     }
     
     async gameOver() {
@@ -804,4 +810,3 @@ class PacManGame {
 document.addEventListener('DOMContentLoaded', () => {
     new PacManGame();
 });
-
