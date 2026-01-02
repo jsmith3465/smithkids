@@ -152,12 +152,42 @@ async function approveRequest(approvalId, approval, tokenId) {
             if (verseError) throw verseError;
             
             // Badge check will handle 3 consecutive months (awards 100 credits via badge)
+        } else if (approval.approval_type === 'marketplace_purchase') {
+            // Update marketplace purchase status
+            const session = window.authStatus?.getSession();
+            const adminUid = session ? session.uid : null;
+            
+            const { error: purchaseError } = await supabase
+                .from('marketplace_purchases')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: adminUid
+                })
+                .eq('purchase_id', approval.source_id);
+            
+            if (purchaseError) throw purchaseError;
+        } else if (approval.approval_type === 'fruit_nomination') {
+            // Update fruit nomination status
+            const session = window.authStatus?.getSession();
+            const adminUid = session ? session.uid : null;
+            
+            const { error: nominationError } = await supabase
+                .from('fruit_nominations')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: adminUid
+                })
+                .eq('nomination_id', approval.source_id);
+            
+            if (nominationError) throw nominationError;
         }
         
-        // Award credits to user
+        // Handle credits based on approval type
         const { data: existingCredit, error: creditFetchError } = await supabase
             .from('User_Credits')
-            .select('credit_id, balance')
+            .select('credit_id, balance, savings_balance')
             .eq('user_uid', approval.user_uid)
             .single();
         
@@ -165,54 +195,227 @@ async function approveRequest(approvalId, approval, tokenId) {
             throw creditFetchError;
         }
         
-        const newBalance = (existingCredit?.balance || 0) + approval.credits_amount;
-        
-        if (existingCredit) {
-            const { error: balanceUpdateError } = await supabase
-                .from('User_Credits')
-                .update({ balance: newBalance, updated_at: new Date().toISOString() })
-                .eq('credit_id', existingCredit.credit_id);
-            
-            if (balanceUpdateError) throw balanceUpdateError;
-        } else {
-            const { error: balanceInsertError } = await supabase
-                .from('User_Credits')
-                .insert({ user_uid: approval.user_uid, balance: approval.credits_amount });
-            
-            if (balanceInsertError) throw balanceInsertError;
-        }
-        
-        // Record transaction
         const user = approval.Users;
         const userName = user.First_Name && user.Last_Name
             ? `${user.First_Name} ${user.Last_Name}`
             : user.Username || 'Unknown User';
         
-        const approvalTypeLabels = {
-            workout: 'Workout',
-            chore: 'Chore',
-            memory_verse: 'Memory Verse',
-        };
-        
-        const typeLabel = approvalTypeLabels[approval.approval_type] || approval.approval_type;
-        
-        const { error: transError } = await supabase
-            .from('Credit_Transactions')
-            .insert({
-                from_user_uid: null, // Approved via email link
-                to_user_uid: approval.user_uid,
-                amount: approval.credits_amount,
-                transaction_type: 'credit_added',
-                game_type: approval.approval_type,
-                description: `Approved ${typeLabel} via email: ${approval.description || 'N/A'}`
-            });
-        
-        if (transError) {
-            console.error('Error recording transaction:', transError);
-            // Don't fail the approval if transaction recording fails
+        if (approval.approval_type === 'marketplace_purchase') {
+            // For marketplace purchases, DEDUCT from savings_balance
+            const currentSavings = existingCredit?.savings_balance || 0;
+            
+            if (currentSavings < approval.credits_amount) {
+                throw new Error(`Insufficient savings balance. User has ${currentSavings} credits but needs ${approval.credits_amount}.`);
+            }
+            
+            const newSavings = currentSavings - approval.credits_amount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ 
+                        savings_balance: newSavings, 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                throw new Error('User credit account not found.');
+            }
+            
+            // Record transaction for marketplace purchase
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    to_user_uid: approval.user_uid,
+                    amount: approval.credits_amount,
+                    transaction_type: 'marketplace_purchase',
+                    description: `Marketplace purchase approved: ${approval.description || 'N/A'}`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+                // Don't fail the approval if transaction recording fails
+            }
+            
+            showSuccess(`Purchase approved! ${userName}'s purchase has been processed and ${approval.credits_amount} credits deducted from savings.`, 'approved');
+        } else if (approval.approval_type === 'fruit_nomination') {
+            // For fruit nominations, ADD to balance and award badge
+            const newBalance = (existingCredit?.balance || 0) + approval.credits_amount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: approval.credits_amount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Get nomination details to award badge
+            const { data: nomination } = await supabase
+                .from('fruit_nominations')
+                .select('fruit_type, nominator_uid, reason')
+                .eq('nomination_id', approval.source_id)
+                .single();
+            
+            if (nomination) {
+                const fruitNames = {
+                    'love': 'Love',
+                    'joy': 'Joy',
+                    'peace': 'Peace',
+                    'patience': 'Patience',
+                    'kindness': 'Kindness',
+                    'goodness': 'Goodness',
+                    'faithfulness': 'Faithfulness',
+                    'gentleness': 'Gentleness',
+                    'self_control': 'Self-Control'
+                };
+                
+                const fruitIcons = {
+                    'love': '❤️',
+                    'joy': '😊',
+                    'peace': '🕊️',
+                    'patience': '⏳',
+                    'kindness': '🤝',
+                    'goodness': '✨',
+                    'faithfulness': '🙏',
+                    'gentleness': '🌸',
+                    'self_control': '🎯'
+                };
+                
+                // Check if user already has this badge
+                const { data: existingBadge } = await supabase
+                    .from('User_Badges')
+                    .select('badge_id')
+                    .eq('user_uid', approval.user_uid)
+                    .eq('badge_type', nomination.fruit_type)
+                    .maybeSingle();
+                
+                if (!existingBadge) {
+                    // Award the badge
+                    await supabase
+                        .from('User_Badges')
+                        .insert({
+                            user_uid: approval.user_uid,
+                            badge_type: nomination.fruit_type,
+                            badge_name: fruitNames[nomination.fruit_type]
+                        });
+                }
+                
+                // Get nominator name
+                const { data: nominatorData } = await supabase
+                    .from('Users')
+                    .select('First_Name, Last_Name, Username')
+                    .eq('UID', nomination.nominator_uid)
+                    .single();
+                
+                const nominatorName = (nominatorData?.First_Name && nominatorData?.Last_Name)
+                    ? `${nominatorData.First_Name} ${nominatorData.Last_Name}`
+                    : nominatorData?.Username || 'A family member';
+                
+                // Send message to nominee
+                const messageContent = `
+                    <div style="padding: 20px;">
+                        <h3 style="color: #28a745; margin-top: 0;">🌟 Fruit of the Spirit Badge Awarded!</h3>
+                        <p><strong>Congratulations!</strong> You have been awarded the <strong>${fruitNames[nomination.fruit_type]} ${fruitIcons[nomination.fruit_type]}</strong> Fruit of the Spirit badge!</p>
+                        <p><strong>Nominated by:</strong> ${nominatorName}</p>
+                        <p><strong>Reason:</strong></p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            ${nomination.reason.replace(/\n/g, '<br>')}
+                        </div>
+                        <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; border: 2px solid #28a745;">
+                            <p style="margin: 0; font-weight: 600; color: #155724;">
+                                💰 You received <strong>${approval.credits_amount} credits</strong> added to your account!
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                await supabase
+                    .from('message_boxes')
+                    .insert({
+                        from_user_uid: session ? session.uid : null,
+                        to_user_uid: approval.user_uid,
+                        subject: `Fruit of the Spirit Badge: ${fruitNames[nomination.fruit_type]}`,
+                        body: messageContent,
+                        folder: 'inbox',
+                        is_read: false
+                    });
+            }
+            
+            // Record transaction
+            const fruitName = nomination ? fruitNames[nomination.fruit_type] : 'Fruit of the Spirit';
+            const session = window.authStatus?.getSession();
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session ? session.uid : null,
+                    to_user_uid: approval.user_uid,
+                    amount: approval.credits_amount,
+                    transaction_type: 'credit_added',
+                    game_type: 'fruit_nomination',
+                    description: `Fruit of the Spirit nomination approved${session ? '' : ' via email'}: ${fruitName} badge - ${approval.credits_amount} credits`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+            }
+            
+            showSuccess(`Fruit nomination approved! Badge awarded and ${approval.credits_amount} credits added to ${userName}'s account.`, 'approved');
+        } else {
+            // For other approvals (workout, chore, memory_verse), ADD to balance
+            const newBalance = (existingCredit?.balance || 0) + approval.credits_amount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: approval.credits_amount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Record transaction
+            const approvalTypeLabels = {
+                workout: 'Workout',
+                chore: 'Chore',
+                memory_verse: 'Memory Verse',
+            };
+            
+            const typeLabel = approvalTypeLabels[approval.approval_type] || approval.approval_type;
+            
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: null, // Approved via email link
+                    to_user_uid: approval.user_uid,
+                    amount: approval.credits_amount,
+                    transaction_type: 'credit_added',
+                    game_type: approval.approval_type,
+                    description: `Approved ${typeLabel} via email: ${approval.description || 'N/A'}`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+                // Don't fail the approval if transaction recording fails
+            }
+            
+            showSuccess(`Approval granted! ${userName} has received ${approval.credits_amount} credits.`, 'approved');
         }
-        
-        showSuccess(`Approval granted! ${userName} has received ${approval.credits_amount} credits.`, 'approved');
         
     } catch (error) {
         console.error('Error approving request:', error);

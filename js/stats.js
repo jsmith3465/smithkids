@@ -983,7 +983,11 @@ async function loadTetrisStatistics() {
     } catch (error) {
         console.error('Error loading Tetris statistics:', error);
         const msg = error?.message || String(error);
-        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        const isMissingTable = /does not exist/i.test(msg) || 
+                              /Could not find the table/i.test(msg) || 
+                              /schema cache/i.test(msg) ||
+                              error?.code === '42P01' ||
+                              error?.code === 'PGRST116';
         tetrisStatsDiv.innerHTML = isMissingTable
             ? '<div class="no-data">Tetris statistics table is not set up yet.<br><small>Run <code>create_tetris_table.sql</code> in Supabase, then play a game.</small></div>'
             : `<div class="no-data">Error loading Tetris statistics: ${msg}</div>`;
@@ -1084,7 +1088,11 @@ async function loadPacmanStatistics() {
     } catch (error) {
         console.error('Error loading Pac-Man statistics:', error);
         const msg = error?.message || String(error);
-        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        const isMissingTable = /does not exist/i.test(msg) || 
+                              /Could not find the table/i.test(msg) || 
+                              /schema cache/i.test(msg) ||
+                              error?.code === '42P01' ||
+                              error?.code === 'PGRST116';
         pacmanStatsDiv.innerHTML = isMissingTable
             ? '<div class="no-data">Pac-Man statistics table is not set up yet.<br><small>Run <code>create_pacman_table.sql</code> in Supabase, then play a game.</small></div>'
             : `<div class="no-data">Error loading Pac-Man statistics: ${msg}</div>`;
@@ -1224,7 +1232,11 @@ async function loadBlockBlastStatistics() {
     } catch (error) {
         console.error('Error loading Block Blast statistics:', error);
         const msg = error?.message || String(error);
-        const isMissingTable = /does not exist/i.test(msg) || error?.code === '42P01';
+        const isMissingTable = /does not exist/i.test(msg) || 
+                              /Could not find the table/i.test(msg) || 
+                              /schema cache/i.test(msg) ||
+                              error?.code === '42P01' ||
+                              error?.code === 'PGRST116';
         blockBlastStatsDiv.innerHTML = isMissingTable
             ? '<div class="no-data">Block Blast statistics table is not set up yet.<br><small>Run <code>create_block_blast_table.sql</code> in Supabase, then play a game.</small></div>'
             : `<div class="no-data">Error loading Block Blast statistics: ${msg}</div>`;

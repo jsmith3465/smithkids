@@ -104,6 +104,46 @@ async function loadPendingApprovals() {
             });
         }
         
+        // Get fruit nomination details for fruit_nomination approvals
+        const fruitNominationIds = approvals
+            .filter(a => a.approval_type === 'fruit_nomination')
+            .map(a => a.source_id);
+        
+        const nominationMap = {};
+        if (fruitNominationIds.length > 0) {
+            const { data: nominations } = await supabase
+                .from('fruit_nominations')
+                .select('nomination_id, nominator_uid, fruit_type, reason')
+                .in('nomination_id', fruitNominationIds);
+            
+            if (nominations) {
+                nominations.forEach(nom => {
+                    nominationMap[nom.nomination_id] = nom;
+                });
+            }
+            
+            // Get nominator names
+            const nominatorIds = [...new Set(nominations.map(n => n.nominator_uid))];
+            if (nominatorIds.length > 0) {
+                const { data: nominators } = await supabase
+                    .from('Users')
+                    .select('UID, First_Name, Last_Name, Username')
+                    .in('UID', nominatorIds);
+                
+                if (nominators) {
+                    const nominatorMap = {};
+                    nominators.forEach(n => {
+                        nominatorMap[n.UID] = n;
+                    });
+                    
+                    // Add nominator info to nominations
+                    nominations.forEach(nom => {
+                        nom.nominator = nominatorMap[nom.nominator_uid];
+                    });
+                }
+            }
+        }
+        
         approvalsList.innerHTML = '';
         
         approvals.forEach(approval => {
@@ -119,6 +159,7 @@ async function loadPendingApprovals() {
             let badgeClass = '';
             let badgeText = '';
             let icon = '';
+            let detailsHtml = approval.description || 'No description';
             
             if (approval.approval_type === 'workout') {
                 badgeClass = 'badge-workout';
@@ -132,6 +173,47 @@ async function loadPendingApprovals() {
                 badgeClass = 'badge-memory-verse';
                 badgeText = '📖 Memory Verse';
                 icon = '📖';
+            } else if (approval.approval_type === 'marketplace_purchase') {
+                badgeClass = 'badge-marketplace';
+                badgeText = '🛍️ Marketplace';
+                icon = '🛍️';
+            } else if (approval.approval_type === 'fruit_nomination') {
+                badgeClass = 'badge-fruit';
+                badgeText = '🍎 Fruit Nomination';
+                icon = '🍎';
+                
+                // Get nomination details
+                const nomination = nominationMap[approval.source_id];
+                if (nomination) {
+                    const fruitNames = {
+                        'love': 'Love ❤️',
+                        'joy': 'Joy 😊',
+                        'peace': 'Peace 🕊️',
+                        'patience': 'Patience ⏳',
+                        'kindness': 'Kindness 🤝',
+                        'goodness': 'Goodness ✨',
+                        'faithfulness': 'Faithfulness 🙏',
+                        'gentleness': 'Gentleness 🌸',
+                        'self_control': 'Self-Control 🎯'
+                    };
+                    
+                    const nominator = nomination.nominator;
+                    const nominatorName = (nominator && nominator.First_Name && nominator.Last_Name)
+                        ? `${nominator.First_Name} ${nominator.Last_Name}`
+                        : (nominator && nominator.Username) || 'Unknown';
+                    
+                    detailsHtml = `
+                        <div style="margin-bottom: 10px;">
+                            <strong>Nominated by:</strong> ${nominatorName}<br>
+                            <strong>Fruit:</strong> ${fruitNames[nomination.fruit_type] || nomination.fruit_type}<br>
+                            <strong>Date:</strong> ${dateStr}
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            <strong>Reason:</strong><br>
+                            ${nomination.reason.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                }
             }
             
             const approvalItem = document.createElement('div');
@@ -142,7 +224,7 @@ async function loadPendingApprovals() {
                     <div class="approval-user">
                         <span class="approval-type-badge ${badgeClass}">${badgeText}</span>${displayName}
                     </div>
-                    <div class="approval-details">${approval.description || 'No description'}</div>
+                    <div class="approval-details">${detailsHtml}</div>
                     <div class="approval-date">${dateStr}</div>
                 </div>
                 <div class="approval-controls">
@@ -150,7 +232,7 @@ async function loadPendingApprovals() {
                     <input type="number" 
                            id="credits_${approval.approval_id}" 
                            class="credits-input" 
-                           value="${approval.credits_amount || (approval.approval_type === 'memory_verse' ? 50 : 10)}" 
+                           value="${approval.credits_amount || (approval.approval_type === 'memory_verse' ? 50 : approval.approval_type === 'fruit_nomination' ? 20 : 10)}" 
                            min="1" 
                            max="100"
                            onchange="validateCreditsInput(this)">
@@ -254,12 +336,36 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
             if (verseError) throw verseError;
             
             // Badge check will handle 3 consecutive months (awards 100 credits via badge)
+        } else if (approvalType === 'marketplace_purchase') {
+            // Update marketplace purchase status
+            const { error: purchaseError } = await supabase
+                .from('marketplace_purchases')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: session.uid
+                })
+                .eq('purchase_id', sourceId);
+            
+            if (purchaseError) throw purchaseError;
+        } else if (approvalType === 'fruit_nomination') {
+            // Update fruit nomination status
+            const { error: nominationError } = await supabase
+                .from('fruit_nominations')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: session.uid
+                })
+                .eq('nomination_id', sourceId);
+            
+            if (nominationError) throw nominationError;
         }
         
-        // Award credits to user
+        // Handle credits based on approval type
         const { data: existingCredit, error: creditFetchError } = await supabase
             .from('User_Credits')
-            .select('credit_id, balance')
+            .select('credit_id, balance, savings_balance')
             .eq('user_uid', approval.user_uid)
             .single();
         
@@ -267,41 +373,223 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
             throw creditFetchError;
         }
         
-        const newBalance = (existingCredit?.balance || 0) + creditsAmount;
-        
-        if (existingCredit) {
-            const { error: balanceUpdateError } = await supabase
-                .from('User_Credits')
-                .update({ balance: newBalance, updated_at: new Date().toISOString() })
-                .eq('credit_id', existingCredit.credit_id);
+        if (approvalType === 'marketplace_purchase') {
+            // For marketplace purchases, DEDUCT from savings_balance
+            const currentSavings = existingCredit?.savings_balance || 0;
             
-            if (balanceUpdateError) throw balanceUpdateError;
+            if (currentSavings < creditsAmount) {
+                throw new Error(`Insufficient savings balance. User has ${currentSavings} credits but needs ${creditsAmount}.`);
+            }
+            
+            const newSavings = currentSavings - creditsAmount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ 
+                        savings_balance: newSavings, 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                throw new Error('User credit account not found.');
+            }
+            
+            // Record transaction for marketplace purchase
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session.uid,
+                    to_user_uid: approval.user_uid,
+                    amount: creditsAmount,
+                    transaction_type: 'marketplace_purchase',
+                    description: `Marketplace purchase approved: ${creditsAmount} credits`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+                // Don't fail if transaction recording fails
+            }
+            
+            showSuccess(`Marketplace purchase approved! ${creditsAmount} credits deducted from user's savings.`);
+        } else if (approvalType === 'fruit_nomination') {
+            // For fruit nominations, ADD to balance and award badge
+            const newBalance = (existingCredit?.balance || 0) + creditsAmount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: creditsAmount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Get nomination details to award badge
+            const { data: nomination } = await supabase
+                .from('fruit_nominations')
+                .select('fruit_type, nominator_uid, reason')
+                .eq('nomination_id', sourceId)
+                .single();
+            
+            // Define fruit names for use in badge awarding and transaction recording
+            const fruitNames = {
+                'love': 'Love',
+                'joy': 'Joy',
+                'peace': 'Peace',
+                'patience': 'Patience',
+                'kindness': 'Kindness',
+                'goodness': 'Goodness',
+                'faithfulness': 'Faithfulness',
+                'gentleness': 'Gentleness',
+                'self_control': 'Self-Control'
+            };
+            
+            if (nomination) {
+                // Award the Fruit of the Spirit badge
+                
+                const fruitIcons = {
+                    'love': '❤️',
+                    'joy': '😊',
+                    'peace': '🕊️',
+                    'patience': '⏳',
+                    'kindness': '🤝',
+                    'goodness': '✨',
+                    'faithfulness': '🙏',
+                    'gentleness': '🌸',
+                    'self_control': '🎯'
+                };
+                
+                // Check if user already has this badge
+                const { data: existingBadge } = await supabase
+                    .from('User_Badges')
+                    .select('badge_id')
+                    .eq('user_uid', approval.user_uid)
+                    .eq('badge_type', nomination.fruit_type)
+                    .maybeSingle();
+                
+                if (!existingBadge) {
+                    // Award the badge
+                    await supabase
+                        .from('User_Badges')
+                        .insert({
+                            user_uid: approval.user_uid,
+                            badge_type: nomination.fruit_type,
+                            badge_name: fruitNames[nomination.fruit_type]
+                        });
+                }
+                
+                // Get nominator and nominee names
+                const { data: nominatorData } = await supabase
+                    .from('Users')
+                    .select('First_Name, Last_Name, Username')
+                    .eq('UID', nomination.nominator_uid)
+                    .single();
+                
+                const { data: nomineeData } = await supabase
+                    .from('Users')
+                    .select('First_Name, Last_Name, Username')
+                    .eq('UID', approval.user_uid)
+                    .single();
+                
+                const nominatorName = (nominatorData?.First_Name && nominatorData?.Last_Name)
+                    ? `${nominatorData.First_Name} ${nominatorData.Last_Name}`
+                    : nominatorData?.Username || 'A family member';
+                
+                // Send message to nominee
+                const messageContent = `
+                    <div style="padding: 20px;">
+                        <h3 style="color: #28a745; margin-top: 0;">🌟 Fruit of the Spirit Badge Awarded!</h3>
+                        <p><strong>Congratulations!</strong> You have been awarded the <strong>${fruitNames[nomination.fruit_type]} ${fruitIcons[nomination.fruit_type]}</strong> Fruit of the Spirit badge!</p>
+                        <p><strong>Nominated by:</strong> ${nominatorName}</p>
+                        <p><strong>Reason:</strong></p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            ${nomination.reason.replace(/\n/g, '<br>')}
+                        </div>
+                        <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; border: 2px solid #28a745;">
+                            <p style="margin: 0; font-weight: 600; color: #155724;">
+                                💰 You received <strong>${creditsAmount} credits</strong> added to your account!
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                await supabase
+                    .from('message_boxes')
+                    .insert({
+                        from_user_uid: session.uid, // Admin who approved
+                        to_user_uid: approval.user_uid,
+                        subject: `Fruit of the Spirit Badge: ${fruitNames[nomination.fruit_type]}`,
+                        body: messageContent,
+                        folder: 'inbox',
+                        is_read: false
+                    });
+            }
+            
+            // Record transaction
+            const fruitName = nomination ? fruitNames[nomination.fruit_type] : 'Fruit of the Spirit';
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session.uid,
+                    to_user_uid: approval.user_uid,
+                    amount: creditsAmount,
+                    transaction_type: 'credit_added',
+                    game_type: 'fruit_nomination',
+                    description: `Fruit of the Spirit nomination approved: ${fruitName} badge - ${creditsAmount} credits`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+            }
+            
+            showSuccess(`Fruit nomination approved! Badge awarded and ${creditsAmount} credits added to user's account.`);
         } else {
-            const { error: balanceInsertError } = await supabase
-                .from('User_Credits')
-                .insert({ user_uid: approval.user_uid, balance: creditsAmount });
+            // For other approvals (workout, chore, memory_verse), ADD to balance
+            const newBalance = (existingCredit?.balance || 0) + creditsAmount;
             
-            if (balanceInsertError) throw balanceInsertError;
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: creditsAmount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Record transaction
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: session.uid,
+                    to_user_uid: approval.user_uid,
+                    amount: creditsAmount,
+                    transaction_type: 'credit_added',
+                    game_type: approvalType,
+                    description: `Approved ${approvalType}: ${creditsAmount} credits`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+                // Don't fail if transaction recording fails
+            }
+            
+            showSuccess(`${approvalType === 'workout' ? 'Workout' : approvalType === 'chore' ? 'Chore' : 'Memory Verse'} approved! User received ${creditsAmount} credits.`);
         }
-        
-        // Record transaction
-        const { error: transError } = await supabase
-            .from('Credit_Transactions')
-            .insert({
-                from_user_uid: session.uid,
-                to_user_uid: approval.user_uid,
-                amount: creditsAmount,
-                transaction_type: 'credit_added',
-                game_type: approvalType,
-                description: `Approved ${approvalType}: ${creditsAmount} credits`
-            });
-        
-        if (transError) {
-            console.error('Error recording transaction:', transError);
-            // Don't fail if transaction recording fails
-        }
-        
-        showSuccess(`${approvalType === 'workout' ? 'Workout' : approvalType === 'chore' ? 'Chore' : 'Memory Verse'} approved! User received ${creditsAmount} credits.`);
         
         // Remove item from list
         const approvalItem = document.getElementById(`approval_${approvalId}`);
@@ -585,9 +873,40 @@ window.denyItem = async function(approvalId, approvalType, sourceId) {
                 .eq('id', sourceId);
             
             if (verseError) throw verseError;
+        } else if (approvalType === 'marketplace_purchase') {
+            // Update marketplace purchase status to denied
+            const { error: purchaseError } = await supabase
+                .from('marketplace_purchases')
+                .update({
+                    status: 'denied',
+                    denied_at: new Date().toISOString(),
+                    denied_by_uid: session.uid
+                })
+                .eq('purchase_id', sourceId);
+            
+            if (purchaseError) throw purchaseError;
+            // Note: No need to return credits since they were never deducted
+        } else if (approvalType === 'fruit_nomination') {
+            // Update fruit nomination status to denied
+            const { error: nominationError } = await supabase
+                .from('fruit_nominations')
+                .update({
+                    status: 'denied',
+                    denied_at: new Date().toISOString(),
+                    denied_by_uid: session.uid
+                })
+                .eq('nomination_id', sourceId);
+            
+            if (nominationError) throw nominationError;
         }
         
-        showSuccess(`${approvalType === 'workout' ? 'Workout' : approvalType === 'chore' ? 'Chore' : 'Memory Verse'} denied.`);
+        const typeLabel = approvalType === 'workout' ? 'Workout' 
+            : approvalType === 'chore' ? 'Chore' 
+            : approvalType === 'memory_verse' ? 'Memory Verse'
+            : approvalType === 'marketplace_purchase' ? 'Marketplace purchase'
+            : approvalType;
+        
+        showSuccess(`${typeLabel} denied.`);
         
         // Remove item from list
         const approvalItem = document.getElementById(`approval_${approvalId}`);

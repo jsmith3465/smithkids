@@ -29,10 +29,13 @@ async function createProfileMenu() {
         savingsBalance = balances.savings;
     }
     
-    // Get pending approvals count for admins
+    // Get pending approvals count
     let pendingApprovalsCount = 0;
     if (isAdmin) {
         pendingApprovalsCount = await getPendingApprovalsCount();
+    } else {
+        // For standard users, get their own pending approvals
+        pendingApprovalsCount = await getUserPendingApprovalsCount(session.uid);
     }
     
     // Find the header area where we'll add the profile menu (different pages use different header layouts)
@@ -155,9 +158,25 @@ async function createProfileMenu() {
                 text-decoration: none;
                 transition: background 0.2s ease;
                 text-align: left;
+                position: relative;
                 white-space: nowrap;
             " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
                 🛍️ Marketplace
+                ${pendingApprovalsCount > 0 ? `<span style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: #ffc107;
+                    color: #333;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                ">${pendingApprovalsCount}</span>` : ''}
             </a>
             <a href="${getPagePath('badges.html')}" style="
                 display: block;
@@ -267,6 +286,7 @@ async function createProfileMenu() {
                 box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
                 min-width: 250px;
                 max-width: calc(100vw - 20px);
+                width: auto;
                 white-space: nowrap;
                 display: none;
                 z-index: 1000;
@@ -367,22 +387,45 @@ async function createProfileMenu() {
     
     // Function to adjust dropdown position for mobile
     function adjustDropdownPosition() {
-        if (profileDropdown.style.display === 'block' || profileDropdown.style.display === '') {
-            const rect = profileDropdown.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
+        if (!profileDropdown || profileDropdown.style.display !== 'block') {
+            return;
+        }
+        
+        const viewportWidth = window.innerWidth;
+        const isMobile = viewportWidth < 768;
+        const buttonRect = profileBtn.getBoundingClientRect();
+        const dropdownTop = buttonRect.bottom + 5; // 5px gap below button
+        
+        // Use fixed positioning to position relative to viewport
+        profileDropdown.style.position = 'fixed';
+        profileDropdown.style.top = `${dropdownTop}px`;
+        profileDropdown.style.maxWidth = `${viewportWidth - 20}px`;
+        
+        if (isMobile) {
+            // On mobile, always align to right edge of viewport with padding
+            profileDropdown.style.right = '10px';
+            profileDropdown.style.left = 'auto';
+        } else {
+            // On desktop, try to align with button, but adjust if needed
+            const dropdownWidth = profileDropdown.offsetWidth || 250;
+            const buttonRight = buttonRect.right;
             
-            // If dropdown extends beyond left edge, align to right edge of viewport
-            if (rect.left < 10) {
-                profileDropdown.style.right = 'auto';
+            // Try to align dropdown right edge with button right edge
+            const rightOffset = viewportWidth - buttonRight;
+            const dropdownLeft = viewportWidth - rightOffset - dropdownWidth;
+            
+            if (dropdownLeft < 10) {
+                // If it would go off left edge, align to left with padding
                 profileDropdown.style.left = '10px';
-            } else if (rect.right > viewportWidth - 10) {
-                // If dropdown extends beyond right edge, align to left edge of viewport
-                profileDropdown.style.left = 'auto';
+                profileDropdown.style.right = 'auto';
+            } else if (buttonRight + dropdownWidth > viewportWidth - 10) {
+                // If it would go off right edge, align to right with padding
                 profileDropdown.style.right = '10px';
-            } else {
-                // Reset to default (right-aligned to button)
                 profileDropdown.style.left = 'auto';
-                profileDropdown.style.right = '0';
+            } else {
+                // Position relative to button
+                profileDropdown.style.right = `${rightOffset}px`;
+                profileDropdown.style.left = 'auto';
             }
         }
     }
@@ -394,7 +437,10 @@ async function createProfileMenu() {
         
         // Adjust position after showing
         if (!isVisible) {
-            setTimeout(adjustDropdownPosition, 10);
+            // Use requestAnimationFrame for better timing
+            requestAnimationFrame(() => {
+                adjustDropdownPosition();
+            });
         }
     });
     
@@ -460,7 +506,7 @@ async function getCreditBalances(userUid) {
     }
 }
 
-// Get pending approvals count from unified table
+// Get pending approvals count from unified table (for admins)
 async function getPendingApprovalsCount() {
     try {
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
@@ -482,6 +528,33 @@ async function getPendingApprovalsCount() {
         return count || 0;
     } catch (error) {
         console.error('Error fetching pending approvals count:', error);
+        return 0;
+    }
+}
+
+// Get pending approvals count for a specific user (for standard users)
+async function getUserPendingApprovalsCount(userUid) {
+    try {
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Count pending approvals for this user (especially marketplace purchases)
+        const { count, error } = await supabase
+            .from('unified_approvals')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_uid', userUid)
+            .eq('status', 'pending');
+        
+        if (error) {
+            console.error('Error fetching user pending approvals count:', error);
+            return 0;
+        }
+        
+        return count || 0;
+    } catch (error) {
+        console.error('Error fetching user pending approvals count:', error);
         return 0;
     }
 }

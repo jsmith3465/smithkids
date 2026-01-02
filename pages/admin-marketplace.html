@@ -171,6 +171,48 @@
                 font-size: 2rem !important;
             }
         }
+        
+        /* Tab Navigation */
+        .marketplace-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .marketplace-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+        
+        .marketplace-tab:hover {
+            color: #DAA520;
+            background: rgba(218, 165, 32, 0.05);
+        }
+        
+        .marketplace-tab.active {
+            color: #CC5500;
+            border-bottom-color: #CC5500;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -195,47 +237,55 @@
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
             
-            <!-- Items Section -->
-            <div class="items-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">Marketplace Items</h2>
-                    <button class="btn btn-primary" id="addItemBtn">Add New Item</button>
-                </div>
-                
-                <div id="itemsList">
-                    <div class="loading">Loading items...</div>
-                </div>
+            <!-- Tab Navigation -->
+            <div class="marketplace-tabs">
+                <button class="marketplace-tab active" data-tab="items">Marketplace Items</button>
             </div>
             
-            <!-- Add Item Form -->
-            <div class="add-item-form" id="addItemForm">
-                <h3 style="margin-top: 0;">Add New Marketplace Item</h3>
-                <form id="newItemForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="newItemName">Item Name *</label>
-                            <input type="text" id="newItemName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="newItemIcon">Icon (emoji) *</label>
-                            <input type="text" id="newItemIcon" placeholder="🛍️" required maxlength="2">
-                        </div>
-                        <div class="form-group">
-                            <label for="newItemCost">Cost (Credits) *</label>
-                            <input type="number" id="newItemCost" min="1" required>
-                        </div>
+            <!-- Marketplace Items Tab -->
+            <div id="itemsTab" class="tab-content active">
+                <!-- Items Section -->
+                <div class="items-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0;">Marketplace Items</h2>
+                        <button class="btn btn-primary" id="addItemBtn">Add New Item</button>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label for="newItemDescription">Description</label>
-                            <textarea id="newItemDescription"></textarea>
+                    
+                    <div id="itemsList">
+                        <div class="loading">Loading items...</div>
+                    </div>
+                </div>
+                
+                <!-- Add Item Form -->
+                <div class="add-item-form" id="addItemForm">
+                    <h3 style="margin-top: 0;">Add New Marketplace Item</h3>
+                    <form id="newItemForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newItemName">Item Name *</label>
+                                <input type="text" id="newItemName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newItemIcon">Icon (emoji) *</label>
+                                <input type="text" id="newItemIcon" placeholder="🛍️" required maxlength="2">
+                            </div>
+                            <div class="form-group">
+                                <label for="newItemCost">Cost (Credits) *</label>
+                                <input type="number" id="newItemCost" min="1" required>
+                            </div>
                         </div>
-                    </div>
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button type="submit" class="btn btn-primary">Add Item</button>
-                        <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
-                    </div>
-                </form>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="newItemDescription">Description</label>
+                                <textarea id="newItemDescription"></textarea>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button type="submit" class="btn btn-primary">Add Item</button>
+                            <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

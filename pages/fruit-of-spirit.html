@@ -191,6 +191,88 @@
             <div id="fruitList" class="fruit-list">
                 <div class="loading">Loading fruits...</div>
             </div>
+            
+            <!-- Nominate a Family Member Section -->
+            <div style="
+                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                border: 3px solid #2196F3;
+                border-radius: 15px;
+                padding: 30px;
+                margin-top: 40px;
+                text-align: left;
+            ">
+                <h2 style="margin: 0 0 20px 0; color: #1976D2; font-size: 2rem;">🌟 Nominate a Family Member</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Recognize a family member who has demonstrated a Fruit of the Spirit! Your nomination will be reviewed by an admin.
+                </p>
+                
+                <form id="nominationForm" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label for="nomineeSelect" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Select Family Member:</label>
+                            <select id="nomineeSelect" required style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 8px;
+                                font-size: 1rem;
+                            ">
+                                <option value="">Select a family member...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="fruitSelect" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Select Fruit of the Spirit:</label>
+                            <select id="fruitSelect" required style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 8px;
+                                font-size: 1rem;
+                            ">
+                                <option value="">Select a fruit...</option>
+                                <option value="love">❤️ Love</option>
+                                <option value="joy">😊 Joy</option>
+                                <option value="peace">🕊️ Peace</option>
+                                <option value="patience">⏳ Patience</option>
+                                <option value="kindness">🤝 Kindness</option>
+                                <option value="goodness">✨ Goodness</option>
+                                <option value="faithfulness">🙏 Faithfulness</option>
+                                <option value="gentleness">🌸 Gentleness</option>
+                                <option value="self_control">🎯 Self-Control</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="nominationReason" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Reason for Nomination:</label>
+                        <textarea id="nominationReason" required placeholder="Explain why you're nominating this family member for this Fruit of the Spirit..." style="
+                            width: 100%;
+                            padding: 12px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 8px;
+                            font-size: 1rem;
+                            min-height: 120px;
+                            resize: vertical;
+                            font-family: inherit;
+                        "></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="
+                        width: 100%;
+                        padding: 14px;
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    ">Submit Nomination</button>
+                </form>
+                
+                <div id="nominationMessage" style="
+                    margin-top: 15px;
+                    padding: 12px;
+                    border-radius: 8px;
+                    display: none;
+                "></div>
+            </div>
         </div>
     </div>
     <script type="module" src="../js/auth.js"></script>

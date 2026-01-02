@@ -66,6 +66,8 @@ async function checkUserAccess() {
     
     try {
         await loadFruitsOfSpirit(session.uid);
+        await loadFamilyMembers(session.uid);
+        setupNominationForm(session.uid);
     } catch (error) {
         console.error('Error loading fruits of spirit:', error);
         const fruitList = document.getElementById('fruitList');
@@ -73,6 +75,229 @@ async function checkUserAccess() {
             fruitList.innerHTML = '<div class="error-message" style="color: #dc3545; padding: 20px;">Error loading fruits. Please refresh the page.</div>';
         }
     }
+}
+
+// Load family members (other standard users) for nomination
+async function loadFamilyMembers(currentUserUid) {
+    const nomineeSelect = document.getElementById('nomineeSelect');
+    if (!nomineeSelect) return;
+    
+    try {
+        const { data: users, error } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .eq('user_type', 'standard')
+            .neq('UID', currentUserUid)
+            .order('First_Name', { ascending: true });
+        
+        if (error) {
+            console.error('Error loading family members:', error);
+            return;
+        }
+        
+        nomineeSelect.innerHTML = '<option value="">Select a family member...</option>';
+        
+        if (users && users.length > 0) {
+            users.forEach(user => {
+                const displayName = (user.First_Name && user.Last_Name)
+                    ? `${user.First_Name} ${user.Last_Name} (${user.Username})`
+                    : user.Username;
+                
+                const option = document.createElement('option');
+                option.value = user.UID;
+                option.textContent = displayName;
+                nomineeSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading family members:', error);
+    }
+}
+
+// Setup nomination form
+function setupNominationForm(nominatorUid) {
+    const nominationForm = document.getElementById('nominationForm');
+    if (!nominationForm) return;
+    
+    nominationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await submitNomination(nominatorUid);
+    });
+}
+
+// Submit nomination
+async function submitNomination(nominatorUid) {
+    const nomineeSelect = document.getElementById('nomineeSelect');
+    const fruitSelect = document.getElementById('fruitSelect');
+    const reasonTextarea = document.getElementById('nominationReason');
+    const messageDiv = document.getElementById('nominationMessage');
+    
+    if (!nomineeSelect || !fruitSelect || !reasonTextarea || !messageDiv) return;
+    
+    const nomineeUid = parseInt(nomineeSelect.value);
+    const fruitType = fruitSelect.value;
+    const reason = reasonTextarea.value.trim();
+    
+    if (!nomineeUid || !fruitType || !reason) {
+        showNominationMessage('Please fill in all fields.', 'error');
+        return;
+    }
+    
+    try {
+        // Create nomination record
+        const { data: nomination, error: nomError } = await supabase
+            .from('fruit_nominations')
+            .insert({
+                nominator_uid: nominatorUid,
+                nominee_uid: nomineeUid,
+                fruit_type: fruitType,
+                reason: reason,
+                status: 'pending'
+            })
+            .select()
+            .single();
+        
+        if (nomError) throw nomError;
+        
+        // Create approval entry in unified_approvals
+        const fruitNames = {
+            'love': 'Love',
+            'joy': 'Joy',
+            'peace': 'Peace',
+            'patience': 'Patience',
+            'kindness': 'Kindness',
+            'goodness': 'Goodness',
+            'faithfulness': 'Faithfulness',
+            'gentleness': 'Gentleness',
+            'self_control': 'Self-Control'
+        };
+        
+        const { data: approval, error: approvalError } = await supabase
+            .from('unified_approvals')
+            .insert({
+                approval_type: 'fruit_nomination',
+                source_id: nomination.nomination_id,
+                user_uid: nomineeUid,
+                credits_amount: 20, // Fruit badges award 20 credits
+                description: `Fruit of the Spirit nomination: ${fruitNames[fruitType]}`,
+                status: 'pending'
+            })
+            .select()
+            .single();
+        
+        if (approvalError) {
+            console.error('Error creating approval:', approvalError);
+            // Continue even if approval creation fails
+        }
+        
+        // Get nominee and nominator names for message
+        const { data: nomineeData } = await supabase
+            .from('Users')
+            .select('First_Name, Last_Name, Username')
+            .eq('UID', nomineeUid)
+            .single();
+        
+        const { data: nominatorData } = await supabase
+            .from('Users')
+            .select('First_Name, Last_Name, Username')
+            .eq('UID', nominatorUid)
+            .single();
+        
+        const nomineeName = (nomineeData?.First_Name && nomineeData?.Last_Name)
+            ? `${nomineeData.First_Name} ${nomineeData.Last_Name}`
+            : nomineeData?.Username || 'Unknown';
+        
+        const nominatorName = (nominatorData?.First_Name && nominatorData?.Last_Name)
+            ? `${nominatorData.First_Name} ${nominatorData.Last_Name}`
+            : nominatorData?.Username || 'Unknown';
+        
+        // Send message to all admins
+        const { data: admins } = await supabase
+            .from('Users')
+            .select('UID')
+            .eq('user_type', 'admin');
+        
+        if (admins && admins.length > 0) {
+            const messageContent = `
+                <div style="padding: 20px;">
+                    <h3 style="color: #1976D2; margin-top: 0;">🌟 Fruit of the Spirit Nomination</h3>
+                    <p><strong>Nominated:</strong> ${nomineeName}</p>
+                    <p><strong>Nominated By:</strong> ${nominatorName}</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <p><strong>Fruit of the Spirit:</strong> ${fruitNames[fruitType]} ${getFruitIcon(fruitType)}</p>
+                    <p><strong>Reason:</strong></p>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        ${reason.replace(/\n/g, '<br>')}
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                        <a href="${getPagePath('approvals.html')}" style="
+                            display: inline-block;
+                            padding: 10px 20px;
+                            background: #28a745;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            font-weight: 600;
+                            margin-right: 10px;
+                        ">Review in Approvals</a>
+                    </div>
+                </div>
+            `;
+            
+            for (const admin of admins) {
+                await supabase
+                    .from('message_boxes')
+                    .insert({
+                        from_user_uid: nominatorUid,
+                        to_user_uid: admin.UID,
+                        subject: `Fruit of the Spirit Nomination: ${nomineeName}`,
+                        body: messageContent,
+                        folder: 'inbox',
+                        is_read: false
+                    });
+            }
+        }
+        
+        // Show success message
+        showNominationMessage('Nomination submitted successfully! Admins will review your nomination.', 'success');
+        
+        // Reset form
+        nominationForm.reset();
+        
+    } catch (error) {
+        console.error('Error submitting nomination:', error);
+        showNominationMessage('Error submitting nomination. Please try again.', 'error');
+    }
+}
+
+function showNominationMessage(message, type) {
+    const messageDiv = document.getElementById('nominationMessage');
+    if (!messageDiv) return;
+    
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+    messageDiv.style.border = `2px solid ${type === 'success' ? '#28a745' : '#dc3545'}`;
+    messageDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+    messageDiv.textContent = message;
+    
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+function getFruitIcon(fruitType) {
+    const icons = {
+        'love': '❤️',
+        'joy': '😊',
+        'peace': '🕊️',
+        'patience': '⏳',
+        'kindness': '🤝',
+        'goodness': '✨',
+        'faithfulness': '🙏',
+        'gentleness': '🌸',
+        'self_control': '🎯'
+    };
+    return icons[fruitType] || '';
 }
 
 async function loadFruitsOfSpirit(userUid) {

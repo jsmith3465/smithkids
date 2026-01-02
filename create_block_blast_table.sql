@@ -14,3 +14,14 @@ CREATE TABLE IF NOT EXISTS block_blast_scores (
 CREATE INDEX IF NOT EXISTS idx_block_blast_scores_user ON block_blast_scores(user_uid);
 CREATE INDEX IF NOT EXISTS idx_block_blast_scores_created ON block_blast_scores(created_at);
 
+-- Enable Row Level Security
+ALTER TABLE block_blast_scores ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow all users to read scores
+CREATE POLICY "Enable read access for all users" ON block_blast_scores
+    FOR SELECT USING (true);
+
+-- Create policy to allow authenticated users to insert their own scores
+CREATE POLICY "Enable insert for authenticated users" ON block_blast_scores
+    FOR INSERT WITH CHECK (true);
+

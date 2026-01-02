@@ -62,13 +62,14 @@ async function checkUserAccess() {
 async function loadBadges(userUid) {
     const badgesList = document.getElementById('badgesList');
     
-    // Define available badges
+    // Define available badges with their requirements
     const availableBadges = [
         {
             id: 'trivia_master',
             name: 'Trivia Master',
             icon: '📖',
             description: 'Get 10 correct answers in Bible Trivia',
+            requirement: 10,
             earned: false
         },
         {
@@ -76,6 +77,7 @@ async function loadBadges(userUid) {
             name: 'Memory Verse Champion',
             icon: '🧠',
             description: 'Complete memory verse 3 months in a row',
+            requirement: 3,
             earned: false
         },
         {
@@ -83,6 +85,7 @@ async function loadBadges(userUid) {
             name: 'Workout Warrior',
             icon: '💪',
             description: 'Complete 10 workouts',
+            requirement: 10,
             earned: false
         },
         {
@@ -90,6 +93,7 @@ async function loadBadges(userUid) {
             name: 'Chore Champion',
             icon: '🏠',
             description: 'Complete 20 chores',
+            requirement: 20,
             earned: false
         },
         {
@@ -97,6 +101,7 @@ async function loadBadges(userUid) {
             name: 'Early Bird',
             icon: '☀️',
             description: 'Complete morning checklist 7 days in a row',
+            requirement: 7,
             earned: false
         },
         {
@@ -104,6 +109,7 @@ async function loadBadges(userUid) {
             name: 'All Fruits of the Spirit',
             icon: '🍎',
             description: 'Collect all 9 Fruits of the Spirit',
+            requirement: 9,
             earned: false
         }
     ];
@@ -131,15 +137,21 @@ async function loadBadges(userUid) {
         const allFruits = ['love', 'joy', 'peace', 'patience', 'kindness', 'goodness', 'faithfulness', 'gentleness', 'self_control'];
         const hasAllFruits = allFruits.every(fruit => earnedBadgeTypes.has(fruit));
         
-        // Mark badges as earned
-        availableBadges.forEach(badge => {
+        // Mark badges as earned and get progress
+        for (const badge of availableBadges) {
             if (badge.id === 'all_fruits') {
                 badge.earned = hasAllFruits;
+                if (!hasAllFruits) {
+                    badge.current = allFruits.filter(fruit => earnedBadgeTypes.has(fruit)).length;
+                }
             } else {
-                // For other badges, check if they have the corresponding badge_type
                 badge.earned = earnedBadgeTypes.has(badge.id);
+                if (!badge.earned) {
+                    // Get current progress for unearned badges
+                    badge.current = await getBadgeProgress(userUid, badge.id);
+                }
             }
-        });
+        }
         
     } catch (error) {
         console.error('Error checking badge progress:', error);
@@ -155,13 +167,172 @@ async function loadBadges(userUid) {
         // Get credit amount from database
         const creditAmount = await getCreditAmount(badge.name, 'credit', badge.id === 'all_fruits' ? 100 : 20);
         
+        // Build progress text
+        let progressText = '';
+        if (!badge.earned && badge.current !== undefined) {
+            if (badge.id === 'memory_verse') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} consecutive months completed
+                </div>`;
+            } else if (badge.id === 'early_bird') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} consecutive days completed
+                </div>`;
+            } else if (badge.id === 'all_fruits') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} fruits collected
+                </div>`;
+            } else if (badge.id === 'trivia_master') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} correct answers
+                </div>`;
+            } else if (badge.id === 'workout_warrior') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} workouts completed
+                </div>`;
+            } else if (badge.id === 'chore_champion') {
+                progressText = `<div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">
+                    ${badge.current} of ${badge.requirement} chores completed
+                </div>`;
+            }
+        }
+        
         badgeCard.innerHTML = `
             <div class="badge-icon">${badge.icon}</div>
             <div class="badge-name">${badge.name}</div>
             <div class="badge-description">${badge.description}</div>
+            ${progressText}
             <div class="credit-box">💰 Earn ${creditAmount} Credits</div>
         `;
         badgesList.appendChild(badgeCard);
+    }
+}
+
+// Get current progress for a specific badge
+async function getBadgeProgress(userUid, badgeId) {
+    try {
+        switch(badgeId) {
+            case 'trivia_master': {
+                const { data: stats } = await supabase
+                    .from('bible_trivia_user_stats')
+                    .select('total_correct')
+                    .eq('user_uid', userUid)
+                    .single();
+                return stats?.total_correct || 0;
+            }
+            
+            case 'memory_verse': {
+                // Get consecutive months count
+                const { data: submissions } = await supabase
+                    .from('Memory_Verse_Submissions')
+                    .select('month_year, approved_at')
+                    .eq('user_uid', userUid)
+                    .eq('status', 'approved')
+                    .order('month_year', { ascending: false });
+                
+                if (!submissions || submissions.length === 0) return 0;
+                
+                // Get unique months and sort them
+                const uniqueMonths = [...new Set(submissions.map(s => s.month_year))];
+                const monthDates = uniqueMonths.map(monthYear => {
+                    const [year, month] = monthYear.split('-').map(Number);
+                    return new Date(year, month - 1, 1);
+                });
+                
+                // Sort by date descending (most recent first)
+                monthDates.sort((a, b) => b - a);
+                
+                // Count consecutive months from the most recent
+                let consecutiveCount = 1;
+                for (let i = 1; i < monthDates.length; i++) {
+                    const prevMonth = new Date(monthDates[i - 1]);
+                    const expectedNextMonth = new Date(prevMonth);
+                    expectedNextMonth.setMonth(expectedNextMonth.getMonth() - 1);
+                    
+                    if (monthDates[i].getTime() === expectedNextMonth.getTime()) {
+                        consecutiveCount++;
+                    } else {
+                        break; // Stop counting when we hit a gap
+                    }
+                }
+                
+                return consecutiveCount;
+            }
+            
+            case 'workout_warrior': {
+                const { count } = await supabase
+                    .from('Workouts')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid)
+                    .eq('is_approved', true);
+                return count || 0;
+            }
+            
+            case 'chore_champion': {
+                const { count } = await supabase
+                    .from('Chores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid)
+                    .eq('is_approved', true);
+                return count || 0;
+            }
+            
+            case 'early_bird': {
+                // Get checklist data for the last 7 days
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                
+                const { data: checklists } = await supabase
+                    .from('Morning_Checklist')
+                    .select('checklist_date, task_1, task_2, task_3, task_4, task_5, task_6')
+                    .eq('user_uid', userUid)
+                    .gte('checklist_date', sevenDaysAgo.toISOString().split('T')[0])
+                    .order('checklist_date', { ascending: false });
+                
+                if (!checklists || checklists.length === 0) return 0;
+                
+                // Count consecutive days with all tasks completed
+                let consecutiveDays = 0;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - i);
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    
+                    const dayChecklist = checklists.find(c => c.checklist_date === dateStr);
+                    if (dayChecklist && dayChecklist.task_1 && dayChecklist.task_2 && 
+                        dayChecklist.task_3 && dayChecklist.task_4 && 
+                        dayChecklist.task_5 && dayChecklist.task_6) {
+                        consecutiveDays++;
+                    } else {
+                        break; // Stop counting if we hit an incomplete day
+                    }
+                }
+                
+                return consecutiveDays;
+            }
+            
+            case 'all_fruits': {
+                const { data: userBadges } = await supabase
+                    .from('User_Badges')
+                    .select('badge_type')
+                    .eq('user_uid', userUid);
+                
+                if (!userBadges) return 0;
+                
+                const allFruits = ['love', 'joy', 'peace', 'patience', 'kindness', 'goodness', 'faithfulness', 'gentleness', 'self_control'];
+                const earnedFruits = userBadges.filter(b => allFruits.includes(b.badge_type));
+                return earnedFruits.length;
+            }
+            
+            default:
+                return 0;
+        }
+    } catch (error) {
+        console.error(`Error getting progress for ${badgeId}:`, error);
+        return 0;
     }
 }
 

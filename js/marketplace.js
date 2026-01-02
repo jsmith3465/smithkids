@@ -168,12 +168,12 @@ async function purchaseItem(itemId, itemName, itemCost) {
     hideMessages();
     
     // Confirm purchase
-    if (!confirm(`Are you sure you want to purchase "${itemName}" for ${itemCost} credits?`)) {
+    if (!confirm(`Are you sure you want to request "${itemName}" for ${itemCost} credits?`)) {
         return;
     }
     
     try {
-        // Get current savings balance
+        // Get current savings balance (check but don't deduct yet)
         const { data: creditData, error: fetchError } = await supabase
             .from('User_Credits')
             .select('credit_id, savings_balance')
@@ -197,27 +197,14 @@ async function purchaseItem(itemId, itemName, itemCost) {
             return;
         }
         
-        // Deduct from savings
-        const newSavings = currentSavings - itemCost;
-        
-        const { error: updateError } = await supabase
-            .from('User_Credits')
-            .update({ 
-                savings_balance: newSavings,
-                updated_at: new Date().toISOString()
-            })
-            .eq('credit_id', creditData.credit_id);
-        
-        if (updateError) throw updateError;
-        
-        // Create purchase record
+        // Create purchase record (status: pending - credits NOT deducted yet)
         const { data: purchaseData, error: purchaseError } = await supabase
             .from('marketplace_purchases')
             .insert({
                 user_uid: session.uid,
                 item_id: itemId,
                 cost: itemCost,
-                description: `Purchased ${itemName}`,
+                description: `Requested ${itemName}`,
                 status: 'pending'
             })
             .select()
@@ -225,32 +212,45 @@ async function purchaseItem(itemId, itemName, itemCost) {
         
         if (purchaseError) throw purchaseError;
         
-        // Record transaction in Credit_Transactions
-        const { error: transError } = await supabase
-            .from('Credit_Transactions')
+        // Create approval entry in unified_approvals
+        const { data: approvalData, error: approvalError } = await supabase
+            .from('unified_approvals')
             .insert({
-                to_user_uid: session.uid,
-                amount: itemCost,
-                transaction_type: 'marketplace_purchase',
-                description: `Marketplace purchase: ${itemName}`
-            });
+                approval_type: 'marketplace_purchase',
+                source_id: purchaseData.purchase_id,
+                user_uid: session.uid,
+                credits_amount: itemCost,
+                description: `Marketplace purchase request: ${itemName}`,
+                status: 'pending'
+            })
+            .select()
+            .single();
         
-        if (transError) {
-            console.error('Error recording transaction:', transError);
-            // Don't fail the purchase if transaction recording fails
+        if (approvalError) {
+            console.error('Error creating approval entry:', approvalError);
+            // Try to clean up the purchase record if approval creation fails
+            await supabase.from('marketplace_purchases').delete().eq('purchase_id', purchaseData.purchase_id);
+            throw approvalError;
         }
         
-        // Send notification to admins
+        // Send notification to admins via email
         await sendMarketplaceNotification(purchaseData.purchase_id, itemName, itemCost, session);
         
         // Update display
         await loadSavingsBalance();
         await loadMarketplaceItems();
-        showSuccess(`Purchase successful! "${itemName}" is pending admin approval.`);
+        
+        // Show success message with parent excitement
+        showSuccess(`Your request for "${itemName}" has been submitted and is pending approval. Your parents are excited for you! 🎉`);
+        
+        // Refresh profile menu to show pending approval
+        if (window.createProfileMenu) {
+            setTimeout(() => window.createProfileMenu(), 500);
+        }
         
     } catch (error) {
         console.error('Error purchasing item:', error);
-        showError('Error processing purchase. Please try again.');
+        showError('Error processing purchase request. Please try again.');
     }
 }
 

@@ -14,3 +14,14 @@ CREATE TABLE IF NOT EXISTS pacman_scores (
 CREATE INDEX IF NOT EXISTS idx_pacman_scores_user ON pacman_scores(user_uid);
 CREATE INDEX IF NOT EXISTS idx_pacman_scores_created ON pacman_scores(created_at);
 
+-- Enable Row Level Security
+ALTER TABLE pacman_scores ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow all users to read scores
+CREATE POLICY "Enable read access for all users" ON pacman_scores
+    FOR SELECT USING (true);
+
+-- Create policy to allow authenticated users to insert their own scores
+CREATE POLICY "Enable insert for authenticated users" ON pacman_scores
+    FOR INSERT WITH CHECK (true);
+

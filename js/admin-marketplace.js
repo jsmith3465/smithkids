@@ -52,12 +52,36 @@ async function checkUserAccess() {
         authCheck.classList.add('hidden');
         mainContent.classList.remove('hidden');
         
+        setupTabs();
         await loadMarketplaceItems();
         setupEventListeners();
     } catch (error) {
         console.error('Error checking access:', error);
         window.location.href = getPagePath('login.html');
     }
+}
+
+function setupTabs() {
+    const tabs = document.querySelectorAll('.marketplace-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            switchTab(targetTab);
+        });
+    });
+}
+
+function switchTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.marketplace-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+    const selectedContent = document.getElementById(`${tabName}Tab`);
+    
+    if (selectedTab) selectedTab.classList.add('active');
+    if (selectedContent) selectedContent.classList.add('active');
 }
 
 function setupEventListeners() {

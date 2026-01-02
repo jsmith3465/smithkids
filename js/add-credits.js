@@ -721,18 +721,20 @@ async function loadAllCredits() {
             return;
         }
         
-        // Get all credit balances
+        // Get all credit balances (available and savings)
         const { data: credits, error: creditsError } = await supabase
             .from('User_Credits')
-            .select('user_uid, balance');
+            .select('user_uid, balance, savings_balance');
         
         if (creditsError) throw creditsError;
         
-        // Create credit map
+        // Create credit maps
         const creditMap = {};
+        const savingsMap = {};
         if (credits) {
             credits.forEach(credit => {
-                creditMap[credit.user_uid] = credit.balance;
+                creditMap[credit.user_uid] = credit.balance || 0;
+                savingsMap[credit.user_uid] = credit.savings_balance || 0;
             });
         }
         
@@ -744,7 +746,8 @@ async function loadAllCredits() {
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = `
             <th>User</th>
-            <th>Current Balance</th>
+            <th>Available Balance</th>
+            <th>Savings Balance</th>
             <th>Add Credits</th>
             <th>Remove Credits</th>
             <th>Set Balance</th>
@@ -757,13 +760,15 @@ async function loadAllCredits() {
                 ? `${user.First_Name} ${user.Last_Name}` 
                 : user.Username;
             
-            const currentBalance = creditMap[user.UID] || 0;
+            const availableBalance = creditMap[user.UID] || 0;
+            const savingsBalance = savingsMap[user.UID] || 0;
             
             const row = document.createElement('tr');
             row.id = `creditRow_${user.UID}`;
             row.innerHTML = `
                 <td>${displayName} (${user.Username})</td>
-                <td><strong style="font-size: 1.2rem; color: #CC5500;">${currentBalance}</strong></td>
+                <td><strong style="font-size: 1.2rem; color: #CC5500;">${availableBalance.toLocaleString()}</strong></td>
+                <td><strong style="font-size: 1.2rem; color: #28a745;">${savingsBalance.toLocaleString()}</strong></td>
                 <td>
                     <div style="display: flex; gap: 5px; align-items: center;">
                         <input type="number" id="addAmount_${user.UID}" value="10" min="1" max="1000" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
@@ -778,7 +783,7 @@ async function loadAllCredits() {
                 </td>
                 <td>
                     <div style="display: flex; gap: 5px; align-items: center;">
-                        <input type="number" id="setBalance_${user.UID}" value="${currentBalance}" min="0" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                        <input type="number" id="setBalance_${user.UID}" value="${availableBalance}" min="0" style="width: 70px; padding: 5px; border: 1px solid #e0e0e0; border-radius: 5px;">
                         <button class="btn btn-primary btn-small" onclick="setUserBalance(${user.UID})">Set</button>
                     </div>
                 </td>
