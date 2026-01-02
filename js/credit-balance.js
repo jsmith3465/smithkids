@@ -35,7 +35,7 @@ async function loadCreditBalance() {
     try {
         const { data, error } = await supabase
             .from('User_Credits')
-            .select('balance')
+            .select('balance, savings_balance')
             .eq('user_uid', session.uid)
             .single();
         
@@ -44,8 +44,11 @@ async function loadCreditBalance() {
             return;
         }
         
-        const balance = data ? data.balance : 0;
-        document.getElementById('currentBalance').textContent = balance;
+        const availableBalance = data ? (data.balance || 0) : 0;
+        const savingsBalance = data ? (data.savings_balance || 0) : 0;
+        
+        document.getElementById('currentBalance').textContent = availableBalance.toLocaleString();
+        document.getElementById('savingsBalance').textContent = savingsBalance.toLocaleString();
     } catch (error) {
         console.error('Error loading balance:', error);
     }
