@@ -59,10 +59,31 @@ async function checkUserAccess() {
     
     try {
         setupPrayerRequestForm(session.uid);
+        setupSubmitToggle();
         await loadPrayerRequests(session.uid);
     } catch (error) {
         console.error('Error initializing Pray Ground:', error);
     }
+}
+
+// Setup submit toggle button
+function setupSubmitToggle() {
+    const submitToggle = document.getElementById('submitPrayerToggle');
+    const submitSection = document.getElementById('submitPrayerSection');
+    
+    if (!submitToggle || !submitSection) return;
+    
+    submitToggle.addEventListener('click', () => {
+        const isVisible = submitSection.style.display === 'block';
+        submitSection.style.display = isVisible ? 'none' : 'block';
+        
+        // Scroll to form if showing
+        if (!isVisible) {
+            setTimeout(() => {
+                submitSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    });
 }
 
 // Setup prayer request form
@@ -171,7 +192,13 @@ async function submitPrayerRequest(userUid) {
         // Reset form
         prayerRequestForm.reset();
         
-        // Reload prayer requests
+        // Hide the form
+        const submitSection = document.getElementById('submitPrayerSection');
+        if (submitSection) {
+            submitSection.style.display = 'none';
+        }
+        
+        // Reload prayer requests to show the new one
         await loadPrayerRequests(userUid);
         
     } catch (error) {
@@ -188,17 +215,7 @@ async function loadPrayerRequests(currentUserUid) {
     try {
         const { data: requests, error } = await supabase
             .from('prayer_requests')
-            .select(`
-                request_id,
-                user_uid,
-                title,
-                details,
-                status,
-                created_at,
-                answered_at,
-                answered_by_uid,
-                Users!prayer_requests_user_uid_fkey (First_Name, Last_Name, Username)
-            `)
+            .select('request_id, user_uid, title, details, status, created_at, answered_at, answered_by_uid')
             .order('created_at', { ascending: false });
         
         if (error) throw error;
@@ -210,25 +227,32 @@ async function loadPrayerRequests(currentUserUid) {
             return;
         }
         
-        // Get all user info for answered_by
-        const answeredByUids = [...new Set(requests.filter(r => r.answered_by_uid).map(r => r.answered_by_uid))];
-        const answeredByMap = {};
+        // Get all user UIDs that we need
+        const allUserUids = [...new Set([
+            ...requests.map(r => r.user_uid),
+            ...requests.filter(r => r.answered_by_uid).map(r => r.answered_by_uid)
+        ])];
         
-        if (answeredByUids.length > 0) {
-            const { data: answeredByUsers } = await supabase
-                .from('Users')
-                .select('UID, First_Name, Last_Name, Username')
-                .in('UID', answeredByUids);
-            
-            if (answeredByUsers) {
-                answeredByUsers.forEach(user => {
-                    answeredByMap[user.UID] = user;
-                });
-            }
+        // Fetch all user info
+        const { data: allUsers, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', allUserUids);
+        
+        if (usersError) {
+            console.error('Error fetching users:', usersError);
+        }
+        
+        // Create user map
+        const userMap = {};
+        if (allUsers) {
+            allUsers.forEach(user => {
+                userMap[user.UID] = user;
+            });
         }
         
         requests.forEach(request => {
-            const user = request.Users;
+            const user = userMap[request.user_uid];
             const authorName = (user?.First_Name && user?.Last_Name)
                 ? `${user.First_Name} ${user.Last_Name}`
                 : user?.Username || 'Unknown';
@@ -279,7 +303,11 @@ async function loadPrayerRequests(currentUserUid) {
         
     } catch (error) {
         console.error('Error loading prayer requests:', error);
-        prayerRequestsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading prayer requests. Please refresh the page.</div>';
+        const errorMsg = error?.message || String(error);
+        prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
+            Error loading prayer requests: ${errorMsg}<br>
+            <small style="color: #666; margin-top: 10px; display: block;">Please make sure the prayer_requests table exists in Supabase.</small>
+        </div>`;
     }
 }
 
@@ -302,17 +330,23 @@ async function markAsAnswered(requestId, userUid) {
         if (updateError) throw updateError;
         
         // Get prayer request details
-        const { data: request } = await supabase
+        const { data: request, error: requestError } = await supabase
             .from('prayer_requests')
-            .select(`
-                title,
-                Users!prayer_requests_user_uid_fkey (First_Name, Last_Name, Username)
-            `)
+            .select('title, user_uid')
             .eq('request_id', requestId)
             .single();
         
+        if (requestError) throw requestError;
+        
         if (request) {
-            const requester = request.Users;
+            // Get requester info
+            const { data: requesterData } = await supabase
+                .from('Users')
+                .select('First_Name, Last_Name, Username')
+                .eq('UID', request.user_uid)
+                .single();
+            
+            const requester = requesterData;
             const requesterName = (requester?.First_Name && requester?.Last_Name)
                 ? `${requester.First_Name} ${requester.Last_Name}`
                 : requester?.Username || 'A family member';

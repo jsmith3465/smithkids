@@ -28,7 +28,7 @@
         
         .pray-ground-header h1 {
             margin: 0 0 10px 0;
-            background: linear-gradient(135deg, #1976D2 0%, #0d47a1 100%);
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -198,7 +198,7 @@
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #1976D2 0%, #0d47a1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🙏 Pray Ground</h1>
+                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🙏 Pray Ground</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Profile menu will be inserted here -->
@@ -215,10 +215,19 @@
                 <h1 style="font-size: 3.5rem; font-weight: 900; margin: 0 0 10px 0;">🙏 Pray Ground</h1>
                 <p>"For where two or three gather in my name, there am I with them." - Matthew 18:20</p>
                 <p style="margin-top: 10px; font-size: 1rem; color: #1976D2; font-weight: 600;">Share your prayer requests and celebrate answered prayers together!</p>
+                
+                <!-- Submit Prayer Request Button -->
+                <div style="margin-top: 20px;">
+                    <button id="submitPrayerToggle" class="btn btn-primary" style="
+                        padding: 12px 24px;
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    ">📝 Submit a Prayer Request</button>
+                </div>
             </div>
             
-            <!-- Submit Prayer Request Section -->
-            <div class="submit-prayer-section">
+            <!-- Submit Prayer Request Section (Hidden by default) -->
+            <div id="submitPrayerSection" class="submit-prayer-section" style="display: none;">
                 <h2>📝 Submit a Prayer Request</h2>
                 <form id="prayerRequestForm" style="display: flex; flex-direction: column; gap: 20px;">
                     <div>
