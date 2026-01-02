@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="32" fill="#eef7ff"/>
+  <path d="M80 62h96v24c0 28-20 52-48 58-28-6-48-30-48-58V62z" fill="#ffd166" stroke="#cc5500" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M70 68H46c0 30 12 52 34 62" fill="none" stroke="#cc5500" stroke-width="6" stroke-linecap="round"/>
+  <path d="M186 68h24c0 30-12 52-34 62" fill="none" stroke="#cc5500" stroke-width="6" stroke-linecap="round"/>
+  <path d="M112 144h32v18c0 12-10 22-22 22h-10c-12 0-22-10-22-22v-18h22z" fill="#f4a261" stroke="#8d3b00" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="94" y="184" width="68" height="18" rx="9" fill="#06d6a0" stroke="#155724" stroke-width="6"/>
+  <text x="128" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#333">Great job!</text>
+</svg>
+

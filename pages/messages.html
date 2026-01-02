@@ -1,501 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages - Smith Team Six</title>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-        .messages-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            width: calc(100% - 40px);
-            padding: 40px;
-        }
-        
-        .messages-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .messages-header h1 {
-            margin: 0;
-            font-size: 3.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .compose-btn {
-            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .compose-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.4);
-        }
-        
-        .messages-layout {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 20px;
-            min-height: 500px;
-        }
-        
-        .messages-sidebar {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            overflow-y: auto;
-            max-height: 600px;
-        }
-        
-        .message-item {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .message-item:hover {
-            border-color: #DAA520;
-            transform: translateX(5px);
-        }
-        
-        .message-item.unread {
-            background: #fff3cd;
-            border-color: #DAA520;
-            font-weight: 600;
-        }
-        
-        .message-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .message-item-from {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .message-item-date {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .message-item-subject {
-            font-size: 0.9rem;
-            color: #555;
-            margin-bottom: 5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .message-item-preview {
-            font-size: 0.8rem;
-            color: #999;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .message-view {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 30px;
-            display: none;
-        }
-        
-        .message-view.active {
-            display: block;
-        }
-        
-        .message-view-header {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .message-view-subject {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .message-view-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-        
-        .message-view-from {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .message-view-date {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .message-view-body {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            min-height: 200px;
-            line-height: 1.6;
-        }
-        
-        .message-view-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-action {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-reply {
-            background: linear-gradient(135deg, #28a745 0%, #155724 100%);
-            color: white;
-        }
-        
-        .btn-forward {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-        }
-        
-        .btn-delete {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-        
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        .compose-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .compose-modal.active {
-            display: flex;
-        }
-        
-        .compose-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .compose-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .compose-header h2 {
-            margin: 0;
-            color: #333;
-        }
-        
-        .close-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #DAA520;
-        }
-        
-        .emoji-picker {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        
-        .emoji-btn {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.2s ease;
-        }
-        
-        .emoji-btn:hover {
-            background: #fff3cd;
-            border-color: #DAA520;
-        }
-        
-        .meme-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .meme-item {
-            cursor: pointer;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
-        
-        .meme-item:hover {
-            border-color: #DAA520;
-            transform: scale(1.05);
-        }
-        
-        .meme-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        
-        #messageBody {
-            min-height: 200px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-        
-        #messageBody:focus {
-            outline: none;
-            border-color: #DAA520;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-        
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-        
-        .error-message, .success-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        @media (max-width: 768px) {
-            .messages-layout {
-                grid-template-columns: 1fr;
-            }
-            
-            .messages-sidebar {
-                max-height: 300px;
-            }
-            
-            .compose-content {
-                width: 95%;
-                padding: 20px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages - Smith Team Six</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .messages-wrap { max-width: 1200px; margin: 0 auto; width: 100%; }
+    .messages-layout { display: grid; grid-template-columns: 420px 1fr; gap: 18px; margin-top: 16px; }
+    @media (max-width: 1000px) { .messages-layout { grid-template-columns: 1fr; } }
+
+    .panel { background: white; border: 2px solid #e0e0e0; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden; }
+    .panel-header { padding: 14px 16px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-bottom: 2px solid #DAA520; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .panel-title { font-size: 1.2rem; font-weight: 800; color: #333; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .filters { padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+    .filter-btn { border: 2px solid #DAA520; background: white; color: #333; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 700; }
+    .filter-btn.active { background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; }
+
+    .list { max-height: 70vh; overflow: auto; }
+    .msg-row { padding: 12px 14px; border-bottom: 1px solid #eee; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .msg-row:hover { background: #f8f9fa; }
+    .msg-row.unread .msg-subject { font-weight: 900; }
+    .msg-subject { font-weight: 700; color: #333; }
+    .msg-meta { font-size: 0.85rem; color: #666; margin-top: 2px; }
+    .msg-time { font-size: 0.8rem; color: #666; white-space: nowrap; }
+    .empty { padding: 16px; color: #666; text-align: center; }
+
+    .viewer { padding: 14px 16px; }
+    .viewer h2 { margin: 0 0 6px; font-size: 1.35rem; }
+    .viewer-meta { color: #666; font-size: 0.9rem; margin-bottom: 12px; }
+    .viewer-body { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 14px; min-height: 200px; }
+
+    /* Compose modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 2000; }
+    .compose-modal { width: 100%; max-width: 900px; background: white; border-radius: 16px; border: 2px solid #DAA520; box-shadow: 0 12px 40px rgba(0,0,0,0.3); overflow: hidden; }
+    .modal-header { padding: 14px 16px; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .modal-header-title { font-weight: 900; font-size: 1.15rem; }
+    .modal-body { padding: 14px 16px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-weight: 800; margin-bottom: 6px; color: #333; }
+    .field input, .field select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+    .editor-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .tool-btn { border: 2px solid #DAA520; background: white; color: #333; border-radius: 10px; padding: 8px 10px; cursor: pointer; font-weight: 800; }
+    .tool-btn:hover { background: #fff3cd; }
+    .editor { border: 2px solid #e0e0e0; border-radius: 12px; padding: 12px; min-height: 180px; outline: none; }
+    .picker { display: none; gap: 8px; flex-wrap: wrap; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; margin-top: 8px; }
+    .emoji-btn { font-size: 20px; padding: 6px 8px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .sticker-btn { padding: 6px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .sticker-btn img { width: 64px; height: 64px; }
+    .modal-footer { padding: 14px 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  </style>
 </head>
 <body>
-    <div class="messages-container">
-        <header>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Messages</h1>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <!-- Profile menu will be inserted here -->
-                </div>
-            </div>
-        </header>
-        
-        <div id="authCheck" style="text-align: center; padding: 40px;">
-            <p>Checking authentication...</p>
+  <div class="container messages-wrap">
+    <header>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h1 style="margin: 0; font-size: 3.2rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Messages</h1>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
+          <button id="logoutBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem; min-height: 44px;">Logout</button>
         </div>
+      </div>
+    </header>
 
-        <div id="mainContent" class="hidden">
-            <div class="messages-header">
-                <h1>Messages</h1>
-                <button class="compose-btn" id="composeBtn">✉️ Compose</button>
-            </div>
-            
-            <!-- Messages -->
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-            
-            <div class="messages-layout">
-                <div class="messages-sidebar" id="messagesList">
-                    <div class="loading">Loading messages...</div>
-                </div>
-                
-                <div class="message-view" id="messageView">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📧</div>
-                        <p>Select a message to view</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="authCheck" style="text-align: center; padding: 40px;">
+      <p>Checking authentication...</p>
     </div>
 
-    <!-- Compose Modal -->
-    <div class="compose-modal" id="composeModal">
-        <div class="compose-content">
-            <div class="compose-header">
-                <h2 id="composeTitle">Compose Message</h2>
-                <button class="close-btn" id="closeComposeBtn">×</button>
+    <div id="mainContent" class="hidden">
+      <div class="messages-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📬 Mailbox</div>
+            <div class="toolbar">
+              <button id="composeBtn" class="btn btn-primary" style="min-height: 40px;">✍️ Compose</button>
+              <button id="refreshBtn" class="btn btn-secondary" style="min-height: 40px;">🔄 Refresh</button>
             </div>
-            
-            <form id="composeForm">
-                <div class="form-group">
-                    <label for="toUser">To:</label>
-                    <select id="toUser" required></select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="messageSubject">Subject:</label>
-                    <input type="text" id="messageSubject" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Emojis:</label>
-                    <div class="emoji-picker" id="emojiPicker"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Kid-Friendly Memes:</label>
-                    <div class="meme-gallery" id="memeGallery"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="messageBody">Message:</label>
-                    <div contenteditable="true" id="messageBody" required></div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" class="btn-action btn-delete" id="cancelComposeBtn">Cancel</button>
-                    <button type="submit" class="btn-action btn-reply">Send</button>
-                </div>
-            </form>
+          </div>
+          <div class="filters">
+            <button class="filter-btn active" data-folder="inbox">Inbox</button>
+            <button class="filter-btn" data-folder="sent">Sent</button>
+            <button class="filter-btn" data-folder="trash">Trash</button>
+          </div>
+          <div id="messageList" class="list"></div>
         </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📖 Message</div>
+            <div class="toolbar">
+              <button id="markReadBtn" class="btn btn-secondary" style="min-height: 40px;">✅ Mark Read</button>
+              <button id="replyBtn" class="btn btn-secondary" style="min-height: 40px;">↩️ Reply</button>
+              <button id="forwardBtn" class="btn btn-secondary" style="min-height: 40px;">📤 Forward</button>
+              <button id="deleteBtn" class="btn btn-danger" style="min-height: 40px;">🗑️ Delete</button>
+              <button id="restoreBtn" class="btn btn-primary" style="min-height: 40px; display:none;">♻️ Restore</button>
+              <button id="deleteForeverBtn" class="btn btn-danger" style="min-height: 40px; display:none;">🔥 Delete Forever</button>
+            </div>
+          </div>
+          <div class="viewer">
+            <div id="viewerEmpty" class="empty">Select a message to view it.</div>
+            <div id="viewerContent" class="hidden">
+              <h2 id="viewSubject"></h2>
+              <div class="viewer-meta" id="viewMeta"></div>
+              <div class="viewer-body" id="viewBody"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <footer class="page-footer">
-        <p>Copyright 2026 by The Smith Family</p>
-    </footer>
+  <!-- Compose modal -->
+  <div id="composeBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="compose-modal" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
+      <div class="modal-header">
+        <div class="modal-header-title" id="composeTitle">✍️ New Message</div>
+        <button id="closeComposeBtn" class="btn btn-secondary" style="min-height: 40px;">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="toSelect">To</label>
+          <select id="toSelect" multiple size="6"></select>
+          <div style="color:#666; font-size:0.85rem; margin-top:6px;">Tip: Hold Ctrl (or Cmd) to pick multiple people.</div>
+        </div>
+        <div class="field">
+          <label for="subjectInput">Subject</label>
+          <input id="subjectInput" type="text" placeholder="(optional)" />
+        </div>
+        <div class="field">
+          <label>Message (HTML)</label>
+          <div class="editor-toolbar">
+            <button class="tool-btn" data-cmd="bold"><b>B</b></button>
+            <button class="tool-btn" data-cmd="italic"><i>I</i></button>
+            <button class="tool-btn" data-cmd="underline"><u>U</u></button>
+            <button class="tool-btn" id="emojiToggleBtn" type="button">😀 Emoji</button>
+            <button class="tool-btn" id="stickerToggleBtn" type="button">🖼️ Stickers</button>
+            <button class="tool-btn" id="clearBtn" type="button">🧽 Clear</button>
+          </div>
+          <div id="emojiPicker" class="picker"></div>
+          <div id="stickerPicker" class="picker"></div>
+          <div id="bodyEditor" class="editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="sendBtn" class="btn btn-primary" style="min-height: 44px;">Send</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../js/auth.js"></script>
+  <script type="module" src="../js/profile-menu.js"></script>
+  <script type="module" src="../js/messages.js"></script>
+  <script>
+    // Fallback: ensure Compose modal opens even if module scripts fail to load.
+    document.addEventListener('DOMContentLoaded', () => {
+      const composeBtn = document.getElementById('composeBtn');
+      const closeBtn = document.getElementById('closeComposeBtn');
+      const backdrop = document.getElementById('composeBackdrop');
+      if (!composeBtn || !backdrop) return;
 
-    <script type="module" src="../js/auth.js"></script>
-    <script type="module" src="../js/profile-menu.js"></script>
-    <script type="module" src="../js/messages.js"></script>
+      const open = () => {
+        if (typeof window.openMessagesComposeModal === 'function') {
+          window.openMessagesComposeModal();
+          return;
+        }
+        backdrop.style.display = 'flex';
+        backdrop.setAttribute('aria-hidden', 'false');
+      };
+
+      const close = () => {
+        if (typeof window.closeMessagesComposeModal === 'function') {
+          window.closeMessagesComposeModal();
+          return;
+        }
+        backdrop.style.display = 'none';
+        backdrop.setAttribute('aria-hidden', 'true');
+      };
+
+      composeBtn.addEventListener('click', open);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) close();
+      });
+    });
+  </script>
 </body>
 </html>
 

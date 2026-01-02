@@ -1,562 +1,641 @@
-// Messages page functionality
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Helper function to get correct path for pages
-function getPagePath(pageName) {
-    const currentPath = window.location.pathname;
-    if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath.endsWith('index.html')) {
-        return `pages/${pageName}`;
-    }
-    return pageName;
+let session = null;
+let currentFolder = 'inbox';
+let selectedMessageId = null;
+
+let usersById = new Map(); // UID -> user
+let boxByMessageId = new Map(); // message_id -> box row
+let messageById = new Map(); // message_id -> message row
+
+let composeMode = { type: 'new', parent_message_id: null, forwarded_from_message_id: null };
+
+function $(id) {
+  return document.getElementById(id);
 }
 
-// Emoji list for picker
-const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
+function onClick(id, handler) {
+  const el = $(id);
+  if (!el) return false;
+  el.addEventListener('click', handler);
+  return true;
+}
 
-// Kid-friendly meme images (using emoji representations for now)
-const kidMemes = [
-    { name: 'Happy', emoji: '😊', code: '<span style="font-size: 2rem;">😊</span>' },
-    { name: 'Excited', emoji: '🤩', code: '<span style="font-size: 2rem;">🤩</span>' },
-    { name: 'Cool', emoji: '😎', code: '<span style="font-size: 2rem;">😎</span>' },
-    { name: 'Love', emoji: '🥰', code: '<span style="font-size: 2rem;">🥰</span>' },
-    { name: 'Party', emoji: '🎉', code: '<span style="font-size: 2rem;">🎉</span>' },
-    { name: 'Star', emoji: '⭐', code: '<span style="font-size: 2rem;">⭐</span>' },
-    { name: 'Fire', emoji: '🔥', code: '<span style="font-size: 2rem;">🔥</span>' },
-    { name: 'Thumbs Up', emoji: '👍', code: '<span style="font-size: 2rem;">👍</span>' },
-    { name: 'Clap', emoji: '👏', code: '<span style="font-size: 2rem;">👏</span>' },
-    { name: 'Heart', emoji: '❤️', code: '<span style="font-size: 2rem;">❤️</span>' },
-    { name: 'Rainbow', emoji: '🌈', code: '<span style="font-size: 2rem;">🌈</span>' },
-    { name: 'Sun', emoji: '☀️', code: '<span style="font-size: 2rem;">☀️</span>' },
-];
+function safeSetText(id, text) {
+  const el = $(id);
+  if (el) el.textContent = text;
+}
 
-let currentMessageId = null;
-let currentMessage = null;
-let allUsers = [];
-let composeMode = 'new'; // 'new', 'reply', 'forward'
+function escapeHtml(text) {
+  return (text ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', () => {
-    const checkAuth = setInterval(() => {
-        if (window.authStatus && window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-            checkUserAccess();
-        } else if (window.authStatus && !window.authStatus.isAuthenticated) {
-            clearInterval(checkAuth);
-            window.location.href = getPagePath('login.html');
-        }
+function displayNameForUser(u) {
+  if (!u) return 'Unknown';
+  const first = u.First_Name || u.first_name || u.firstName;
+  const last = u.Last_Name || u.last_name || u.lastName;
+  const username = u.Username || u.username;
+  if (first && last) return `${first} ${last}`;
+  return username || 'Unknown';
+}
+
+function formatTime(ts) {
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return '';
+  }
+}
+
+function sanitizeMessageHtml(html) {
+  const doc = new DOMParser().parseFromString(html || '', 'text/html');
+
+  // remove scripts/styles/iframes just in case
+  doc.querySelectorAll('script, iframe, object, embed').forEach((el) => el.remove());
+
+  // strip event handlers + javascript: URLs
+  doc.querySelectorAll('*').forEach((el) => {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase();
+      const value = (attr.value || '').trim().toLowerCase();
+      if (name.startsWith('on')) el.removeAttribute(attr.name);
+      if ((name === 'href' || name === 'src') && value.startsWith('javascript:')) el.removeAttribute(attr.name);
+    }
+  });
+
+  return doc.body.innerHTML;
+}
+
+async function ensureAuthReady() {
+  return await new Promise((resolve) => {
+    const start = Date.now();
+    const timer = setInterval(() => {
+      if (window.authStatus) {
+        clearInterval(timer);
+        resolve(true);
+      }
+      if (Date.now() - start > 5000) {
+        clearInterval(timer);
+        resolve(false);
+      }
     }, 100);
-    
-    setTimeout(() => {
-        clearInterval(checkAuth);
-    }, 5000);
-});
-
-async function checkUserAccess() {
-    const authCheck = document.getElementById('authCheck');
-    const mainContent = document.getElementById('mainContent');
-    
-    try {
-        const session = window.authStatus?.getSession();
-        if (!session || !session.uid) {
-            window.location.href = getPagePath('login.html');
-            return;
-        }
-        
-        authCheck.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-        
-        await loadUsers();
-        await loadMessages();
-        setupEventListeners();
-        setupEmojiPicker();
-        setupMemeGallery();
-    } catch (error) {
-        console.error('Error checking access:', error);
-        window.location.href = getPagePath('login.html');
-    }
+  });
 }
 
-function setupEventListeners() {
-    document.getElementById('composeBtn').addEventListener('click', () => openCompose('new'));
-    document.getElementById('closeComposeBtn').addEventListener('click', closeCompose);
-    document.getElementById('cancelComposeBtn').addEventListener('click', closeCompose);
-    document.getElementById('composeForm').addEventListener('submit', handleSendMessage);
-    
-    // Close modal when clicking outside
-    document.getElementById('composeModal').addEventListener('click', (e) => {
-        if (e.target.id === 'composeModal') {
-            closeCompose();
-        }
+function setViewerEmpty() {
+  selectedMessageId = null;
+  $('viewerEmpty').classList.remove('hidden');
+  $('viewerContent').classList.add('hidden');
+}
+
+function updateViewerButtons() {
+  const box = selectedMessageId ? boxByMessageId.get(selectedMessageId) : null;
+  const hasSelection = Boolean(selectedMessageId && box);
+
+  const folder = box?.folder;
+  const isTrash = folder === 'trash';
+
+  $('markReadBtn').disabled = !hasSelection || currentFolder !== 'inbox';
+  $('replyBtn').disabled = !hasSelection;
+  $('forwardBtn').disabled = !hasSelection;
+  $('deleteBtn').disabled = !hasSelection;
+
+  $('restoreBtn').style.display = hasSelection && isTrash ? 'inline-block' : 'none';
+  $('deleteForeverBtn').style.display = hasSelection && isTrash ? 'inline-block' : 'none';
+
+  if (hasSelection && currentFolder === 'inbox') {
+    $('markReadBtn').textContent = box.is_read ? '📩 Mark Unread' : '✅ Mark Read';
+  } else {
+    $('markReadBtn').textContent = '✅ Mark Read';
+  }
+}
+
+function renderMessageList() {
+  const list = $('messageList');
+  const boxes = Array.from(boxByMessageId.values())
+    .filter((b) => b.folder === currentFolder)
+    .sort((a, b) => (new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)));
+
+  if (!boxes.length) {
+    list.innerHTML = `<div class="empty">No messages in ${escapeHtml(currentFolder)}.</div>`;
+    setViewerEmpty();
+    updateViewerButtons();
+    return;
+  }
+
+  const rowsHtml = boxes
+    .map((box) => {
+      const msg = messageById.get(box.message_id);
+      const sender = usersById.get(msg?.sender_uid);
+      const subject = msg?.subject || '(no subject)';
+      const time = msg?.created_at ? formatTime(msg.created_at) : '';
+
+      let line2 = '';
+      if (box.folder === 'inbox') {
+        line2 = `From: ${escapeHtml(displayNameForUser(sender))}`;
+      } else if (box.folder === 'sent') {
+        const toNames = (msg?.recipient_uids || [])
+          .filter((uid) => uid !== session.uid)
+          .map((uid) => displayNameForUser(usersById.get(uid)))
+          .join(', ');
+        line2 = `To: ${escapeHtml(toNames || '(unknown)')}`;
+      } else {
+        line2 = `(${escapeHtml(box.original_folder)}) ${escapeHtml(displayNameForUser(sender))}`;
+        if (box.purged_at) line2 += ' • Deleted Forever';
+      }
+
+      const unreadClass = box.folder === 'inbox' && !box.is_read ? 'unread' : '';
+      const selectedClass = box.message_id === selectedMessageId ? 'style="background:#f8f9fa;"' : '';
+
+      return `
+        <div class="msg-row ${unreadClass}" data-message-id="${box.message_id}" ${selectedClass}>
+          <div>
+            <div class="msg-subject">${escapeHtml(subject)}</div>
+            <div class="msg-meta">${escapeHtml(line2)}</div>
+          </div>
+          <div class="msg-time">${escapeHtml(time)}</div>
+        </div>
+      `;
+    })
+    .join('');
+
+  list.innerHTML = rowsHtml;
+
+  // attach click handler
+  list.querySelectorAll('.msg-row').forEach((row) => {
+    row.addEventListener('click', async () => {
+      const messageId = Number(row.getAttribute('data-message-id'));
+      await openMessage(messageId);
     });
+  });
+}
+
+function renderViewer(messageId) {
+  const box = boxByMessageId.get(messageId);
+  const msg = messageById.get(messageId);
+  if (!box || !msg) {
+    setViewerEmpty();
+    updateViewerButtons();
+    return;
+  }
+
+  const sender = usersById.get(msg.sender_uid);
+  const subject = msg.subject || '(no subject)';
+
+  const toNames = (msg.recipient_uids || [])
+    .filter((uid) => uid !== msg.sender_uid)
+    .map((uid) => displayNameForUser(usersById.get(uid)))
+    .join(', ');
+
+  const metaParts = [];
+  metaParts.push(`<strong>From:</strong> ${escapeHtml(displayNameForUser(sender))}`);
+  metaParts.push(`<strong>To:</strong> ${escapeHtml(toNames || '(unknown)')}`);
+  metaParts.push(`<strong>Sent:</strong> ${escapeHtml(formatTime(msg.created_at))}`);
+  if (box.folder === 'trash') metaParts.push(`<strong>Trash:</strong> ${escapeHtml(formatTime(box.trashed_at || box.deleted_at || box.updated_at))}`);
+
+  $('viewSubject').textContent = subject;
+  $('viewMeta').innerHTML = metaParts.join(' • ');
+  $('viewBody').innerHTML = msg.body_html || '';
+
+  $('viewerEmpty').classList.add('hidden');
+  $('viewerContent').classList.remove('hidden');
+  updateViewerButtons();
+}
+
+async function openMessage(messageId) {
+  selectedMessageId = messageId;
+  renderViewer(messageId);
+  renderMessageList();
+
+  const box = boxByMessageId.get(messageId);
+  if (box?.folder === 'inbox' && !box.is_read) {
+    await setReadState(true);
+  }
 }
 
 async function loadUsers() {
-    try {
-        const { data, error } = await supabase
-            .from('Users')
-            .select('UID, First_Name, Last_Name, Username')
-            .order('First_Name', { ascending: true });
-        
-        if (error) throw error;
-        
-        allUsers = data || [];
-        
-        // Populate user dropdown
-        const toUserSelect = document.getElementById('toUser');
-        toUserSelect.innerHTML = '<option value="">Select a user...</option>';
-        allUsers.forEach(user => {
-            const name = user.First_Name && user.Last_Name 
-                ? `${user.First_Name} ${user.Last_Name} (${user.Username})`
-                : user.Username;
-            const option = document.createElement('option');
-            option.value = user.UID;
-            option.textContent = name;
-            toUserSelect.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error loading users:', error);
-        showError('Failed to load users. Please refresh the page.');
-    }
+  const { data, error } = await supabase
+    .from('Users')
+    .select('UID, First_Name, Last_Name, Username, user_type, is_suspended, EmailAddress')
+    .order('First_Name', { ascending: true });
+
+  if (error) throw error;
+
+  usersById = new Map((data || []).map((u) => [Number(u.UID), u]));
 }
 
-async function loadMessages() {
-    const session = window.authStatus?.getSession();
-    if (!session) return;
-    
-    const messagesList = document.getElementById('messagesList');
-    
-    try {
-        // Get all messages for this user (both sent and received)
-        const { data: receivedMessages, error: receivedError } = await supabase
-            .from('messages')
-            .select(`
-                message_id,
-                from_user_uid,
-                to_user_uid,
-                subject,
-                body_html,
-                is_read,
-                read_at,
-                created_at,
-                deleted_at,
-                parent_message_id,
-                forwarded_from_message_id,
-                is_forwarded,
-                forwarded_from_user_uid,
-                from_user:Users!messages_from_user_uid_fkey(First_Name, Last_Name, Username),
-                to_user:Users!messages_to_user_uid_fkey(First_Name, Last_Name, Username)
-            `)
-            .eq('to_user_uid', session.uid)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false });
-        
-        if (receivedError) throw receivedError;
-        
-        const { data: sentMessages, error: sentError } = await supabase
-            .from('messages')
-            .select(`
-                message_id,
-                from_user_uid,
-                to_user_uid,
-                subject,
-                body_html,
-                is_read,
-                read_at,
-                created_at,
-                deleted_at,
-                parent_message_id,
-                forwarded_from_message_id,
-                is_forwarded,
-                forwarded_from_user_uid,
-                from_user:Users!messages_from_user_uid_fkey(First_Name, Last_Name, Username),
-                to_user:Users!messages_to_user_uid_fkey(First_Name, Last_Name, Username)
-            `)
-            .eq('from_user_uid', session.uid)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false });
-        
-        if (sentError) throw sentError;
-        
-        // Combine and sort messages
-        const allMessages = [
-            ...(receivedMessages || []).map(m => ({ ...m, direction: 'received' })),
-            ...(sentMessages || []).map(m => ({ ...m, direction: 'sent' }))
-        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
-        if (allMessages.length === 0) {
-            messagesList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No messages yet</p></div>';
-            return;
-        }
-        
-        // Display messages
-        messagesList.innerHTML = '';
-        allMessages.forEach(message => {
-            const messageItem = document.createElement('div');
-            messageItem.className = `message-item ${message.direction === 'received' && !message.is_read ? 'unread' : ''}`;
-            messageItem.dataset.messageId = message.message_id;
-            
-            const otherUser = message.direction === 'received' ? message.from_user : message.to_user;
-            const fromName = otherUser?.First_Name && otherUser?.Last_Name
-                ? `${otherUser.First_Name} ${otherUser.Last_Name}`
-                : otherUser?.Username || 'Unknown';
-            
-            const date = new Date(message.created_at);
-            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
-            // Strip HTML for preview
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = message.body_html || '';
-            const textPreview = tempDiv.textContent || tempDiv.innerText || '';
-            
-            messageItem.innerHTML = `
-                <div class="message-item-header">
-                    <div class="message-item-from">${message.direction === 'received' ? 'From' : 'To'}: ${fromName}</div>
-                    <div class="message-item-date">${dateStr}</div>
-                </div>
-                <div class="message-item-subject">${message.subject || '(No subject)'}</div>
-                <div class="message-item-preview">${textPreview.substring(0, 50)}${textPreview.length > 50 ? '...' : ''}</div>
-            `;
-            
-            messageItem.addEventListener('click', () => viewMessage(message));
-            messagesList.appendChild(messageItem);
-        });
-        
-    } catch (error) {
-        console.error('Error loading messages:', error);
-        messagesList.innerHTML = '<div class="empty-state"><p>Error loading messages. Please refresh the page.</p></div>';
+async function loadMailbox() {
+  const list = $('messageList');
+  list.innerHTML = `<div class="empty">Loading...</div>`;
+  setViewerEmpty();
+
+  // Load boxes for this folder (hide purged items from non-trash folders)
+  let query = supabase
+    .from('message_boxes')
+    .select('message_id, folder, original_folder, is_read, read_at, trashed_at, deleted_at, purged_at, created_at, updated_at')
+    .eq('user_uid', session.uid)
+    .eq('folder', currentFolder)
+    .order('updated_at', { ascending: false })
+    .limit(200);
+
+  if (currentFolder !== 'trash') {
+    query = query.is('purged_at', null);
+  }
+
+  const { data: boxes, error: boxError } = await query;
+  if (boxError) throw boxError;
+
+  boxByMessageId = new Map((boxes || []).map((b) => [Number(b.message_id), b]));
+
+  const messageIds = (boxes || []).map((b) => Number(b.message_id));
+  if (!messageIds.length) {
+    messageById = new Map();
+    renderMessageList();
+    return;
+  }
+
+  // Load message content
+  const { data: messages, error: msgError } = await supabase
+    .from('messages')
+    .select('id, sender_uid, recipient_uids, subject, body_html, created_at, parent_message_id, forwarded_from_message_id')
+    .in('id', messageIds);
+  if (msgError) throw msgError;
+
+  messageById = new Map((messages || []).map((m) => [Number(m.id), m]));
+
+  // Load any missing Users referenced in sender/recipients
+  const neededUserIds = new Set();
+  for (const m of messages || []) {
+    neededUserIds.add(Number(m.sender_uid));
+    for (const uid of m.recipient_uids || []) neededUserIds.add(Number(uid));
+  }
+  const missing = Array.from(neededUserIds).filter((uid) => !usersById.has(uid));
+  if (missing.length) {
+    const { data: moreUsers, error: uErr } = await supabase
+      .from('Users')
+      .select('UID, First_Name, Last_Name, Username, user_type, is_suspended, EmailAddress')
+      .in('UID', missing);
+    if (!uErr && moreUsers) {
+      for (const u of moreUsers) usersById.set(Number(u.UID), u);
     }
+  }
+
+  renderMessageList();
 }
 
-async function viewMessage(message) {
-    currentMessageId = message.message_id;
-    currentMessage = message;
-    
-    const messageView = document.getElementById('messageView');
-    messageView.classList.add('active');
-    
-    const session = window.authStatus?.getSession();
-    const otherUser = message.direction === 'received' ? message.from_user : message.to_user;
-    const fromName = otherUser?.First_Name && otherUser?.Last_Name
-        ? `${otherUser.First_Name} ${otherUser.Last_Name}`
-        : otherUser?.Username || 'Unknown';
-    
-    const date = new Date(message.created_at);
-    const dateStr = date.toLocaleString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+function openComposeModal({ title, toUids = [], subject = '', bodyHtml = '', mode }) {
+  composeMode = mode;
+  safeSetText('composeTitle', title);
+
+  // reset selections
+  const toSelect = $('toSelect');
+  if (toSelect) {
+    for (const opt of Array.from(toSelect.options)) {
+      opt.selected = toUids.includes(Number(opt.value));
+    }
+  }
+
+  const subjectInput = $('subjectInput');
+  if (subjectInput) subjectInput.value = subject || '';
+  const bodyEditor = $('bodyEditor');
+  if (bodyEditor) bodyEditor.innerHTML = bodyHtml || '';
+
+  const backdrop = $('composeBackdrop');
+  if (backdrop) {
+    backdrop.style.display = 'flex';
+    backdrop.setAttribute('aria-hidden', 'false');
+  }
+  if (bodyEditor) bodyEditor.focus();
+}
+
+function closeComposeModal() {
+  const backdrop = $('composeBackdrop');
+  if (!backdrop) return;
+  backdrop.style.display = 'none';
+  backdrop.setAttribute('aria-hidden', 'true');
+}
+
+// Expose safe helpers for non-module fallback bindings
+window.openMessagesComposeModal = () => {
+  openComposeModal({
+    title: '✍️ New Message',
+    toUids: [],
+    subject: '',
+    bodyHtml: '',
+    mode: { type: 'new', parent_message_id: null, forwarded_from_message_id: null },
+  });
+};
+window.closeMessagesComposeModal = () => closeComposeModal();
+
+function insertHtmlAtCursor(html) {
+  const editor = $('bodyEditor');
+  if (!editor) return;
+  editor.focus();
+  document.execCommand('insertHTML', false, html);
+}
+
+function insertTextAtCursor(text) {
+  const editor = $('bodyEditor');
+  if (!editor) return;
+  editor.focus();
+  document.execCommand('insertText', false, text);
+}
+
+function buildEmojiPicker() {
+  const emojis = ['😀', '😄', '😊', '😍', '🥳', '👍', '🙏', '🎉', '⭐', '🌟', '💎', '🎮', '🏆', '📖', '🍎', '🧩', '🐍', '⚔️', '💪', '🏠'];
+  const picker = $('emojiPicker');
+  picker.innerHTML = emojis
+    .map((e) => `<button class="emoji-btn" type="button" data-emoji="${escapeHtml(e)}">${escapeHtml(e)}</button>`)
+    .join('');
+  picker.querySelectorAll('.emoji-btn').forEach((btn) => {
+    btn.addEventListener('click', () => insertTextAtCursor(btn.getAttribute('data-emoji')));
+  });
+}
+
+function buildStickerPicker() {
+  const stickers = [
+    { name: 'Smile', src: '../assets/stickers/smile.svg' },
+    { name: 'Thumbs Up', src: '../assets/stickers/thumbs-up.svg' },
+    { name: 'Trophy', src: '../assets/stickers/trophy.svg' },
+  ];
+  const picker = $('stickerPicker');
+  picker.innerHTML = stickers
+    .map(
+      (s) => `
+        <button class="sticker-btn" type="button" title="${escapeHtml(s.name)}" data-src="${escapeHtml(s.src)}">
+          <img alt="${escapeHtml(s.name)}" src="${escapeHtml(s.src)}" />
+        </button>
+      `,
+    )
+    .join('');
+  picker.querySelectorAll('.sticker-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const src = btn.getAttribute('data-src');
+      insertHtmlAtCursor(`<img src="${src}" alt="sticker" style="width:96px; height:96px; vertical-align:middle;" />`);
     });
-    
-    messageView.innerHTML = `
-        <div class="message-view-header">
-            <div class="message-view-subject">${message.subject || '(No subject)'}</div>
-            <div class="message-view-meta">
-                <div class="message-view-from">${message.direction === 'received' ? 'From' : 'To'}: ${fromName}</div>
-                <div class="message-view-date">${dateStr}</div>
-            </div>
-        </div>
-        <div class="message-view-body">${message.body_html || ''}</div>
-        <div class="message-view-actions">
-            ${message.direction === 'received' ? `<button class="btn-action btn-reply" id="replyBtn">Reply</button>` : ''}
-            <button class="btn-action btn-forward" id="forwardBtn">Forward</button>
-            <button class="btn-action btn-delete" id="deleteBtn">Delete</button>
-        </div>
-    `;
-    
-    // Add event listeners
-    if (message.direction === 'received') {
-        document.getElementById('replyBtn').addEventListener('click', () => openCompose('reply', message));
-    }
-    document.getElementById('forwardBtn').addEventListener('click', () => openCompose('forward', message));
-    document.getElementById('deleteBtn').addEventListener('click', () => deleteMessage(message.message_id));
-    
-    // Mark as read if received and unread
-    if (message.direction === 'received' && !message.is_read) {
-        await markAsRead(message.message_id);
-    }
+  });
 }
 
-async function markAsRead(messageId) {
-    try {
-        const { error } = await supabase
-            .from('messages')
-            .update({ 
-                is_read: true,
-                read_at: new Date().toISOString()
-            })
-            .eq('message_id', messageId);
-        
-        if (error) throw error;
-        
-        // Reload messages to update unread status
-        await loadMessages();
-        
-        // Update unread badge in profile menu if it exists
-        if (window.updateUnreadBadge) {
-            window.updateUnreadBadge();
-        }
-    } catch (error) {
-        console.error('Error marking message as read:', error);
-    }
-}
+async function sendCurrentDraft() {
+  const toSelect = $('toSelect');
+  const recipientUids = Array.from(toSelect.selectedOptions).map((o) => Number(o.value));
+  const subject = $('subjectInput').value.trim();
+  const rawHtml = $('bodyEditor').innerHTML;
+  const bodyHtml = sanitizeMessageHtml(rawHtml);
 
-function openCompose(mode, message = null) {
-    composeMode = mode;
-    currentMessage = message;
-    
-    const modal = document.getElementById('composeModal');
-    const title = document.getElementById('composeTitle');
-    const form = document.getElementById('composeForm');
-    
-    // Reset form
-    form.reset();
-    document.getElementById('messageBody').innerHTML = '';
-    
-    if (mode === 'reply') {
-        title.textContent = 'Reply';
-        document.getElementById('toUser').value = message.from_user_uid;
-        document.getElementById('toUser').disabled = true;
-        document.getElementById('messageSubject').value = `Re: ${message.subject || ''}`;
-    } else if (mode === 'forward') {
-        title.textContent = 'Forward';
-        document.getElementById('toUser').value = '';
-        document.getElementById('toUser').disabled = false;
-        document.getElementById('messageSubject').value = `Fwd: ${message.subject || ''}`;
-        document.getElementById('messageBody').innerHTML = `<br><br>--- Forwarded Message ---<br>${message.body_html || ''}`;
-    } else {
-        title.textContent = 'Compose Message';
-        document.getElementById('toUser').value = '';
-        document.getElementById('toUser').disabled = false;
-        document.getElementById('messageSubject').value = '';
-    }
-    
-    modal.classList.add('active');
-}
+  if (!recipientUids.length) {
+    alert('Please choose at least one recipient.');
+    return;
+  }
+  if (!bodyHtml || !bodyHtml.trim()) {
+    alert('Please write a message.');
+    return;
+  }
 
-function closeCompose() {
-    document.getElementById('composeModal').classList.remove('active');
-    document.getElementById('toUser').disabled = false;
-}
-
-async function handleSendMessage(e) {
-    e.preventDefault();
-    
-    const session = window.authStatus?.getSession();
-    if (!session) return;
-    
-    const toUserUid = document.getElementById('toUser').value;
-    const subject = document.getElementById('messageSubject').value;
-    const bodyHtml = document.getElementById('messageBody').innerHTML;
-    
-    if (!toUserUid || !subject || !bodyHtml.trim()) {
-        showError('Please fill in all fields.');
-        return;
-    }
-    
-    try {
-        let parentMessageId = null;
-        if (composeMode === 'reply' && currentMessage) {
-            parentMessageId = currentMessage.message_id;
-        }
-        
-        // Insert message
-        const { data: newMessage, error } = await supabase
-            .from('messages')
-            .insert({
-                from_user_uid: session.uid,
-                to_user_uid: toUserUid,
-                subject: subject,
-                body_html: bodyHtml,
-                parent_message_id: composeMode === 'reply' ? parentMessageId : null,
-                forwarded_from_message_id: composeMode === 'forward' && currentMessage ? currentMessage.message_id : null,
-                is_forwarded: composeMode === 'forward'
-            })
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        // Get recipient info for notification
-        const recipient = allUsers.find(u => u.UID === parseInt(toUserUid));
-        const fromName = session.firstName && session.lastName
-            ? `${session.firstName} ${session.lastName}`
-            : session.username;
-        
-        // Send email notification if recipient is admin
-        if (recipient) {
-            try {
-                const { data: recipientData } = await supabase
-                    .from('Users')
-                    .select('user_type')
-                    .eq('UID', toUserUid)
-                    .single();
-                
-                if (recipientData && recipientData.user_type === 'admin') {
-                    await supabase.functions.invoke('send-approval-notification', {
-                        body: {
-                            notification_type: 'new_message',
-                            message_id: newMessage.message_id,
-                            from_user_name: fromName,
-                            message_subject: subject,
-                            message_body: bodyHtml
-                        }
-                    });
-                }
-            } catch (notifError) {
-                console.error('Error sending notification:', notifError);
-                // Don't fail the message send if notification fails
-            }
-        }
-        
-        showSuccess('Message sent successfully!');
-        closeCompose();
-        await loadMessages();
-        
-        // Update unread badge
-        if (window.updateUnreadBadge) {
-            window.updateUnreadBadge();
-        }
-        
-    } catch (error) {
-        console.error('Error sending message:', error);
-        showError('Failed to send message. Please try again.');
-    }
-}
-
-async function deleteMessage(messageId) {
-    if (!confirm('Are you sure you want to delete this message?')) {
-        return;
-    }
-    
-    try {
-        // Get message data before deleting
-        const { data: message, error: fetchError } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('message_id', messageId)
-            .single();
-        
-        if (fetchError) throw fetchError;
-        
-        const session = window.authStatus?.getSession();
-        
-        // Soft delete
-        const { error: deleteError } = await supabase
-            .from('messages')
-            .update({ deleted_at: new Date().toISOString() })
-            .eq('message_id', messageId);
-        
-        if (deleteError) throw deleteError;
-        
-        // Save to deleted_messages table
-        await supabase
-            .from('deleted_messages')
-            .insert({
-                message_id: messageId,
-                from_user_uid: message.from_user_uid,
-                to_user_uid: message.to_user_uid,
-                subject: message.subject,
-                body_html: message.body_html,
-                deleted_by_user_uid: session.uid,
-                original_created_at: message.created_at,
-                is_read: message.is_read,
-                parent_message_id: message.parent_message_id,
-                is_forwarded: message.is_forwarded || false,
-                forwarded_from_user_uid: message.forwarded_from_user_uid
-            });
-        
-        showSuccess('Message deleted successfully!');
-        
-        // Clear message view
-        document.getElementById('messageView').innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📧</div>
-                <p>Select a message to view</p>
-            </div>
-        `;
-        
-        await loadMessages();
-        
-    } catch (error) {
-        console.error('Error deleting message:', error);
-        showError('Failed to delete message. Please try again.');
-    }
-}
-
-function setupEmojiPicker() {
-    const emojiPicker = document.getElementById('emojiPicker');
-    emojis.forEach(emoji => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'emoji-btn';
-        btn.textContent = emoji;
-        btn.addEventListener('click', () => {
-            insertAtCursor(emoji);
-        });
-        emojiPicker.appendChild(btn);
+  $('sendBtn').disabled = true;
+  $('sendBtn').textContent = 'Sending...';
+  try {
+    const { data: messageId, error } = await supabase.rpc('send_message', {
+      p_sender_uid: session.uid,
+      p_recipient_uids: recipientUids,
+      p_subject: subject || null,
+      p_body_html: bodyHtml,
+      p_parent_message_id: composeMode.parent_message_id,
+      p_forwarded_from_message_id: composeMode.forwarded_from_message_id,
     });
+    if (error) throw error;
+
+    // Email admins (only the admin recipients)
+    for (const uid of recipientUids) {
+      const u = usersById.get(uid);
+      if (u?.user_type === 'admin') {
+        try {
+          await supabase.functions.invoke('send-message-notification', {
+            body: { message_id: Number(messageId), recipient_uid: uid },
+          });
+        } catch (e) {
+          console.warn('Admin email notify failed:', e);
+        }
+      }
+    }
+
+    closeComposeModal();
+    await loadMailbox();
+    alert('Message sent!');
+  } catch (e) {
+    console.error(e);
+    alert(`Failed to send message: ${e.message || e}`);
+  } finally {
+    $('sendBtn').disabled = false;
+    $('sendBtn').textContent = 'Send';
+  }
 }
 
-function setupMemeGallery() {
-    const memeGallery = document.getElementById('memeGallery');
-    kidMemes.forEach(meme => {
-        const memeItem = document.createElement('div');
-        memeItem.className = 'meme-item';
-        memeItem.innerHTML = `<div style="text-align: center; padding: 10px; font-size: 2rem;">${meme.emoji}</div><div style="text-align: center; font-size: 0.7rem; padding: 5px;">${meme.name}</div>`;
-        memeItem.addEventListener('click', () => {
-            insertAtCursor(meme.code);
-        });
-        memeGallery.appendChild(memeItem);
+async function setReadState(isRead) {
+  if (!selectedMessageId) return;
+  try {
+    await supabase.rpc('set_message_read_state', {
+      p_user_uid: session.uid,
+      p_message_id: selectedMessageId,
+      p_is_read: isRead,
     });
+    const box = boxByMessageId.get(selectedMessageId);
+    if (box) {
+      box.is_read = isRead;
+      box.read_at = isRead ? new Date().toISOString() : null;
+    }
+    renderMessageList();
+    renderViewer(selectedMessageId);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-function insertAtCursor(text) {
-    const messageBody = document.getElementById('messageBody');
-    const selection = window.getSelection();
-    
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        const textNode = document.createTextNode(text);
-        range.insertNode(textNode);
-        range.setStartAfter(textNode);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    } else {
-        messageBody.innerHTML += text;
-    }
-    
-    messageBody.focus();
+async function trashSelected() {
+  if (!selectedMessageId) return;
+  const ok = confirm('Move this message to Trash?');
+  if (!ok) return;
+
+  await supabase.rpc('trash_message', { p_user_uid: session.uid, p_message_id: selectedMessageId });
+  await loadMailbox();
 }
 
-function showError(message) {
-    const errorDiv = document.getElementById('errorMessage');
-    if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
-    }
+async function restoreSelected() {
+  if (!selectedMessageId) return;
+  await supabase.rpc('restore_message', { p_user_uid: session.uid, p_message_id: selectedMessageId });
+  await loadMailbox();
 }
 
-function showSuccess(message) {
-    const successDiv = document.getElementById('successMessage');
-    if (successDiv) {
-        successDiv.textContent = message;
-        successDiv.style.display = 'block';
-        setTimeout(() => {
-            successDiv.style.display = 'none';
-        }, 5000);
-    }
+async function purgeSelected() {
+  if (!selectedMessageId) return;
+  const ok = confirm('Delete forever? (This will still be retained in the database for audit/history.)');
+  if (!ok) return;
+
+  await supabase.rpc('purge_message', { p_user_uid: session.uid, p_message_id: selectedMessageId });
+  await loadMailbox();
 }
+
+function setupComposeRecipientList() {
+  const toSelect = $('toSelect');
+  toSelect.innerHTML = '';
+
+  const options = Array.from(usersById.values())
+    .filter((u) => !u.is_suspended)
+    .filter((u) => Number(u.UID) !== Number(session.uid))
+    .map((u) => {
+      const label = `${displayNameForUser(u)} (${u.Username})${u.user_type === 'admin' ? ' - Admin' : ''}`;
+      return { uid: Number(u.UID), label };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = String(opt.uid);
+    o.textContent = opt.label;
+    toSelect.appendChild(o);
+  }
+}
+
+function setupEventHandlers() {
+  // folder filters
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFolder = btn.getAttribute('data-folder');
+      await loadMailbox();
+      updateViewerButtons();
+    });
+  });
+
+  onClick('refreshBtn', async () => {
+    await loadMailbox();
+  });
+
+  onClick('composeBtn', () => {
+    openComposeModal({
+      title: '✍️ New Message',
+      toUids: [],
+      subject: '',
+      bodyHtml: '',
+      mode: { type: 'new', parent_message_id: null, forwarded_from_message_id: null },
+    });
+  });
+
+  onClick('closeComposeBtn', closeComposeModal);
+  const backdrop = $('composeBackdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) closeComposeModal();
+    });
+  }
+
+  onClick('sendBtn', sendCurrentDraft);
+
+  // editor toolbar
+  document.querySelectorAll('.tool-btn[data-cmd]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cmd = btn.getAttribute('data-cmd');
+      const editor = $('bodyEditor');
+      if (editor) editor.focus();
+      document.execCommand(cmd, false, null);
+    });
+  });
+
+  onClick('emojiToggleBtn', () => {
+    const p = $('emojiPicker');
+    p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  onClick('stickerToggleBtn', () => {
+    const p = $('stickerPicker');
+    p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  onClick('clearBtn', () => {
+    const ok = confirm('Clear the message editor?');
+    if (!ok) return;
+    $('bodyEditor').innerHTML = '';
+  });
+
+  onClick('markReadBtn', async () => {
+    const box = selectedMessageId ? boxByMessageId.get(selectedMessageId) : null;
+    if (!box || box.folder !== 'inbox') return;
+    await setReadState(!box.is_read);
+  });
+
+  onClick('deleteBtn', trashSelected);
+  onClick('restoreBtn', restoreSelected);
+  onClick('deleteForeverBtn', purgeSelected);
+
+  onClick('replyBtn', () => {
+    if (!selectedMessageId) return;
+    const msg = messageById.get(selectedMessageId);
+    if (!msg) return;
+    const sender = usersById.get(msg.sender_uid);
+    const subj = msg.subject ? (msg.subject.startsWith('Re:') ? msg.subject : `Re: ${msg.subject}`) : 'Re: (no subject)';
+
+    openComposeModal({
+      title: '↩️ Reply',
+      toUids: [Number(msg.sender_uid)],
+      subject: subj,
+      bodyHtml: `<p></p><hr /><p><em>On ${escapeHtml(formatTime(msg.created_at))}, ${escapeHtml(displayNameForUser(sender))} wrote:</em></p>${msg.body_html || ''}`,
+      mode: { type: 'reply', parent_message_id: Number(msg.id), forwarded_from_message_id: null },
+    });
+  });
+
+  onClick('forwardBtn', () => {
+    if (!selectedMessageId) return;
+    const msg = messageById.get(selectedMessageId);
+    if (!msg) return;
+    const sender = usersById.get(msg.sender_uid);
+    const subj = msg.subject ? (msg.subject.startsWith('Fwd:') ? msg.subject : `Fwd: ${msg.subject}`) : 'Fwd: (no subject)';
+
+    openComposeModal({
+      title: '📤 Forward',
+      toUids: [],
+      subject: subj,
+      bodyHtml: `<p></p><hr /><p><strong>Forwarded message</strong></p><p><strong>From:</strong> ${escapeHtml(displayNameForUser(sender))}<br/><strong>Date:</strong> ${escapeHtml(formatTime(msg.created_at))}<br/><strong>Subject:</strong> ${escapeHtml(msg.subject || '(no subject)')}</p>${msg.body_html || ''}`,
+      mode: { type: 'forward', parent_message_id: null, forwarded_from_message_id: Number(msg.id) },
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Bind compose early so the modal opens even if stats/users haven't loaded yet.
+  // This also prevents a missing element from breaking the entire script.
+  try {
+    setupEventHandlers();
+  } catch (e) {
+    console.error('Message page event binding failed:', e);
+  }
+
+  const ready = await ensureAuthReady();
+  if (!ready || !window.authStatus?.isAuthenticated) return;
+
+  session = window.authStatus.getSession();
+  if (!session) return;
+
+  buildEmojiPicker();
+  buildStickerPicker();
+
+  try {
+    await loadUsers();
+    setupComposeRecipientList();
+    await loadMailbox();
+    updateViewerButtons();
+  } catch (e) {
+    console.error(e);
+    $('messageList').innerHTML = `<div class="empty" style="color:#dc3545;">Failed to load messages.</div>`;
+  }
+});
 
