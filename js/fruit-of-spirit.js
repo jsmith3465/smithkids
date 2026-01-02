@@ -77,7 +77,7 @@ async function checkUserAccess() {
     }
 }
 
-// Load family members (other standard users) for nomination
+// Load all users (except current user) for nomination
 async function loadFamilyMembers(currentUserUid) {
     const nomineeSelect = document.getElementById('nomineeSelect');
     if (!nomineeSelect) return;
@@ -85,13 +85,12 @@ async function loadFamilyMembers(currentUserUid) {
     try {
         const { data: users, error } = await supabase
             .from('Users')
-            .select('UID, First_Name, Last_Name, Username')
-            .eq('user_type', 'standard')
+            .select('UID, First_Name, Last_Name, Username, user_type')
             .neq('UID', currentUserUid)
             .order('First_Name', { ascending: true });
         
         if (error) {
-            console.error('Error loading family members:', error);
+            console.error('Error loading users:', error);
             return;
         }
         
@@ -100,8 +99,8 @@ async function loadFamilyMembers(currentUserUid) {
         if (users && users.length > 0) {
             users.forEach(user => {
                 const displayName = (user.First_Name && user.Last_Name)
-                    ? `${user.First_Name} ${user.Last_Name} (${user.Username})`
-                    : user.Username;
+                    ? `${user.First_Name} ${user.Last_Name} (${user.Username})${user.user_type === 'admin' ? ' - Admin' : ''}`
+                    : `${user.Username}${user.user_type === 'admin' ? ' - Admin' : ''}`;
                 
                 const option = document.createElement('option');
                 option.value = user.UID;
@@ -110,14 +109,31 @@ async function loadFamilyMembers(currentUserUid) {
             });
         }
     } catch (error) {
-        console.error('Error loading family members:', error);
+        console.error('Error loading users:', error);
     }
 }
 
 // Setup nomination form
 function setupNominationForm(nominatorUid) {
     const nominationForm = document.getElementById('nominationForm');
-    if (!nominationForm) return;
+    const nominationToggle = document.getElementById('nominationToggle');
+    const nominationSection = document.getElementById('nominationSection');
+    
+    if (!nominationForm || !nominationToggle || !nominationSection) return;
+    
+    // Toggle form visibility when link is clicked
+    nominationToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isVisible = nominationSection.style.display === 'block';
+        nominationSection.style.display = isVisible ? 'none' : 'block';
+        
+        // Scroll to form if showing
+        if (!isVisible) {
+            setTimeout(() => {
+                nominationSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    });
     
     nominationForm.addEventListener('submit', async (e) => {
         e.preventDefault();
