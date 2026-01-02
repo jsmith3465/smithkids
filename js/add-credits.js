@@ -116,8 +116,53 @@ async function loadAllUsers() {
 }
 
 async function loadManagerOverview() {
-    // Simply load the credit tracking table
+    // Load total balances and credit tracking table
+    await loadTotalBalances();
     await loadCreditTrackingTable();
+}
+
+// Load total available credits and savings balances across all users
+async function loadTotalBalances() {
+    try {
+        // Get all credit balances (available and savings)
+        const { data: credits, error } = await supabase
+            .from('User_Credits')
+            .select('balance, savings_balance');
+        
+        if (error) {
+            console.error('Error loading total balances:', error);
+            // Set to 0 if error
+            document.getElementById('totalAvailableCredits').textContent = '0';
+            document.getElementById('totalSavingsBalance').textContent = '0';
+            return;
+        }
+        
+        // Calculate totals
+        let totalAvailable = 0;
+        let totalSavings = 0;
+        
+        if (credits && credits.length > 0) {
+            credits.forEach(credit => {
+                totalAvailable += credit.balance || 0;
+                totalSavings += credit.savings_balance || 0;
+            });
+        }
+        
+        // Update display
+        const totalAvailableEl = document.getElementById('totalAvailableCredits');
+        const totalSavingsEl = document.getElementById('totalSavingsBalance');
+        
+        if (totalAvailableEl) {
+            totalAvailableEl.textContent = totalAvailable.toLocaleString();
+        }
+        if (totalSavingsEl) {
+            totalSavingsEl.textContent = totalSavings.toLocaleString();
+        }
+    } catch (error) {
+        console.error('Error loading total balances:', error);
+        document.getElementById('totalAvailableCredits').textContent = '0';
+        document.getElementById('totalSavingsBalance').textContent = '0';
+    }
 }
 
 // Store original values for comparison
@@ -809,6 +854,11 @@ window.addCreditsToUser = async function(userId) {
         
         showSuccess(`Successfully added ${amount} credits. New balance: ${newBalance}`);
         await loadAllCredits();
+        // Refresh total balances if manager tab is active
+        const managerTab = document.getElementById('managerTab');
+        if (managerTab && managerTab.classList.contains('active')) {
+            await loadTotalBalances();
+        }
         
     } catch (error) {
         console.error('Error adding credits:', error);
@@ -946,6 +996,11 @@ window.setUserBalance = async function(userId) {
         
         showSuccess(`Successfully set balance to ${newBalance} credits.`);
         await loadAllCredits();
+        // Refresh total balances if manager tab is active
+        const managerTab = document.getElementById('managerTab');
+        if (managerTab && managerTab.classList.contains('active')) {
+            await loadTotalBalances();
+        }
         
     } catch (error) {
         console.error('Error setting balance:', error);
@@ -1245,6 +1300,12 @@ async function addCredits() {
         }
         
         showSuccess(`Successfully added ${creditAmount} credits to ${userNames.length} user(s): ${userNames.join(', ')}`);
+        
+        // Refresh total balances if manager tab is active
+        const managerTab = document.getElementById('managerTab');
+        if (managerTab && managerTab.classList.contains('active')) {
+            await loadTotalBalances();
+        }
         
         // Reset form
         document.getElementById('creditAmount').value = 10;

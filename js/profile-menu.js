@@ -266,6 +266,7 @@ async function createProfileMenu() {
                 border-radius: 10px;
                 box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
                 min-width: 250px;
+                max-width: calc(100vw - 20px);
                 white-space: nowrap;
                 display: none;
                 z-index: 1000;
@@ -364,10 +365,44 @@ async function createProfileMenu() {
     const profileDropdown = document.getElementById('profileDropdown');
     const profileLogoutBtn = document.getElementById('profileLogoutBtn');
     
+    // Function to adjust dropdown position for mobile
+    function adjustDropdownPosition() {
+        if (profileDropdown.style.display === 'block' || profileDropdown.style.display === '') {
+            const rect = profileDropdown.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            
+            // If dropdown extends beyond left edge, align to right edge of viewport
+            if (rect.left < 10) {
+                profileDropdown.style.right = 'auto';
+                profileDropdown.style.left = '10px';
+            } else if (rect.right > viewportWidth - 10) {
+                // If dropdown extends beyond right edge, align to left edge of viewport
+                profileDropdown.style.left = 'auto';
+                profileDropdown.style.right = '10px';
+            } else {
+                // Reset to default (right-aligned to button)
+                profileDropdown.style.left = 'auto';
+                profileDropdown.style.right = '0';
+            }
+        }
+    }
+    
     profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const isVisible = profileDropdown.style.display === 'block';
         profileDropdown.style.display = isVisible ? 'none' : 'block';
+        
+        // Adjust position after showing
+        if (!isVisible) {
+            setTimeout(adjustDropdownPosition, 10);
+        }
+    });
+    
+    // Adjust on window resize
+    window.addEventListener('resize', () => {
+        if (profileDropdown.style.display === 'block') {
+            adjustDropdownPosition();
+        }
     });
     
     // Close dropdown when clicking outside
