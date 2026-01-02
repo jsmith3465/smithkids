@@ -450,13 +450,6 @@ function buildStickerPicker() {
       </div>`
     },
     {
-      name: 'Rainbow Magic',
-      html: `<div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
-        <div style="font-size: 3rem; margin-bottom: 8px;">🌈</div>
-        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">So Magical!</div>
-      </div>`
-    },
-    {
       name: 'Rock Star',
       html: `<div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border: 3px solid #DAA520; border-radius: 12px; padding: 12px; text-align: center; display: inline-block; max-width: 200px;">
         <div style="font-size: 3rem; margin-bottom: 8px;">🎸</div>
