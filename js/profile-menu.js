@@ -35,6 +35,9 @@ async function createProfileMenu() {
         pendingApprovalsCount = await getPendingApprovalsCount();
     }
     
+    // Get unread messages count for all users
+    const unreadMessagesCount = await getUnreadMessagesCount(session.uid);
+    
     // Find the header area where we'll add the profile menu
     const headerRight = document.querySelector('header > div > div:last-child');
     if (!headerRight) return;
@@ -201,6 +204,41 @@ async function createProfileMenu() {
             transition: all 0.3s ease;
             text-decoration: none;
         " onmouseenter="this.style.transform='scale(1.1)'; this.style.boxShadow='0 3px 10px rgba(218, 165, 32, 0.4)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏠</a>
+        <div style="position: relative;">
+            <a href="${getPagePath('messages.html')}" style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 2px solid #DAA520;
+                background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+                color: white;
+                font-size: 1.5rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                text-decoration: none;
+            " onmouseenter="this.style.transform='scale(1.1)'; this.style.boxShadow='0 3px 10px rgba(218, 165, 32, 0.4)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">📧</a>
+            ${unreadMessagesCount > 0 ? `<span id="unreadMessagesBadge" style="
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: #dc3545;
+                color: white;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.7rem;
+                font-weight: 700;
+                border: 2px solid white;
+                z-index: 10;
+            ">${unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}</span>` : ''}
+        </div>
         <div style="position: relative;">
             <button id="profileBtn" style="
                 width: 40px;
@@ -370,6 +408,57 @@ async function getPendingApprovalsCount() {
         return 0;
     }
 }
+
+// Get unread messages count for a user
+async function getUnreadMessagesCount(userUid) {
+    try {
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Count unread messages for this user
+        const { count, error } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('to_user_uid', userUid)
+            .eq('is_read', false)
+            .is('deleted_at', null);
+        
+        if (error) {
+            console.error('Error fetching unread messages count:', error);
+            return 0;
+        }
+        
+        return count || 0;
+    } catch (error) {
+        console.error('Error fetching unread messages count:', error);
+        return 0;
+    }
+}
+
+// Function to update unread badge (can be called from other pages)
+window.updateUnreadBadge = async function() {
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    const unreadCount = await getUnreadMessagesCount(session.uid);
+    const badge = document.getElementById('unreadMessagesBadge');
+    
+    if (unreadCount > 0) {
+        if (badge) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'flex';
+        } else {
+            // Badge doesn't exist, need to recreate profile menu
+            await createProfileMenu();
+        }
+    } else {
+        if (badge) {
+            badge.style.display = 'none';
+        }
+    }
+};
 
 // Initialize profile menu when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

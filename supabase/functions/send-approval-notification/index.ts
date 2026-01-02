@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     // Get the notification data from the request
     const requestBody = await req.json();
     console.log('Request body:', requestBody);
-    const { notification_type, approval_id, approval_type, user_name, description, credits_amount, badge_name, earned_at, purchase_id, item_name, cost, purchase_date } = requestBody;
+    const { notification_type, approval_id, approval_type, user_name, description, credits_amount, badge_name, earned_at, purchase_id, item_name, cost, purchase_date, message_id, message_subject, message_body, from_user_name } = requestBody;
 
     // Handle marketplace purchase notifications
     if (notification_type === 'marketplace_purchase') {
@@ -392,6 +392,212 @@ Deno.serve(async (req) => {
           },
         }
       );
+    }
+
+    // Handle message notifications for admins
+    if (notification_type === 'new_message') {
+      if (!message_id || !from_user_name || !message_subject) {
+        console.error('Missing required fields for message notification');
+        return new Response(
+          JSON.stringify({ error: 'Missing required fields' }),
+          { 
+            status: 400, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      console.log('Processing message notification:', { message_id, from_user_name, message_subject });
+      
+      if (!RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is not set!');
+        return new Response(
+          JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Supabase credentials not set!');
+        return new Response(
+          JSON.stringify({ error: 'Supabase credentials not configured' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      // Get the recipient user to check if they're an admin
+      const { data: messageData, error: messageError } = await supabase
+        .from('messages')
+        .select('to_user_uid')
+        .eq('message_id', message_id)
+        .single();
+
+      if (messageError || !messageData) {
+        console.error('Error fetching message:', messageError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch message' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Get recipient user info
+      const { data: recipient, error: recipientError } = await supabase
+        .from('Users')
+        .select('UID, First_Name, Last_Name, Username, EmailAddress, user_type')
+        .eq('UID', messageData.to_user_uid)
+        .single();
+
+      if (recipientError || !recipient) {
+        console.error('Error fetching recipient:', recipientError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch recipient' }),
+          { 
+            status: 500, 
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            } 
+          }
+        );
+      }
+
+      // Only send email if recipient is an admin
+      if (recipient.user_type === 'admin' && recipient.EmailAddress) {
+        const siteUrl = Deno.env.get('SITE_URL') || 'https://smithfamjam.com';
+        const messagesUrl = `${siteUrl}/pages/messages.html`;
+
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }
+                .info-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #DAA520; }
+                .message-body { background: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
+                .button { display: inline-block; background: #DAA520; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+                .button-container { text-align: center; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>📧 New Message</h1>
+                </div>
+                <div class="content">
+                  <div class="info-box">
+                    <p><strong>From:</strong> ${from_user_name}</p>
+                    <p><strong>Subject:</strong> ${message_subject}</p>
+                  </div>
+                  <div class="message-body">
+                    ${message_body}
+                  </div>
+                  <div class="button-container">
+                    <a href="${messagesUrl}" class="button">View Message</a>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>Smith Team Six - Messaging System</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
+
+        try {
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+            },
+            body: JSON.stringify({
+              from: 'Smith Team Six <notifications@email.smithfamjam.com>',
+              to: recipient.EmailAddress,
+              subject: `New Message from ${from_user_name} - ${message_subject}`,
+              html: emailHtml,
+            }),
+          });
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text();
+            console.error(`Failed to send email to ${recipient.EmailAddress}:`, errorText);
+            return new Response(
+              JSON.stringify({ success: false, error: errorText }),
+              { 
+                status: 500, 
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                } 
+              }
+            );
+          }
+
+          const result = await emailResponse.json();
+          console.log(`Message notification email sent successfully to ${recipient.EmailAddress}`);
+          return new Response(
+            JSON.stringify({ success: true, emailId: result.id }),
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              },
+            }
+          );
+        } catch (error) {
+          console.error(`Error sending email to ${recipient.EmailAddress}:`, error);
+          return new Response(
+            JSON.stringify({ success: false, error: error.message }),
+            { 
+              status: 500, 
+              headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              } 
+            }
+          );
+        }
+      } else {
+        // Not an admin or no email, just return success
+        return new Response(
+          JSON.stringify({ success: true, message: 'Recipient is not an admin or has no email' }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          }
+        );
+      }
     }
 
     // Original approval notification logic
