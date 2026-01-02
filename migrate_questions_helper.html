@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Trivia Questions Migration Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #CC5500;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 2px solid #DAA520;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        button {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 Bible Trivia Questions Migration Helper</h1>
+        
+        <div class="instructions">
+            <h2>Instructions:</h2>
+            <ol>
+                <li>Make sure you've run the SQL file <code>create_bible_trivia_questions_table.sql</code> in Supabase</li>
+                <li>Open the Bible Trivia page and open the browser console</li>
+                <li>Copy the <code>triviaQuestions</code> array from <code>bible-trivia.js</code></li>
+                <li>Paste it into the textarea below</li>
+                <li>Click "Migrate Questions" to insert them into the database</li>
+            </ol>
+        </div>
+        
+        <div>
+            <label for="questionsInput"><strong>Paste triviaQuestions array here:</strong></label>
+            <textarea id="questionsInput" style="width: 100%; height: 200px; font-family: monospace; padding: 10px; border: 2px solid #ddd; border-radius: 5px;"></textarea>
+        </div>
+        
+        <button onclick="migrateQuestions()">Migrate Questions</button>
+        <button onclick="checkQuestions()">Check Database</button>
+        
+        <div id="status"></div>
+    </div>
+    
+    <script type="module">
+        const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+        
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        window.migrateQuestions = async function() {
+            const statusDiv = document.getElementById('status');
+            const input = document.getElementById('questionsInput').value.trim();
+            
+            if (!input) {
+                statusDiv.innerHTML = '<div class="status error">Please paste the triviaQuestions array first.</div>';
+                return;
+            }
+            
+            try {
+                // Try to parse the array
+                let questions;
+                try {
+                    // Remove const/let/var declaration if present
+                    const cleaned = input.replace(/^(const|let|var)\s+triviaQuestions\s*=\s*/, '').replace(/;?\s*$/, '');
+                    questions = eval('(' + cleaned + ')');
+                } catch (e) {
+                    statusDiv.innerHTML = '<div class="status error">Could not parse the array. Make sure you copied the complete array including brackets.</div>';
+                    return;
+                }
+                
+                if (!Array.isArray(questions)) {
+                    statusDiv.innerHTML = '<div class="status error">The input is not a valid array.</div>';
+                    return;
+                }
+                
+                statusDiv.innerHTML = '<div class="status info">Processing ' + questions.length + ' questions...</div>';
+                
+                // Convert to database format
+                const questionsToInsert = questions.map((q, index) => ({
+                    question: q.question,
+                    option_1: q.options[0],
+                    option_2: q.options[1],
+                    option_3: q.options[2],
+                    option_4: q.options[3],
+                    correct_answer_index: q.correct,
+                    difficulty: q.difficulty,
+                    bible_book: q.bibleRef?.book || null,
+                    bible_chapter: q.bibleRef?.chapter || null,
+                    bible_verse: q.bibleRef?.verse || null,
+                    created_at: new Date().toISOString()
+                }));
+                
+                // Insert in batches
+                const batchSize = 50;
+                let inserted = 0;
+                let errors = 0;
+                
+                for (let i = 0; i < questionsToInsert.length; i += batchSize) {
+                    const batch = questionsToInsert.slice(i, i + batchSize);
+                    
+                    try {
+                        const { data, error } = await supabase
+                            .from('bible_trivia_questions')
+                            .insert(batch);
+                        
+                        if (error) {
+                            console.error('Error inserting batch:', error);
+                            errors += batch.length;
+                            statusDiv.innerHTML = `<div class="status error">Error inserting batch ${Math.floor(i / batchSize) + 1}: ${error.message}</div>`;
+                        } else {
+                            inserted += batch.length;
+                            statusDiv.innerHTML = `<div class="status info">Inserted batch ${Math.floor(i / batchSize) + 1}: ${inserted}/${questionsToInsert.length} questions</div>`;
+                        }
+                    } catch (err) {
+                        console.error('Exception:', err);
+                        errors += batch.length;
+                        statusDiv.innerHTML = `<div class="status error">Exception inserting batch ${Math.floor(i / batchSize) + 1}: ${err.message}</div>`;
+                    }
+                }
+                
+                if (errors === 0) {
+                    statusDiv.innerHTML = `<div class="status success">✅ Migration complete! Successfully inserted ${inserted} questions.</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Migration completed with errors. Inserted: ${inserted}, Errors: ${errors}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        };
+        
+        window.checkQuestions = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status info">Checking database...</div>';
+            
+            try {
+                const { data, error, count } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*', { count: 'exact' })
+                    .limit(1);
+                
+                if (error) {
+                    statusDiv.innerHTML = `<div class="status error">Error checking database: ${error.message}</div>`;
+                    return;
+                }
+                
+                // Get full count
+                const { count: totalCount } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Get counts by difficulty
+                const { count: easyCount } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('difficulty', 'easy');
+                
+                const { count: moderateCount } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('difficulty', 'moderate');
+                
+                const { count: hardCount } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('difficulty', 'hard');
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        <strong>Database Status:</strong><br>
+                        Total Questions: ${totalCount || 0}<br>
+                        Easy: ${easyCount || 0}<br>
+                        Moderate: ${moderateCount || 0}<br>
+                        Hard: ${hardCount || 0}
+                    </div>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        };
+    </script>
+</body>
+</html>
+

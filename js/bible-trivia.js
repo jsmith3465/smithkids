@@ -2793,10 +2793,12 @@ class BibleTrivia {
         this.currentQuestion = 0;
         this.score = 0;
         this.selectedAnswer = null;
-        this.questions = this.shuffleQuestions([...triviaQuestions]);
+        this.questions = []; // Will be loaded from database
         this.gameStarted = false;
         this.maxCredits = 20;
         this._maxCreditsPromise = null;
+        this._questionsLoaded = false;
+        this._questionsPromise = null;
         
         // Track answers by difficulty
         this.answersByDifficulty = {
@@ -2806,6 +2808,56 @@ class BibleTrivia {
         };
         
         this.init();
+    }
+    
+    async loadQuestionsFromDatabase() {
+        // Return cached promise if already loading
+        if (this._questionsPromise) {
+            return this._questionsPromise;
+        }
+        
+        this._questionsPromise = (async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('bible_trivia_questions')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+                
+                if (error) {
+                    console.error('Error loading questions from database:', error);
+                    // Fallback to hardcoded questions
+                    console.log('Falling back to hardcoded questions');
+                    return this.shuffleQuestions([...triviaQuestions]);
+                }
+                
+                if (!data || data.length === 0) {
+                    console.warn('No questions found in database, using hardcoded questions');
+                    return this.shuffleQuestions([...triviaQuestions]);
+                }
+                
+                // Convert database format to game format
+                const convertedQuestions = data.map(q => ({
+                    question: q.question,
+                    options: [q.option_1, q.option_2, q.option_3, q.option_4],
+                    correct: q.correct_answer_index,
+                    difficulty: q.difficulty,
+                    bibleRef: q.bible_book ? {
+                        book: q.bible_book,
+                        chapter: q.bible_chapter,
+                        verse: q.bible_verse
+                    } : null
+                }));
+                
+                console.log(`Loaded ${convertedQuestions.length} questions from database`);
+                return this.shuffleQuestions(convertedQuestions);
+            } catch (error) {
+                console.error('Exception loading questions from database:', error);
+                // Fallback to hardcoded questions
+                return this.shuffleQuestions([...triviaQuestions]);
+            }
+        })();
+        
+        return this._questionsPromise;
     }
     
     init() {
@@ -2858,6 +2910,12 @@ class BibleTrivia {
             } catch (error) {
                 console.error('Error initializing badge notifications:', error);
             }
+        }
+
+        // Load questions from database
+        if (!this._questionsLoaded) {
+            this.questions = await this.loadQuestionsFromDatabase();
+            this._questionsLoaded = true;
         }
 
         // Populate "10 correct" max credits label on start screen
@@ -2921,8 +2979,20 @@ class BibleTrivia {
         return shuffle(combined);
     }
     
-    startGame() {
+    async startGame() {
         // Note: Bible Trivia is free to play - no credits are required or deducted
+        
+        // Ensure questions are loaded
+        if (!this._questionsLoaded || this.questions.length === 0) {
+            this.questions = await this.loadQuestionsFromDatabase();
+            this._questionsLoaded = true;
+        }
+        
+        if (this.questions.length === 0) {
+            alert('No questions available. Please try again later.');
+            return;
+        }
+        
         this.gameStarted = true;
         document.getElementById('startScreen').classList.add('hidden');
         document.getElementById('gameInfoSection').classList.remove('hidden');
@@ -3471,11 +3541,13 @@ class BibleTrivia {
         }
     }
     
-    resetGame() {
+    async resetGame() {
         this.currentQuestion = 0;
         this.score = 0;
         this.selectedAnswer = null;
-        this.questions = this.shuffleQuestions([...triviaQuestions]);
+        
+        // Reload questions from database (in case new questions were added)
+        this.questions = await this.loadQuestionsFromDatabase();
         
         // Reset difficulty tracking
         this.answersByDifficulty = {
