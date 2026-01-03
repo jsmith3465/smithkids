@@ -167,21 +167,47 @@ async function initializeLanding() {
     
     console.log('Initializing landing page for user:', session);
     
+    // Show main content first
+    const authCheck = document.getElementById('authCheck');
+    const mainContent = document.getElementById('mainContent');
+    if (authCheck) authCheck.classList.add('hidden');
+    if (mainContent) mainContent.classList.remove('hidden');
+    
+    // Wait a moment to ensure DOM is fully ready
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
     // Set greeting
     const greetingText = document.getElementById('greetingText');
     const userName = document.getElementById('userName');
     
-    if (!greetingText || !userName) {
-        console.error('Greeting elements not found');
-        return;
+    if (greetingText && userName) {
+        const displayName = (session.firstName && session.lastName) 
+            ? `${session.firstName} ${session.lastName}` 
+            : session.username || 'User';
+        
+        greetingText.textContent = getTimeBasedGreeting() + ',';
+        userName.textContent = displayName;
+        console.log('Set greeting for:', displayName);
+    } else {
+        console.error('Greeting elements not found. Available elements:', {
+            greetingText: !!greetingText,
+            userName: !!userName,
+            mainContent: !!mainContent
+        });
+        // Try again after a short delay
+        setTimeout(() => {
+            const retryGreetingText = document.getElementById('greetingText');
+            const retryUserName = document.getElementById('userName');
+            if (retryGreetingText && retryUserName) {
+                const displayName = (session.firstName && session.lastName) 
+                    ? `${session.firstName} ${session.lastName}` 
+                    : session.username || 'User';
+                retryGreetingText.textContent = getTimeBasedGreeting() + ',';
+                retryUserName.textContent = displayName;
+                console.log('Set greeting on retry for:', displayName);
+            }
+        }, 200);
     }
-    
-    const displayName = (session.firstName && session.lastName) 
-        ? `${session.firstName} ${session.lastName}` 
-        : session.username || 'User';
-    
-    greetingText.textContent = getTimeBasedGreeting() + ',';
-    userName.textContent = displayName;
     
     // Set quote or Bible verse
     try {
@@ -235,10 +261,6 @@ async function initializeLanding() {
             quoteAuthorEl.textContent = '— Proverbs 3:5';
         }
     }
-    
-    // Show main content
-    document.getElementById('authCheck').classList.add('hidden');
-    document.getElementById('mainContent').classList.remove('hidden');
     
     // Load Fruit of the Spirit badges for standard users
     if (session.userType !== 'admin') {
