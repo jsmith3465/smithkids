@@ -139,6 +139,15 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.style.opacity = '0.5';
         loginForm.style.pointerEvents = 'none';
 
+        // Add overall timeout to prevent infinite hanging
+        const overallTimeout = setTimeout(() => {
+            console.error('Login process timed out after 15 seconds');
+            showError('Login is taking longer than expected. Please try again.');
+            loginLoading.classList.remove('show');
+            loginForm.style.opacity = '1';
+            loginForm.style.pointerEvents = 'auto';
+        }, 15000); // 15 second overall timeout
+
         try {
             // Authenticate user
             const authResult = await authenticateUser(username, password);
@@ -164,13 +173,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Get client information
-            const ipAddress = await getClientIP();
+            // Get client information with timeout
+            let ipAddress = 'unknown';
+            try {
+                const ipPromise = getClientIP();
+                const ipTimeout = new Promise((resolve) => {
+                    setTimeout(() => resolve('unknown'), 3000); // 3 second timeout
+                });
+                ipAddress = await Promise.race([ipPromise, ipTimeout]);
+            } catch (error) {
+                console.warn('Error getting IP address:', error);
+                ipAddress = 'unknown';
+            }
+            
             const userAgent = getUserAgent();
             const sessionId = generateSessionId();
 
-            // Track login
-            await trackLogin(authResult.user.uid, ipAddress, userAgent, sessionId);
+            // Track login with timeout
+            try {
+                const trackPromise = trackLogin(authResult.user.uid, ipAddress, userAgent, sessionId);
+                const trackTimeout = new Promise((resolve) => {
+                    setTimeout(() => {
+                        console.warn('Login tracking timed out');
+                        resolve();
+                    }, 2000); // 2 second timeout
+                });
+                await Promise.race([trackPromise, trackTimeout]);
+            } catch (error) {
+                console.warn('Error tracking login (non-blocking):', error);
+                // Don't block login if tracking fails
+            }
 
             // Store session data with current timestamp
             const sessionData = {
@@ -187,10 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set a flag to check announcements after redirect
             sessionStorage.setItem('checkAnnouncements', 'true');
 
+            // Clear timeout since we're about to redirect
+            clearTimeout(overallTimeout);
+
             // Redirect to main page
             window.location.href = '../index.html';
         } catch (error) {
             console.error('Login error:', error);
+            clearTimeout(overallTimeout);
             showError('An unexpected error occurred. Please try again.');
             loginLoading.classList.remove('show');
             loginForm.style.opacity = '1';

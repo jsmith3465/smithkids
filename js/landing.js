@@ -94,68 +94,146 @@ function getRandomQuote() {
 
 // Initialize landing page
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for authentication
+    // Wait for authentication with longer timeout
+    let attempts = 0;
+    const maxAttempts = 100; // 10 seconds (100 * 100ms)
+    
     const checkAuth = setInterval(() => {
+        attempts++;
+        
         if (window.authStatus && window.authStatus.isAuthenticated) {
             clearInterval(checkAuth);
+            console.log('Authentication confirmed, initializing landing page');
             initializeLanding();
         } else if (window.authStatus && !window.authStatus.isAuthenticated) {
             clearInterval(checkAuth);
+            console.log('User not authenticated');
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkAuth);
+            console.error('Authentication check timed out after 10 seconds');
+            // Try to initialize anyway if we have a session
+            const session = sessionStorage.getItem('userSession');
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData && sessionData.uid) {
+                        console.log('Found session data, initializing landing page anyway');
+                        // Manually set authStatus if it's not set
+                        if (!window.authStatus) {
+                            window.authStatus = {
+                                isAuthenticated: true,
+                                getSession: () => sessionData
+                            };
+                        }
+                        initializeLanding();
+                    }
+                } catch (e) {
+                    console.error('Error parsing session data:', e);
+                }
+            }
         }
     }, 100);
-    
-    setTimeout(() => {
-        clearInterval(checkAuth);
-    }, 5000);
 });
 
 async function initializeLanding() {
-    const session = window.authStatus.getSession();
-    if (!session) return;
+    let session = null;
+    
+    // Try to get session from authStatus first
+    if (window.authStatus && window.authStatus.getSession) {
+        try {
+            session = window.authStatus.getSession();
+        } catch (e) {
+            console.warn('Error getting session from authStatus:', e);
+        }
+    }
+    
+    // Fallback: get session directly from sessionStorage
+    if (!session) {
+        const sessionData = sessionStorage.getItem('userSession');
+        if (sessionData) {
+            try {
+                session = JSON.parse(sessionData);
+            } catch (e) {
+                console.error('Error parsing session data:', e);
+                return;
+            }
+        }
+    }
+    
+    if (!session) {
+        console.error('No session found, cannot initialize landing page');
+        return;
+    }
+    
+    console.log('Initializing landing page for user:', session);
     
     // Set greeting
     const greetingText = document.getElementById('greetingText');
     const userName = document.getElementById('userName');
-    const displayName = session.firstName && session.lastName 
+    
+    if (!greetingText || !userName) {
+        console.error('Greeting elements not found');
+        return;
+    }
+    
+    const displayName = (session.firstName && session.lastName) 
         ? `${session.firstName} ${session.lastName}` 
-        : session.username;
+        : session.username || 'User';
     
     greetingText.textContent = getTimeBasedGreeting() + ',';
     userName.textContent = displayName;
     
     // Set quote or Bible verse
-    const quote = getRandomQuote();
-    const quoteTextEl = document.getElementById('quoteText');
-    const quoteAuthorEl = document.getElementById('quoteAuthor');
-    
-    quoteTextEl.textContent = `"${quote.text}"`;
-    
-    if (quote.type === 'bible') {
-        // For Bible verses, make the reference a clickable link
-        const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
-        const referenceLink = document.createElement('a');
-        referenceLink.href = `pages/bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
-        referenceLink.textContent = reference;
-        referenceLink.style.color = '#CC5500';
-        referenceLink.style.textDecoration = 'none';
-        referenceLink.style.fontWeight = '600';
-        referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
-        referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+    try {
+        const quote = getRandomQuote();
+        const quoteTextEl = document.getElementById('quoteText');
+        const quoteAuthorEl = document.getElementById('quoteAuthor');
         
-        // Add click event to award bonus credit
-        referenceLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await awardBibleVerseBonus(session.uid, quote.book, quote.chapter, quote.verse);
-            // Navigate to the Bible page after awarding credit
-            window.location.href = referenceLink.href;
-        });
-        
-        quoteAuthorEl.innerHTML = '';
-        quoteAuthorEl.appendChild(document.createTextNode('— '));
-        quoteAuthorEl.appendChild(referenceLink);
-        quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
-    } else {
-        quoteAuthorEl.textContent = `— ${quote.author}`;
+        if (!quoteTextEl || !quoteAuthorEl) {
+            console.error('Quote elements not found');
+        } else if (quote && quote.text) {
+            quoteTextEl.textContent = `"${quote.text}"`;
+            
+            if (quote.type === 'bible') {
+                // For Bible verses, make the reference a clickable link
+                const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
+                const referenceLink = document.createElement('a');
+                referenceLink.href = `pages/bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
+                referenceLink.textContent = reference;
+                referenceLink.style.color = '#CC5500';
+                referenceLink.style.textDecoration = 'none';
+                referenceLink.style.fontWeight = '600';
+                referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+                referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+                
+                // Add click event to award bonus credit
+                referenceLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await awardBibleVerseBonus(session.uid, quote.book, quote.chapter, quote.verse);
+                    // Navigate to the Bible page after awarding credit
+                    window.location.href = referenceLink.href;
+                });
+                
+                quoteAuthorEl.innerHTML = '';
+                quoteAuthorEl.appendChild(document.createTextNode('— '));
+                quoteAuthorEl.appendChild(referenceLink);
+                quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
+            } else {
+                quoteAuthorEl.textContent = `— ${quote.author || 'Unknown'}`;
+            }
+        } else {
+            console.error('Invalid quote data:', quote);
+            quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
+            quoteAuthorEl.textContent = '— Proverbs 3:5';
+        }
+    } catch (error) {
+        console.error('Error setting quote:', error);
+        const quoteTextEl = document.getElementById('quoteText');
+        const quoteAuthorEl = document.getElementById('quoteAuthor');
+        if (quoteTextEl && quoteAuthorEl) {
+            quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
+            quoteAuthorEl.textContent = '— Proverbs 3:5';
+        }
     }
     
     // Show main content
