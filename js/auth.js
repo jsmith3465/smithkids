@@ -248,49 +248,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize authStatus with default values to prevent hanging
+    // First, check if we have a session in sessionStorage
+    const sessionData = sessionStorage.getItem('userSession');
+    let hasValidSession = false;
+    
+    if (sessionData) {
+        try {
+            const session = JSON.parse(sessionData);
+            // Check if session has required fields
+            if (session && session.uid && session.username) {
+                hasValidSession = true;
+            }
+        } catch (e) {
+            console.warn('Error parsing session data:', e);
+        }
+    }
+    
     window.authStatus = {
-        isAuthenticated: false,
+        isAuthenticated: hasValidSession, // Start with sessionStorage check
         getSession: () => {
             const sessionData = sessionStorage.getItem('userSession');
             return sessionData ? JSON.parse(sessionData) : null;
         }
     };
 
-    // Check authentication with timeout
-    let isAuthenticated = false;
-    try {
-        // Add overall timeout to prevent hanging
-        const authPromise = checkAuthentication();
-        const timeoutPromise = new Promise((resolve) => {
-            setTimeout(() => {
-                console.error('Authentication check timed out after 10 seconds');
-                resolve(false);
-            }, 10000); // 10 second timeout
+    // Check authentication with timeout (non-blocking)
+    // If we have a valid session, proceed optimistically
+    if (hasValidSession) {
+        // Start auth check in background, but don't block
+        checkAuthentication().then(result => {
+            window.authStatus.isAuthenticated = result;
+            if (!result && hasValidSession) {
+                console.warn('Background auth check failed, but session exists. Continuing with session.');
+            }
+        }).catch(error => {
+            console.error('Background auth check error:', error);
+            // Keep isAuthenticated as true if we have a valid session
+            if (hasValidSession) {
+                window.authStatus.isAuthenticated = true;
+            }
         });
+    } else {
+        // No session, do full auth check
+        let isAuthenticated = false;
+        try {
+            // Add overall timeout to prevent hanging
+            const authPromise = checkAuthentication();
+            const timeoutPromise = new Promise((resolve) => {
+                setTimeout(() => {
+                    console.error('Authentication check timed out after 10 seconds');
+                    resolve(false);
+                }, 10000); // 10 second timeout
+            });
+            
+            isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
+        } catch (error) {
+            console.error('Error during authentication check:', error);
+            isAuthenticated = false;
+        }
         
-        isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
-    } catch (error) {
-        console.error('Error during authentication check:', error);
-        isAuthenticated = false;
+        // Update authentication status
+        window.authStatus.isAuthenticated = isAuthenticated;
     }
     
-    // Update authentication status
-    window.authStatus.isAuthenticated = isAuthenticated;
-    
     // Check for feature announcements if user just logged in
-    if (isAuthenticated) {
+    if (hasValidSession || window.authStatus.isAuthenticated) {
         const session = window.authStatus.getSession();
         const shouldCheckAnnouncements = sessionStorage.getItem('checkAnnouncements') === 'true';
         
         if (shouldCheckAnnouncements && session) {
             sessionStorage.removeItem('checkAnnouncements');
-            // Import and check announcements
+            // Import and check announcements (non-blocking)
             import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
                 setTimeout(() => {
-                    checkFeatureAnnouncements(session.uid);
+                    checkFeatureAnnouncements(session.uid).catch(error => {
+                        console.error('Error checking feature announcements:', error);
+                    });
                 }, 1000); // Wait 1 second for page to fully load
             }).catch(error => {
-                console.error('Error loading feature announcements:', error);
+                console.error('Error loading feature announcements module:', error);
             });
         }
     }
