@@ -198,6 +198,77 @@
             font-size: 1rem;
         }
         
+        .screener-section {
+            text-align: left;
+        }
+        
+        .screener-companies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .screener-company-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .screener-company-card:hover {
+            border-color: #DAA520;
+            box-shadow: 0 3px 10px rgba(218, 165, 32, 0.2);
+        }
+        
+        .screener-company-symbol {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .screener-company-name {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .warren-link {
+            color: #DAA520;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .warren-link:hover {
+            color: #CC5500;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
         @media (max-width: 768px) {
             .watchlist-grid, .portfolio-grid {
                 grid-template-columns: 1fr;
@@ -205,6 +276,10 @@
             
             .search-box {
                 flex-direction: column;
+            }
+            
+            .screener-companies-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -301,89 +376,68 @@
             
             <!-- Stock Screener Tab -->
             <div id="screenerTab" class="tab-content">
-                <div class="disclaimer">
-                    <strong>⚠️ Educational Use Only</strong><br>
-                    This Buffett-inspired screener is for educational purposes only and does not constitute financial advice. 
-                    Data may be incomplete or inaccurate. Always conduct your own research and consult with a financial advisor 
-                    before making investment decisions.
-                </div>
-                
-                <div class="screener-container">
-                    <div class="screener-controls">
-                        <h3 style="margin-top: 0;">Screening Criteria</h3>
-                        
-                        <div class="param-group">
-                            <label for="tickerInput">Tickers (comma/space/newline separated):</label>
-                            <textarea id="tickerInput" class="ticker-input" placeholder="AAPL, MSFT, KO"></textarea>
-                        </div>
-                        
-                        <div id="screensList"></div>
-                        
-                        <div class="param-group" style="margin-top: 20px;">
-                            <label>
-                                <input type="checkbox" id="treatNaAsFail" checked>
-                                Treat "Insufficient Data" as FAIL
-                            </label>
-                        </div>
-                        
-                        <button class="btn btn-primary" id="runScreenerBtn" style="width: 100%; margin-top: 20px;">
-                            Run Screener
-                        </button>
+                <div class="screener-section">
+                    <h2 style="margin: 0 0 20px 0;">🔍 Buffett-Inspired Stock Screener</h2>
+                    
+                    <div style="background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 30px;">
+                        <label for="screenerSelect" style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                            Select a Screener:
+                        </label>
+                        <select id="screenerSelect" style="width: 100%; padding: 12px; border: 2px solid #DAA520; border-radius: 8px; font-size: 1rem; font-weight: 600; background: white; cursor: pointer;">
+                            <option value="">-- Choose a Screener --</option>
+                            <option value="circle-of-competence">1. Circle of Competence</option>
+                            <option value="simple-business">2. Simple Business</option>
+                            <option value="consistent-earnings">3. Consistent Earning Power</option>
+                            <option value="high-returns-low-debt">4. High Returns with Low or Moderate Debt</option>
+                            <option value="durable-moat">5. Durable Competitive Advantage (Moat Proxies)</option>
+                            <option value="cash-generation">6. Owner Earnings / Cash Generation</option>
+                            <option value="intrinsic-value">7. Intrinsic Value vs. Market Price</option>
+                            <option value="long-term-mindset">8. Long-Term Ownership Mindset</option>
+                        </select>
                     </div>
                     
-                    <div class="screener-results">
-                        <h3>Results</h3>
-                        <div id="screenerResultsContainer">
-                            <div style="text-align: center; padding: 40px; color: #999;">
-                                Enter tickers and select screening criteria, then click "Run Screener"
-                            </div>
-                        </div>
+                    <div id="screenerDescription" style="display: none; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #DAA520; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
+                        <div id="screenerContent"></div>
+                    </div>
+                    
+                    <div id="screenerResults" style="display: none;">
+                        <h3 style="margin: 0 0 20px 0;">Companies That Fit This Screen</h3>
+                        <div id="screenerCompaniesList" class="screener-companies-grid"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- DCF Panel Modal -->
-    <div id="dcfPanelOverlay" class="dcf-panel-overlay"></div>
-    <div id="dcfPanel" class="dcf-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">DCF Intrinsic Value Calculator</h2>
-            <button id="closeDcfPanel" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+    <!-- Warren Buffett Bio Modal -->
+    <div id="warrenModal" class="modal" style="display: none;" onclick="if(event.target === this) window.closeWarrenModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">About Uncle Warren</h2>
+                <button id="closeWarrenModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">×</button>
+            </div>
+            <div style="line-height: 1.8; color: #333;">
+                <p style="margin-bottom: 15px;">
+                    <strong>Warren Buffett</strong> is one of the most successful investors in history. Born in 1930, he began investing as a teenager and built his company, Berkshire Hathaway, into one of the world's largest corporations.
+                </p>
+                <p style="margin-bottom: 15px;">
+                    Known as the "Oracle of Omaha," Buffett is famous for his long-term investment philosophy. He focuses on buying great businesses at fair prices and holding them for decades, rather than trading frequently.
+                </p>
+                <p style="margin-bottom: 15px;">
+                    His investment principles emphasize:
+                </p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Understanding the businesses you invest in</li>
+                    <li>Looking for companies with strong competitive advantages</li>
+                    <li>Buying when prices are below the company's true value</li>
+                    <li>Holding investments for the long term</li>
+                    <li>Avoiding debt and focusing on cash generation</li>
+                </ul>
+                <p style="margin-bottom: 0;">
+                    Buffett's approach has made him one of the wealthiest people in the world, and he's known for his simple lifestyle and commitment to giving away most of his fortune to charity.
+                </p>
+            </div>
         </div>
-        
-        <div id="dcfCompanyInfo" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>
-        
-        <div class="param-group">
-            <label>Discount Rate (%):</label>
-            <input type="number" id="dcfDiscountRate" value="10" step="0.1" min="1" max="20">
-        </div>
-        
-        <div class="param-group">
-            <label>Growth Rate Years 1-5 (%):</label>
-            <input type="number" id="dcfGrowth1to5" value="6" step="0.1" min="0" max="50">
-        </div>
-        
-        <div class="param-group">
-            <label>Growth Rate Years 6-10 (%):</label>
-            <input type="number" id="dcfGrowth6to10" value="3" step="0.1" min="0" max="20">
-        </div>
-        
-        <div class="param-group">
-            <label>Terminal Growth Rate (%):</label>
-            <input type="number" id="dcfTerminalGrowth" value="2" step="0.1" min="0" max="5">
-        </div>
-        
-        <div class="param-group">
-            <label>Margin of Safety (%):</label>
-            <input type="number" id="dcfMarginOfSafety" value="25" step="1" min="0" max="50">
-        </div>
-        
-        <button class="btn btn-primary" id="calculateDcfBtn" style="width: 100%; margin-top: 15px;">
-            Calculate Intrinsic Value
-        </button>
-        
-        <div id="dcfResults" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: none;"></div>
     </div>
     
     <!-- Add/Edit Portfolio Modal -->

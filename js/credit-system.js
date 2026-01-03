@@ -32,7 +32,7 @@ export async function checkCredits(userUid) {
 }
 
 // Deduct credits for a game
-export async function deductCredits(userUid, gameType, gameId = null) {
+export async function deductCredits(userUid, gameType, gameId = null, amount = CREDIT_COST) {
     try {
         // Get current balance
         const { data: creditData, error: fetchError } = await supabase
@@ -51,11 +51,11 @@ export async function deductCredits(userUid, gameType, gameId = null) {
         }
         
         // Check if user has enough credits
-        if (!creditData || creditData.balance < CREDIT_COST) {
+        if (!creditData || creditData.balance < amount) {
             return { success: false, message: 'Insufficient credits' };
         }
         
-        const newBalance = creditData.balance - CREDIT_COST;
+        const newBalance = creditData.balance - amount;
         
         // Update balance
         const { error: updateError } = await supabase
@@ -70,7 +70,7 @@ export async function deductCredits(userUid, gameType, gameId = null) {
             .from('Credit_Transactions')
             .insert({
                 to_user_uid: userUid,
-                amount: CREDIT_COST,
+                amount: amount,
                 transaction_type: 'game_payment',
                 game_type: gameType,
                 game_id: gameId,

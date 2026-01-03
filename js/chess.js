@@ -257,21 +257,21 @@ class ChessGame {
         // Check and deduct credits
         if (!isAdmin && !this.isAdmin) {
             const p1Player = this.players[p1Id];
-            if (!p1Player || p1Player.credits === undefined || p1Player.credits < 1) {
-                alert('You do not have enough credits to play. Please earn more credits.');
+            if (!p1Player || p1Player.credits === undefined || p1Player.credits < 3) {
+                alert('You do not have enough credits to play. Chess costs 3 credits per game. Please earn more credits.');
                 return;
             }
             
             if (!p2IsComputer) {
                 const p2Player = this.players[p2Id];
-                if (!p2Player || p2Player.credits === undefined || p2Player.credits < 1) {
-                    alert(`${p2Player.name} does not have enough credits to play.`);
+                if (!p2Player || p2Player.credits === undefined || p2Player.credits < 3) {
+                    alert(`${p2Player.name} does not have enough credits to play. Chess costs 3 credits per game.`);
                     return;
                 }
             }
             
-            // Deduct credits
-            const deductResult1 = await deductCredits(parseInt(p1Id), 'chess');
+            // Deduct credits (3 credits for Chess)
+            const deductResult1 = await deductCredits(parseInt(p1Id), 'chess', null, 3);
             if (!deductResult1.success) {
                 alert('Unable to deduct credits. Please try again.');
                 return;
@@ -279,7 +279,7 @@ class ChessGame {
             p1Player.credits = deductResult1.newBalance;
             
             if (!p2IsComputer) {
-                const deductResult2 = await deductCredits(parseInt(p2Id), 'chess');
+                const deductResult2 = await deductCredits(parseInt(p2Id), 'chess', null, 3);
                 if (!deductResult2.success) {
                     alert(`Unable to deduct credits from ${this.players[p2Id].name}.`);
                     return;

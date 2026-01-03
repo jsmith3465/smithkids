@@ -72,12 +72,6 @@ async function checkUserAccess() {
         setupTabs();
         setupEventListeners();
         
-        // Initialize screener if tab exists
-        if (document.getElementById('screenerTab')) {
-            const { initScreener } = await import('./screener-ui.js');
-            initScreener();
-        }
-        
         if (isAdmin) {
             await setupAdminUserSelector();
         }
@@ -142,6 +136,8 @@ function setupEventListeners() {
     const addPortfolioBtn = document.getElementById('addPortfolioBtn');
     const portfolioForm = document.getElementById('portfolioForm');
     const cancelPortfolioBtn = document.getElementById('cancelPortfolioBtn');
+    const screenerSelect = document.getElementById('screenerSelect');
+    const closeWarrenModal = document.getElementById('closeWarrenModal');
     
     if (searchBtn) {
         searchBtn.addEventListener('click', handleStockSearch);
@@ -167,6 +163,24 @@ function setupEventListeners() {
     
     if (cancelPortfolioBtn) {
         cancelPortfolioBtn.addEventListener('click', closePortfolioModal);
+    }
+    
+    if (screenerSelect) {
+        screenerSelect.addEventListener('change', handleScreenerSelect);
+    }
+    
+    if (closeWarrenModal) {
+        closeWarrenModal.addEventListener('click', () => window.closeWarrenModal());
+    }
+    
+    // Close Warren modal when clicking outside
+    const warrenModal = document.getElementById('warrenModal');
+    if (warrenModal) {
+        warrenModal.addEventListener('click', (e) => {
+            if (e.target === warrenModal) {
+                window.closeWarrenModal();
+            }
+        });
     }
 }
 
@@ -1082,6 +1096,210 @@ async function deletePortfolioHolding(holdingId) {
         alert('Error deleting portfolio holding. Please try again.');
     }
 }
+
+// Screener data
+const screenerData = {
+    'circle-of-competence': {
+        title: 'Circle of Competence',
+        whatItScreens: 'Businesses that operate in areas you actually understand.',
+        plainMeaning: 'Only look at companies whose business model, economics, and risks you can reasonably explain. If you don\'t understand how the company makes money or what could hurt it, you skip it—no matter how attractive it looks.',
+        whyBuffett: 'You don\'t need to understand every business—just the ones you can evaluate correctly. Avoiding mistakes is more important than finding every opportunity.',
+        companies: [
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'WMT', name: 'Walmart Inc.' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PEP', name: 'PepsiCo, Inc.' },
+            { symbol: 'DIS', name: 'The Walt Disney Company' }
+        ]
+    },
+    'simple-business': {
+        title: 'Simple Business',
+        whatItScreens: 'Companies with straightforward, stable business models.',
+        plainMeaning: 'The company does something easy to explain and doesn\'t depend on constant innovation, cutting-edge technology, or complex financial engineering to survive.',
+        whyBuffett: 'Simple businesses are easier to evaluate, easier to predict, and less likely to surprise you in bad ways.',
+        companies: [
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+            { symbol: 'WMT', name: 'Walmart Inc.' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'AXP', name: 'American Express Company' },
+            { symbol: 'BK', name: 'The Bank of New York Mellon' },
+            { symbol: 'USB', name: 'U.S. Bancorp' },
+            { symbol: 'GS', name: 'The Goldman Sachs Group, Inc.' }
+        ]
+    },
+    'consistent-earnings': {
+        title: 'Consistent Earning Power',
+        whatItScreens: 'Businesses that have reliably made money over time.',
+        plainMeaning: 'The company has a long track record of being profitable. It\'s not a turnaround, a "this year was bad but next year will be great" story, or a business that only works in perfect conditions.',
+        whyBuffett: 'A proven history of earnings is far more reliable than forecasts. Buffett prefers businesses that have already shown they can earn money through good times and bad.',
+        companies: [
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'WMT', name: 'Walmart Inc.' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'AXP', name: 'American Express Company' },
+            { symbol: 'AAPL', name: 'Apple Inc.' }
+        ]
+    },
+    'high-returns-low-debt': {
+        title: 'High Returns with Low or Moderate Debt',
+        whatItScreens: 'Companies that generate strong profits without relying heavily on borrowing.',
+        plainMeaning: 'The business earns attractive returns on the money invested in it and doesn\'t need a lot of debt to do so. If interest rates rise or revenue dips, the company isn\'t at risk of financial stress.',
+        whyBuffett: 'Debt magnifies risk. A truly great business doesn\'t need leverage to look good.',
+        companies: [
+            { symbol: 'AAPL', name: 'Apple Inc.' },
+            { symbol: 'MSFT', name: 'Microsoft Corporation' },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'V', name: 'Visa Inc.' }
+        ]
+    },
+    'durable-moat': {
+        title: 'Durable Competitive Advantage (Moat Proxies)',
+        whatItScreens: 'Evidence that the company has a "moat" protecting it from competitors.',
+        plainMeaning: 'The company appears able to maintain strong profitability over time because it has something competitors struggle to copy—brand, cost advantage, customer loyalty, regulation, or scale. Since moats are qualitative, this screener looks for signs of a moat, like stable margins and strong returns that persist over many years.',
+        whyBuffett: 'Without a moat, competitors eventually drive profits down. With a moat, profits can compound for decades.',
+        companies: [
+            { symbol: 'AAPL', name: 'Apple Inc.' },
+            { symbol: 'MSFT', name: 'Microsoft Corporation' },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+            { symbol: 'AMZN', name: 'Amazon.com, Inc.' },
+            { symbol: 'V', name: 'Visa Inc.' },
+            { symbol: 'MA', name: 'Mastercard Incorporated' },
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' }
+        ]
+    },
+    'cash-generation': {
+        title: 'Owner Earnings / Cash Generation',
+        whatItScreens: 'How much real, usable cash the business produces for owners.',
+        plainMeaning: 'Instead of focusing on accounting earnings, this looks at whether the business actually generates cash after spending what it needs to stay competitive. A business that reports profits but constantly consumes cash is not attractive.',
+        whyBuffett: 'Cash is what owners can reinvest, distribute, or use to grow value. Accounting profits alone can be misleading.',
+        companies: [
+            { symbol: 'AAPL', name: 'Apple Inc.' },
+            { symbol: 'MSFT', name: 'Microsoft Corporation' },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'V', name: 'Visa Inc.' }
+        ]
+    },
+    'intrinsic-value': {
+        title: 'Intrinsic Value vs. Market Price',
+        whatItScreens: 'Whether the stock price is reasonable compared to the business\'s underlying value.',
+        plainMeaning: 'Estimate how much cash the business is likely to produce over its lifetime and compare that value to today\'s stock price. Buy only if there\'s a margin of safety—meaning the price is clearly below a conservative estimate of value.',
+        whyBuffett: 'Even a great business can be a bad investment if you overpay.',
+        companies: [
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'WMT', name: 'Walmart Inc.' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+            { symbol: 'AXP', name: 'American Express Company' },
+            { symbol: 'USB', name: 'U.S. Bancorp' }
+        ]
+    },
+    'long-term-mindset': {
+        title: 'Long-Term Ownership Mindset',
+        whatItScreens: 'Your willingness to hold the business for many years.',
+        plainMeaning: 'If you wouldn\'t be comfortable owning the business for at least 10 years, you shouldn\'t own it at all. Short-term price movements are ignored; the focus is on long-term business performance.',
+        whyBuffett: 'Time is the friend of a great business and the enemy of a mediocre one. Compounding only works if you let it.',
+        companies: [
+            { symbol: 'KO', name: 'The Coca-Cola Company' },
+            { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+            { symbol: 'JNJ', name: 'Johnson & Johnson' },
+            { symbol: 'PG', name: 'Procter & Gamble Co.' },
+            { symbol: 'WMT', name: 'Walmart Inc.' },
+            { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+            { symbol: 'AXP', name: 'American Express Company' },
+            { symbol: 'AAPL', name: 'Apple Inc.' }
+        ]
+    }
+};
+
+// Handle screener selection
+function handleScreenerSelect() {
+    const select = document.getElementById('screenerSelect');
+    const descriptionDiv = document.getElementById('screenerDescription');
+    const screenerContent = document.getElementById('screenerContent');
+    const resultsDiv = document.getElementById('screenerResults');
+    const companiesList = document.getElementById('screenerCompaniesList');
+    
+    if (!select || !descriptionDiv || !screenerContent || !resultsDiv || !companiesList) return;
+    
+    const selectedValue = select.value;
+    
+    if (!selectedValue) {
+        descriptionDiv.style.display = 'none';
+        resultsDiv.style.display = 'none';
+        return;
+    }
+    
+    const screener = screenerData[selectedValue];
+    if (!screener) return;
+    
+    // Build description HTML with clickable "Uncle Warren" link
+    const warrenLink = '<span class="warren-link" onclick="openWarrenModal()">Uncle Warren (Buffett)</span>';
+    screenerContent.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #DAA520; font-size: 1.5rem;">${screener.title}</h3>
+        <div style="margin-bottom: 20px;">
+            <strong style="color: #333; font-size: 1.1rem;">What it screens for:</strong>
+            <p style="margin: 5px 0 15px 0; color: #555; line-height: 1.6;">${screener.whatItScreens}</p>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <strong style="color: #333; font-size: 1.1rem;">Plain meaning:</strong>
+            <p style="margin: 5px 0 15px 0; color: #555; line-height: 1.6;">${screener.plainMeaning}</p>
+        </div>
+        <div>
+            <strong style="color: #333; font-size: 1.1rem;">Why ${warrenLink} uses it:</strong>
+            <p style="margin: 5px 0 0 0; color: #555; line-height: 1.6;">${screener.whyBuffett}</p>
+        </div>
+    `;
+    
+    descriptionDiv.style.display = 'block';
+    
+    // Display companies
+    companiesList.innerHTML = screener.companies.map(company => `
+        <div class="screener-company-card" onclick="window.location.href='${getPagePath('stock-details.html')}?ticker=${company.symbol}'">
+            <div class="screener-company-symbol">${company.symbol}</div>
+            <div class="screener-company-name">${company.name}</div>
+        </div>
+    `).join('');
+    
+    resultsDiv.style.display = 'block';
+}
+
+// Open Warren Buffett modal
+function openWarrenModal() {
+    const modal = document.getElementById('warrenModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Close Warren Buffett modal
+function closeWarrenModal() {
+    const modal = document.getElementById('warrenModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Make functions globally available for onclick handlers
+window.openWarrenModal = openWarrenModal;
+window.closeWarrenModal = closeWarrenModal;
 
 // Make functions available globally
 window.addToWatchlist = addToWatchlist;
