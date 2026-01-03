@@ -168,27 +168,45 @@ async function setupAdminUserSelector() {
     const adminSelector = document.getElementById('adminUserSelector');
     const userSelect = document.getElementById('adminUserSelect');
     
-    if (!adminSelector || !userSelect) return;
+    if (!adminSelector || !userSelect) {
+        console.error('Admin selector elements not found');
+        return;
+    }
     
     adminSelector.style.display = 'block';
     
     try {
-        const { data: users, error } = await supabase
+        console.log('Loading standard users for admin selector...');
+        
+        // First, try to get all users to see what we have
+        const { data: allUsers, error: allUsersError } = await supabase
             .from('Users')
-            .select('UID, First_Name, Last_Name, Username')
-            .eq('user_type', 'standard')
+            .select('UID, First_Name, Last_Name, Username, user_type')
             .order('First_Name', { ascending: true });
         
-        if (error) throw error;
+        if (allUsersError) {
+            console.error('Error fetching all users:', allUsersError);
+            throw allUsersError;
+        }
+        
+        console.log('All users fetched:', allUsers);
+        
+        // Filter for standard users
+        const standardUsers = allUsers ? allUsers.filter(user => user.user_type === 'standard' || !user.user_type) : [];
+        console.log('Standard users filtered:', standardUsers);
         
         userSelect.innerHTML = '<option value="">Select a user to view their account...</option>';
         
         // Add current user option
-        const { data: currentUser } = await supabase
+        const { data: currentUser, error: currentUserError } = await supabase
             .from('Users')
             .select('UID, First_Name, Last_Name, Username')
             .eq('UID', currentUserUid)
             .single();
+        
+        if (currentUserError && currentUserError.code !== 'PGRST116') {
+            console.error('Error fetching current user:', currentUserError);
+        }
         
         if (currentUser) {
             const displayName = (currentUser.First_Name && currentUser.Last_Name)
@@ -200,8 +218,8 @@ async function setupAdminUserSelector() {
             userSelect.appendChild(option);
         }
         
-        if (users && users.length > 0) {
-            users.forEach(user => {
+        if (standardUsers && standardUsers.length > 0) {
+            standardUsers.forEach(user => {
                 if (user.UID === currentUserUid) return; // Already added
                 
                 const displayName = (user.First_Name && user.Last_Name)
@@ -213,9 +231,21 @@ async function setupAdminUserSelector() {
                 option.textContent = displayName;
                 userSelect.appendChild(option);
             });
+            console.log(`Added ${standardUsers.length} standard users to dropdown`);
+        } else {
+            console.warn('No standard users found');
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No standard users found';
+            option.disabled = true;
+            userSelect.appendChild(option);
         }
         
-        userSelect.addEventListener('change', async (e) => {
+        // Remove existing event listener if any, then add new one
+        const newUserSelect = userSelect.cloneNode(true);
+        userSelect.parentNode.replaceChild(newUserSelect, userSelect);
+        
+        newUserSelect.addEventListener('change', async (e) => {
             viewingUserUid = parseInt(e.target.value) || currentUserUid;
             await loadWatchlist();
             await loadPortfolio();
@@ -223,6 +253,7 @@ async function setupAdminUserSelector() {
         
     } catch (error) {
         console.error('Error loading users for admin selector:', error);
+        userSelect.innerHTML = '<option value="">Error loading users</option>';
     }
 }
 
