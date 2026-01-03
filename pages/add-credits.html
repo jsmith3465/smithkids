@@ -335,6 +335,7 @@
                 <div class="credits-tabs">
                     <button class="credits-tab active" data-tab="manager">Credit Manager</button>
                     <button class="credits-tab" data-tab="add">Add Credits</button>
+                    <button class="credits-tab" data-tab="transfer">Transfer Credits</button>
                     <button class="credits-tab" data-tab="balances">View Balances</button>
                     <button class="credits-tab" data-tab="history">Credit History</button>
                     <button class="credits-tab" data-tab="quick">Quick Link</button>
@@ -458,6 +459,42 @@
                     </div>
                     
                     <button id="addCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
+                    </div>
+                </div>
+                
+                <!-- Transfer Credits Tab -->
+                <div id="transferTab" class="tab-content">
+                    <div class="credits-form">
+                        <h2 style="margin-bottom: 20px;">Transfer Credits Between Users</h2>
+                        <p style="color: #666; margin-bottom: 20px;">Transfer credits from one user to another. Both users will see the transaction in their credit history.</p>
+                        
+                        <form id="transferCreditsForm">
+                            <div class="input-group" style="margin-bottom: 20px;">
+                                <label for="transferFromUser" style="display: block; margin-bottom: 10px; font-weight: 600;">Transfer From:</label>
+                                <select id="transferFromUser" class="chores-input" required style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem;">
+                                    <option value="">Select a user...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group" style="margin-bottom: 20px;">
+                                <label for="transferToUser" style="display: block; margin-bottom: 10px; font-weight: 600;">Transfer To:</label>
+                                <select id="transferToUser" class="chores-input" required style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem;">
+                                    <option value="">Select a user...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group" style="margin-bottom: 20px;">
+                                <label for="transferAmount" style="display: block; margin-bottom: 10px; font-weight: 600;">Amount:</label>
+                                <input type="number" id="transferAmount" class="credit-amount-input" min="1" value="10" required style="width: 100%;">
+                                <small style="color: #666; display: block; margin-top: 5px;">Number of credits to transfer</small>
+                            </div>
+                            
+                            <div id="transferFromBalance" style="display: none; background: #fff3cd; border: 2px solid #DAA520; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                                <strong>From User Balance:</strong> <span id="transferFromBalanceAmount" style="font-size: 1.2rem; color: #CC5500; font-weight: 700;">0</span> credits
+                            </div>
+                            
+                            <button type="submit" id="transferCreditsBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Transfer Credits</button>
+                        </form>
                     </div>
                 </div>
                 

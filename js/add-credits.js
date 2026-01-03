@@ -66,6 +66,7 @@ async function checkUserAccess() {
         await loadAllCredits();
         await loadHistoryUsers();
         await loadManagerOverview();
+        await loadTransferUsers();
         setupAdminEventListeners();
     } else {
         // Show standard user content
@@ -1107,10 +1108,14 @@ async function loadUserTransactions() {
                 description = `Played ${gameType.replace('_', ' ')}`;
             } else if (trans.transaction_type === 'credit_adjusted') {
                 typeText = 'Balance Adjusted';
+            } else if (trans.transaction_type === 'credit_transfer_out') {
+                typeText = 'Credit Transferred Out';
+            } else if (trans.transaction_type === 'credit_transfer_in') {
+                typeText = 'Credit Transferred In';
             }
             
-            const amountClass = trans.transaction_type === 'credit_added' ? 'transaction-credit' : 'transaction-debit';
-            const amountSign = trans.transaction_type === 'credit_added' ? '+' : '-';
+            const amountClass = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'credit_transfer_in') ? 'transaction-credit' : 'transaction-debit';
+            const amountSign = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'credit_transfer_in') ? '+' : '-';
             
             row.innerHTML = `
                 <td>${dateStr}</td>
@@ -1199,6 +1204,28 @@ function setupAdminEventListeners() {
             await addNewCreditScheme();
         });
     }
+    
+    // Transfer credits form submission
+    const transferCreditsForm = document.getElementById('transferCreditsForm');
+    if (transferCreditsForm) {
+        transferCreditsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await transferCredits();
+        });
+    }
+    
+    // Transfer from user selection - show balance
+    const transferFromUser = document.getElementById('transferFromUser');
+    if (transferFromUser) {
+        transferFromUser.addEventListener('change', async (e) => {
+            const userId = e.target.value;
+            if (userId) {
+                await loadUserBalanceForTransfer(userId, 'from');
+            } else {
+                document.getElementById('transferFromBalance').style.display = 'none';
+            }
+        });
+    }
 }
 
 function switchTab(tabName) {
@@ -1222,6 +1249,12 @@ function switchTab(tabName) {
         // Reset history view when switching to tab
         document.getElementById('historyUserSelect').value = '';
         document.getElementById('userHistorySection').style.display = 'none';
+    } else if (tabName === 'transfer') {
+        // Reset transfer form when switching to tab
+        document.getElementById('transferFromUser').value = '';
+        document.getElementById('transferToUser').value = '';
+        document.getElementById('transferAmount').value = '10';
+        document.getElementById('transferFromBalance').style.display = 'none';
     }
 }
 
@@ -1642,10 +1675,14 @@ async function loadUserCreditHistory(userId) {
                 description = description || `Played ${gameType.replace('_', ' ')}`;
             } else if (trans.transaction_type === 'credit_adjusted') {
                 typeText = 'Balance Adjusted';
+            } else if (trans.transaction_type === 'credit_transfer_out') {
+                typeText = 'Credit Transferred Out';
+            } else if (trans.transaction_type === 'credit_transfer_in') {
+                typeText = 'Credit Transferred In';
             }
             
-            const amountClass = trans.transaction_type === 'credit_added' ? 'transaction-credit' : 'transaction-debit';
-            const amountSign = trans.transaction_type === 'credit_added' ? '+' : '-';
+            const amountClass = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'credit_transfer_in') ? 'transaction-credit' : 'transaction-debit';
+            const amountSign = (trans.transaction_type === 'credit_added' || trans.transaction_type === 'credit_transfer_in') ? '+' : '-';
             
             row.innerHTML = `
                 <td>${dateStr}</td>
@@ -1662,6 +1699,267 @@ async function loadUserCreditHistory(userId) {
     } catch (error) {
         console.error('Error loading user credit history:', error);
         historyTransactionsList.innerHTML = '<div class="no-data">Error loading transaction history.</div>';
+    }
+}
+
+// Load users for transfer dropdowns
+async function loadTransferUsers() {
+    const transferFromUser = document.getElementById('transferFromUser');
+    const transferToUser = document.getElementById('transferToUser');
+    
+    if (!transferFromUser || !transferToUser) return;
+    
+    try {
+        const { data: users, error } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .eq('user_type', 'standard')
+            .order('First_Name', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Clear existing options except the first one
+        transferFromUser.innerHTML = '<option value="">Select a user...</option>';
+        transferToUser.innerHTML = '<option value="">Select a user...</option>';
+        
+        if (!users || users.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No standard users found';
+            transferFromUser.appendChild(option.cloneNode(true));
+            transferToUser.appendChild(option);
+            return;
+        }
+        
+        users.forEach(user => {
+            const displayName = (user.First_Name && user.Last_Name) 
+                ? `${user.First_Name} ${user.Last_Name} (${user.Username})`
+                : user.Username;
+            
+            const optionFrom = document.createElement('option');
+            optionFrom.value = user.UID;
+            optionFrom.textContent = displayName;
+            transferFromUser.appendChild(optionFrom);
+            
+            const optionTo = document.createElement('option');
+            optionTo.value = user.UID;
+            optionTo.textContent = displayName;
+            transferToUser.appendChild(optionTo);
+        });
+    } catch (error) {
+        console.error('Error loading transfer users:', error);
+        transferFromUser.innerHTML = '<option value="">Error loading users</option>';
+        transferToUser.innerHTML = '<option value="">Error loading users</option>';
+    }
+}
+
+// Load user balance for transfer display
+async function loadUserBalanceForTransfer(userId, type) {
+    try {
+        const { data: creditData, error } = await supabase
+            .from('User_Credits')
+            .select('balance')
+            .eq('user_uid', userId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error loading balance:', error);
+            return;
+        }
+        
+        const balance = creditData ? creditData.balance : 0;
+        
+        if (type === 'from') {
+            const balanceDiv = document.getElementById('transferFromBalance');
+            const balanceAmount = document.getElementById('transferFromBalanceAmount');
+            if (balanceDiv && balanceAmount) {
+                balanceAmount.textContent = balance.toLocaleString();
+                balanceDiv.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user balance for transfer:', error);
+    }
+}
+
+// Transfer credits between users
+async function transferCredits() {
+    const session = window.authStatus?.getSession();
+    if (!session || session.userType !== 'admin') {
+        showError('Admin access required.');
+        return;
+    }
+    
+    const fromUserId = parseInt(document.getElementById('transferFromUser').value);
+    const toUserId = parseInt(document.getElementById('transferToUser').value);
+    const amount = parseInt(document.getElementById('transferAmount').value);
+    
+    if (!fromUserId || !toUserId) {
+        showError('Please select both users.');
+        return;
+    }
+    
+    if (fromUserId === toUserId) {
+        showError('Cannot transfer credits to the same user.');
+        return;
+    }
+    
+    if (isNaN(amount) || amount < 1) {
+        showError('Please enter a valid amount (minimum 1).');
+        return;
+    }
+    
+    // Get admin name for transaction description
+    const adminName = (session.firstName && session.lastName) 
+        ? `${session.firstName} ${session.lastName}` 
+        : session.username || 'Admin';
+    
+    // Get user names for transaction descriptions
+    let fromUserName = '';
+    let toUserName = '';
+    
+    try {
+        // Get user names
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', [fromUserId, toUserId]);
+        
+        if (usersError) throw usersError;
+        
+        users.forEach(user => {
+            if (user.UID === fromUserId) {
+                fromUserName = (user.First_Name && user.Last_Name) 
+                    ? `${user.First_Name} ${user.Last_Name}` 
+                    : user.Username;
+            }
+            if (user.UID === toUserId) {
+                toUserName = (user.First_Name && user.Last_Name) 
+                    ? `${user.First_Name} ${user.Last_Name}` 
+                    : user.Username;
+            }
+        });
+        
+        // Check if FROM user has enough credits
+        const { data: fromCredit, error: fromError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', fromUserId)
+            .single();
+        
+        if (fromError && fromError.code !== 'PGRST116') {
+            throw fromError;
+        }
+        
+        const fromBalance = fromCredit?.balance || 0;
+        
+        if (fromBalance < amount) {
+            showError(`Insufficient credits. User has ${fromBalance} credits available.`);
+            return;
+        }
+        
+        const transferBtn = document.getElementById('transferCreditsBtn');
+        transferBtn.disabled = true;
+        transferBtn.textContent = 'Transferring...';
+        
+        // Deduct from FROM user
+        const newFromBalance = fromBalance - amount;
+        
+        if (fromCredit) {
+            const { error: updateFromError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', fromCredit.credit_id);
+            
+            if (updateFromError) throw updateFromError;
+        } else {
+            // This shouldn't happen if balance check passed, but handle it
+            showError('Source user credit record not found.');
+            transferBtn.disabled = false;
+            transferBtn.textContent = 'Transfer Credits';
+            return;
+        }
+        
+        // Add to TO user
+        const { data: toCredit, error: toError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', toUserId)
+            .single();
+        
+        if (toError && toError.code !== 'PGRST116') {
+            throw toError;
+        }
+        
+        const toBalance = toCredit?.balance || 0;
+        const newToBalance = toBalance + amount;
+        
+        if (toCredit) {
+            const { error: updateToError } = await supabase
+                .from('User_Credits')
+                .update({ balance: newToBalance, updated_at: new Date().toISOString() })
+                .eq('credit_id', toCredit.credit_id);
+            
+            if (updateToError) throw updateToError;
+        } else {
+            // Create new credit record for TO user
+            const { error: insertToError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: toUserId, balance: amount });
+            
+            if (insertToError) throw insertToError;
+        }
+        
+        // Create transaction for FROM user (debit)
+        const { error: transFromError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                from_user_uid: fromUserId,
+                to_user_uid: toUserId,
+                amount: amount,
+                transaction_type: 'credit_transfer_out',
+                description: `Transferred ${amount} credits to ${toUserName} (authorized by ${adminName})`
+            });
+        
+        if (transFromError) throw transFromError;
+        
+        // Create transaction for TO user (credit)
+        const { error: transToError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                from_user_uid: fromUserId,
+                to_user_uid: toUserId,
+                amount: amount,
+                transaction_type: 'credit_transfer_in',
+                description: `Received ${amount} credits from ${fromUserName} (authorized by ${adminName})`
+            });
+        
+        if (transToError) throw transToError;
+        
+        showSuccess(`Successfully transferred ${amount} credits from ${fromUserName} to ${toUserName}.`);
+        
+        // Reset form
+        document.getElementById('transferFromUser').value = '';
+        document.getElementById('transferToUser').value = '';
+        document.getElementById('transferAmount').value = '10';
+        document.getElementById('transferFromBalance').style.display = 'none';
+        
+        // Refresh balances if needed
+        await loadAllCredits();
+        const managerTab = document.getElementById('managerTab');
+        if (managerTab && managerTab.classList.contains('active')) {
+            await loadTotalBalances();
+        }
+        
+    } catch (error) {
+        console.error('Error transferring credits:', error);
+        showError('An error occurred while transferring credits. Please try again.');
+    } finally {
+        const transferBtn = document.getElementById('transferCreditsBtn');
+        if (transferBtn) {
+            transferBtn.disabled = false;
+            transferBtn.textContent = 'Transfer Credits';
+        }
     }
 }
 
