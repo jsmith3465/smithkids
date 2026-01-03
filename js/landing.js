@@ -197,32 +197,55 @@ async function initializeLanding() {
         const greetingText = document.getElementById('greetingText');
         const userName = document.getElementById('userName');
         
+        console.log('Attempting to set greeting. Elements found:', {
+            greetingText: !!greetingText,
+            userName: !!userName,
+            greetingTextContent: greetingText?.textContent,
+            userNameContent: userName?.textContent
+        });
+        
         if (greetingText && userName) {
             const displayName = (session.firstName && session.lastName) 
                 ? `${session.firstName} ${session.lastName}` 
                 : (session.username || 'User');
             
             const greeting = getTimeBasedGreeting();
+            
+            // Clear any existing content first
+            greetingText.textContent = '';
+            userName.textContent = '';
+            
+            // Set the content
             greetingText.textContent = greeting + ',';
             userName.textContent = displayName;
+            
             console.log('Successfully set greeting:', greeting, 'for user:', displayName);
+            console.log('After setting - greetingText:', greetingText.textContent, 'userName:', userName.textContent);
             return true;
         } else {
             console.warn('Greeting elements not found yet. Retrying...', {
                 greetingText: !!greetingText,
                 userName: !!userName,
-                mainContent: !!mainContent
+                mainContent: !!mainContent,
+                allElements: document.querySelectorAll('#greetingText, #userName')
             });
             return false;
         }
     };
     
     // Try to set greeting immediately
-    if (!setGreeting()) {
+    let greetingSet = setGreeting();
+    if (!greetingSet) {
         // Retry after delays
         setTimeout(() => {
-            if (!setGreeting()) {
-                setTimeout(() => setGreeting(), 300);
+            greetingSet = setGreeting();
+            if (!greetingSet) {
+                setTimeout(() => {
+                    greetingSet = setGreeting();
+                    if (!greetingSet) {
+                        console.error('Failed to set greeting after all retries');
+                    }
+                }, 300);
             }
         }, 200);
     }

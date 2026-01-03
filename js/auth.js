@@ -311,25 +311,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.authStatus.isAuthenticated = isAuthenticated;
     }
     
-    // Check for feature announcements if user just logged in
-    if (hasValidSession || window.authStatus.isAuthenticated) {
-        const session = window.authStatus.getSession();
-        const shouldCheckAnnouncements = sessionStorage.getItem('checkAnnouncements') === 'true';
-        
-        if (shouldCheckAnnouncements && session) {
-            sessionStorage.removeItem('checkAnnouncements');
-            // Import and check announcements (non-blocking)
-            import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
-                setTimeout(() => {
-                    checkFeatureAnnouncements(session.uid).catch(error => {
-                        console.error('Error checking feature announcements:', error);
-                    });
-                }, 1000); // Wait 1 second for page to fully load
-            }).catch(error => {
-                console.error('Error loading feature announcements module:', error);
-            });
+    // Check for feature announcements if user just logged in (non-blocking, delayed)
+    // Don't block page load - do this after a delay
+    setTimeout(() => {
+        if (hasValidSession || window.authStatus.isAuthenticated) {
+            const session = window.authStatus.getSession();
+            const shouldCheckAnnouncements = sessionStorage.getItem('checkAnnouncements') === 'true';
+            
+            if (shouldCheckAnnouncements && session) {
+                sessionStorage.removeItem('checkAnnouncements');
+                // Import and check announcements (non-blocking)
+                import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
+                    // Wait longer for page to fully load before checking announcements
+                    setTimeout(() => {
+                        checkFeatureAnnouncements(session.uid).catch(error => {
+                            console.error('Error checking feature announcements:', error);
+                        });
+                    }, 2000); // Wait 2 seconds for page to fully load
+                }).catch(error => {
+                    console.error('Error loading feature announcements module:', error);
+                });
+            }
         }
-    }
+    }, 500); // Wait 500ms before even starting the check
     
     // Scroll to top for all pages except login
     scrollToTop();

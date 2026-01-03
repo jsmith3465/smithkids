@@ -21,14 +21,33 @@ async function checkFeatureAnnouncements(userUid) {
     try {
         console.log('Checking feature announcements for user:', userUid);
         
-        // Get active announcements
-        const { data: announcements, error: announcementsError } = await supabase
-            .from('feature_announcements')
-            .select('*')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
+        // Add timeout to prevent hanging
+        const announcementsPromise = (async () => {
+            // Get active announcements
+            const { data: announcements, error: announcementsError } = await supabase
+                .from('feature_announcements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+            
+            return { announcements, announcementsError };
+        })();
+        
+        const timeoutPromise = new Promise((resolve) => {
+            setTimeout(() => {
+                console.warn('Feature announcements check timed out after 3 seconds');
+                resolve({ announcements: null, announcementsError: { message: 'Timeout' } });
+            }, 3000); // 3 second timeout
+        });
+        
+        const { announcements, announcementsError } = await Promise.race([announcementsPromise, timeoutPromise]);
         
         if (announcementsError) {
+            // Check if it's a timeout
+            if (announcementsError.message === 'Timeout') {
+                console.warn('Feature announcements check timed out');
+                return;
+            }
             console.error('Error fetching announcements:', announcementsError);
             // Check if table doesn't exist
             const isMissingTable = /does not exist/i.test(announcementsError.message) || 
@@ -47,15 +66,28 @@ async function checkFeatureAnnouncements(userUid) {
         
         console.log('Found', announcements.length, 'active announcements');
         
-        // Get announcements user has already seen
-        const announcementIds = announcements.map(a => a.announcement_id);
-        const { data: viewedAnnouncements, error: viewsError } = await supabase
-            .from('user_announcement_views')
-            .select('announcement_id')
-            .eq('user_uid', userUid)
-            .in('announcement_id', announcementIds);
+        // Get announcements user has already seen (with timeout)
+        const viewsPromise = (async () => {
+            const announcementIds = announcements.map(a => a.announcement_id);
+            const { data: viewedAnnouncements, error: viewsError } = await supabase
+                .from('user_announcement_views')
+                .select('announcement_id')
+                .eq('user_uid', userUid)
+                .in('announcement_id', announcementIds);
+            
+            return { viewedAnnouncements, viewsError };
+        })();
         
-        if (viewsError) {
+        const viewsTimeoutPromise = new Promise((resolve) => {
+            setTimeout(() => {
+                console.warn('Viewed announcements check timed out after 3 seconds');
+                resolve({ viewedAnnouncements: [], viewsError: { message: 'Timeout' } });
+            }, 3000);
+        });
+        
+        const { viewedAnnouncements, viewsError } = await Promise.race([viewsPromise, viewsTimeoutPromise]);
+        
+        if (viewsError && viewsError.message !== 'Timeout') {
             console.error('Error fetching viewed announcements:', viewsError);
             // Check if table doesn't exist
             const isMissingTable = /does not exist/i.test(viewsError.message) || 
