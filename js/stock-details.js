@@ -20,6 +20,7 @@ function getPagePath(pageName) {
 
 let currentUserUid = null;
 let currentTicker = null;
+let priceChart = null;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
@@ -78,6 +79,7 @@ async function checkUserAccess() {
     try {
         setupEventListeners();
         await loadStockDetails(currentTicker);
+        await loadPriceChart(currentTicker, '1mo'); // Load default 1 month chart
     } catch (error) {
         console.error('Error loading stock details:', error);
     }
@@ -94,22 +96,49 @@ function setupEventListeners() {
     if (addToPortfolioBtn) {
         addToPortfolioBtn.addEventListener('click', () => addToPortfolioFromDetails());
     }
+    
+    // Chart period buttons
+    const periodButtons = document.querySelectorAll('.chart-period-btn');
+    periodButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            periodButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const period = btn.getAttribute('data-period');
+            loadPriceChart(currentTicker, period);
+        });
+    });
 }
 
 // Load comprehensive stock details
 async function loadStockDetails(ticker) {
     try {
-        // Get overview and quote data
-        const [overviewData, quoteData] = await Promise.all([
-            getStockOverview(ticker),
-            getStockQuote(ticker)
-        ]);
+        console.log('Loading stock details for:', ticker);
         
-        // Combine data
+        // Get quote data first (most important)
+        let quoteData = await getStockQuote(ticker);
+        console.log('Quote data received:', quoteData);
+        
+        // If quote data is null or missing price, show error
+        if (!quoteData || (!quoteData.price && quoteData.price !== 0)) {
+            throw new Error('Unable to fetch stock price data. Please check the ticker symbol and try again.');
+        }
+        
+        // Get overview data (can be empty, that's okay)
+        let overviewData = {};
+        try {
+            overviewData = await getStockOverview(ticker);
+            console.log('Overview data received:', overviewData);
+        } catch (overviewError) {
+            console.warn('Overview data not available, continuing with quote data only:', overviewError);
+        }
+        
+        // Combine data (quote data takes precedence)
         const stockData = {
-            ...quoteData,
-            ...overviewData
+            ...overviewData,
+            ...quoteData  // Quote data overrides overview data for price info
         };
+        
+        console.log('Combined stock data:', stockData);
         
         // Update header
         updateStockHeader(stockData);
@@ -131,12 +160,16 @@ async function loadStockDetails(ticker) {
         
     } catch (error) {
         console.error('Error loading stock details:', error);
-        document.getElementById('mainContent').innerHTML = `
-            <div style="color: #dc3545; padding: 40px;">
-                Error loading stock details. Please try again.<br>
-                <a href="wall-street-warrior.html" class="back-button" style="margin-top: 20px;">Go Back</a>
-            </div>
-        `;
+        const mainContent = document.getElementById('mainContent');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div style="color: #dc3545; padding: 40px; text-align: center;">
+                    <h3>Error loading stock details</h3>
+                    <p>${error.message || 'Please try again.'}</p>
+                    <a href="wall-street-warrior.html" class="back-button" style="margin-top: 20px; display: inline-block;">Go Back</a>
+                </div>
+            `;
+        }
     }
 }
 
@@ -176,13 +209,23 @@ async function getStockOverview(ticker) {
 // Get stock quote (current price data)
 async function getStockQuote(ticker) {
     try {
-        // Try Alpha Vantage first
+        // Try Yahoo Finance first (more reliable)
+        const yahooData = await getYahooFinanceQuote(ticker);
+        if (yahooData && yahooData.price) {
+            console.log('Using Yahoo Finance quote data for', ticker);
+            return yahooData;
+        }
+        
+        // Fallback to Alpha Vantage
+        console.log('Trying Alpha Vantage for', ticker);
         const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${ALPHA_VANTAGE_API_KEY}`);
         const data = await response.json();
         
+        console.log('Alpha Vantage response:', data);
+        
         if (data['Global Quote'] && data['Global Quote']['01. symbol']) {
             const quote = data['Global Quote'];
-            return {
+            const result = {
                 symbol: quote['01. symbol'],
                 price: parseFloat(quote['05. price']),
                 change: parseFloat(quote['09. change']),
@@ -193,14 +236,17 @@ async function getStockQuote(ticker) {
                 high: parseFloat(quote['03. high']),
                 low: parseFloat(quote['04. low'])
             };
+            console.log('Alpha Vantage quote result:', result);
+            return result;
         }
         
-        // Fallback to Yahoo Finance
+        // If Alpha Vantage fails, try Yahoo Finance again
+        console.log('Alpha Vantage failed, trying Yahoo Finance again');
         return await getYahooFinanceQuote(ticker);
         
     } catch (error) {
         console.error('Error fetching stock quote:', error);
-        // Fallback to Yahoo Finance
+        // Final fallback to Yahoo Finance
         return await getYahooFinanceQuote(ticker);
     }
 }
@@ -208,8 +254,17 @@ async function getStockQuote(ticker) {
 // Get quote from Yahoo Finance
 async function getYahooFinanceQuote(ticker) {
     try {
-        const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`);
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        console.log('Fetching Yahoo Finance quote from:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error('Yahoo Finance response not OK:', response.status, response.statusText);
+            return null;
+        }
+        
         const data = await response.json();
+        console.log('Yahoo Finance response:', data);
         
         if (data.chart && data.chart.result && data.chart.result[0]) {
             const result = data.chart.result[0];
@@ -221,19 +276,26 @@ async function getYahooFinanceQuote(ticker) {
                 const change = currentPrice - previousClose;
                 const changePercent = previousClose > 0 ? ((change / previousClose) * 100).toFixed(2) : '0.00';
                 
-                return {
+                const quoteData = {
                     symbol: meta.symbol || ticker,
-                    name: meta.longName || meta.shortName || ticker,
+                    name: meta.longName || meta.shortName || meta.displayName || ticker,
                     price: currentPrice,
                     change: change,
                     changePercent: `${changePercent}%`,
-                    volume: meta.regularMarketVolume || 0,
+                    volume: meta.regularMarketVolume || meta.volume || 0,
                     previousClose: previousClose,
-                    open: meta.regularMarketOpen || currentPrice,
-                    high: meta.regularMarketDayHigh || currentPrice,
-                    low: meta.regularMarketDayLow || currentPrice
+                    open: meta.regularMarketOpen || meta.previousClose || currentPrice,
+                    high: meta.regularMarketDayHigh || meta.regularMarketPrice || currentPrice,
+                    low: meta.regularMarketDayLow || meta.regularMarketPrice || currentPrice
                 };
+                
+                console.log('Yahoo Finance quote data:', quoteData);
+                return quoteData;
+            } else {
+                console.warn('Yahoo Finance meta missing regularMarketPrice');
             }
+        } else {
+            console.warn('Yahoo Finance chart result missing or empty');
         }
         
         return null;
@@ -250,18 +312,30 @@ function updateStockHeader(stockData) {
     const priceEl = document.getElementById('stockPrice');
     const changeEl = document.getElementById('stockChange');
     
+    console.log('Updating stock header with data:', stockData);
+    
     if (symbolEl) symbolEl.textContent = stockData.symbol || currentTicker;
     if (nameEl) nameEl.textContent = stockData.name || currentTicker;
     
-    if (priceEl && stockData.price) {
-        priceEl.textContent = `$${stockData.price.toFixed(2)}`;
-        priceEl.className = `stock-price-large ${stockData.change >= 0 ? 'positive' : 'negative'}`;
+    if (priceEl) {
+        if (stockData.price && !isNaN(stockData.price)) {
+            priceEl.textContent = `$${stockData.price.toFixed(2)}`;
+            priceEl.className = `stock-price-large ${stockData.change >= 0 ? 'positive' : 'negative'}`;
+        } else {
+            priceEl.textContent = 'Loading...';
+            priceEl.className = 'stock-price-large';
+        }
     }
     
-    if (changeEl && stockData.change !== undefined) {
-        const isPositive = stockData.change >= 0;
-        changeEl.textContent = `${isPositive ? '+' : ''}$${stockData.change.toFixed(2)} (${stockData.changePercent || '0.00%'})`;
-        changeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
+    if (changeEl) {
+        if (stockData.change !== undefined && !isNaN(stockData.change)) {
+            const isPositive = stockData.change >= 0;
+            changeEl.textContent = `${isPositive ? '+' : ''}$${stockData.change.toFixed(2)} (${stockData.changePercent || '0.00%'})`;
+            changeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
+        } else {
+            changeEl.textContent = 'Loading...';
+            changeEl.className = 'stock-change';
+        }
     }
 }
 
@@ -444,6 +518,160 @@ function formatNumber(num) {
     if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
     if (n >= 1e3) return `$${(n / 1e3).toFixed(2)}K`;
     return `$${n.toFixed(2)}`;
+}
+
+// Load price chart
+async function loadPriceChart(ticker, period = '1mo') {
+    const chartLoading = document.getElementById('chartLoading');
+    const chartCanvas = document.getElementById('priceChart');
+    
+    if (!chartCanvas) return;
+    
+    try {
+        if (chartLoading) chartLoading.style.display = 'block';
+        
+        // Map period to Yahoo Finance range
+        const periodMap = {
+            '1d': { interval: '5m', range: '1d' },
+            '5d': { interval: '15m', range: '5d' },
+            '1mo': { interval: '1d', range: '1mo' },
+            '3mo': { interval: '1d', range: '3mo' },
+            '6mo': { interval: '1d', range: '6mo' },
+            '1y': { interval: '1d', range: '1y' },
+            '2y': { interval: '1wk', range: '2y' },
+            '5y': { interval: '1mo', range: '5y' }
+        };
+        
+        const periodConfig = periodMap[period] || periodMap['1mo'];
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`;
+        
+        console.log('Fetching chart data from:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.chart || !data.chart.result || !data.chart.result[0]) {
+            throw new Error('No chart data available');
+        }
+        
+        const result = data.chart.result[0];
+        const timestamps = result.timestamp || [];
+        const quotes = result.indicators?.quote?.[0];
+        
+        if (!quotes || !quotes.close) {
+            throw new Error('No price data available');
+        }
+        
+        // Prepare chart data
+        const labels = timestamps.map(ts => {
+            const date = new Date(ts * 1000);
+            if (period === '1d' || period === '5d') {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (period === '1mo' || period === '3mo') {
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            } else {
+                return date.toLocaleDateString([], { month: 'short', year: 'numeric' });
+            }
+        });
+        
+        const prices = quotes.close;
+        const volumes = quotes.volume || [];
+        
+        // Determine color based on price trend
+        const firstPrice = prices[0];
+        const lastPrice = prices[prices.length - 1];
+        const chartColor = lastPrice >= firstPrice ? '#28a745' : '#dc3545';
+        
+        // Destroy existing chart if it exists
+        if (priceChart) {
+            priceChart.destroy();
+        }
+        
+        // Create new chart
+        const ctx = chartCanvas.getContext('2d');
+        priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Price',
+                    data: prices,
+                    borderColor: chartColor,
+                    backgroundColor: chartColor + '20',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `$${context.parsed.y.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+        
+        if (chartLoading) chartLoading.style.display = 'none';
+        
+    } catch (error) {
+        console.error('Error loading price chart:', error);
+        if (chartLoading) {
+            chartLoading.style.display = 'block';
+            chartLoading.textContent = 'Chart data unavailable. Please try a different time period.';
+            chartLoading.style.color = '#dc3545';
+        }
+        
+        const chartCanvas = document.getElementById('priceChart');
+        if (chartCanvas) {
+            const ctx = chartCanvas.getContext('2d');
+            ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+        }
+    }
 }
 
 // Escape HTML to prevent XSS
