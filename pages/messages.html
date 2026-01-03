@@ -6,12 +6,12 @@
   <title>Messages - Smith Team Six</title>
   <link rel="stylesheet" href="../style.css" />
   <style>
-    .messages-wrap { max-width: 1200px; margin: 0 auto; width: 100%; }
+    .messages-wrap { max-width: 1400px; margin: 0 auto; width: 100%; }
     .messages-layout { display: grid; grid-template-columns: 420px 1fr; gap: 18px; margin-top: 16px; }
     @media (max-width: 1000px) { .messages-layout { grid-template-columns: 1fr; } }
 
     .panel { background: white; border: 2px solid #e0e0e0; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); overflow: hidden; }
-    .panel-header { padding: 14px 16px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-bottom: 2px solid #DAA520; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .panel-header { padding: 14px 16px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-bottom: 2px solid #DAA520; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; min-height: 60px; }
     .panel-title { font-size: 1.2rem; font-weight: 800; color: #333; }
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -22,8 +22,9 @@
     .list { max-height: 70vh; overflow: auto; }
     .msg-row { padding: 12px 14px; border-bottom: 1px solid #eee; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .msg-row:hover { background: #f8f9fa; }
-    .msg-subject { font-weight: 400; color: #999; }
+    .msg-subject { font-weight: 400; color: #999; text-align: left; }
     .msg-row.unread .msg-subject { font-weight: 700; color: #333; }
+    .msg-meta { text-align: left; }
     .msg-reply-badge { 
       display: inline-block; 
       background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); 
@@ -97,18 +98,20 @@
           <div class="panel-header">
             <div class="panel-title">📬 Mailbox</div>
             <div class="toolbar">
-              <select id="sortOrder" style="padding: 8px 12px; border: 2px solid #DAA520; border-radius: 8px; font-size: 0.9rem; font-weight: 600; background: white; cursor: pointer; min-height: 40px;">
-                <option value="newest">📅 Newest First</option>
-                <option value="oldest">📅 Oldest First</option>
-              </select>
               <button id="composeBtn" class="btn btn-primary" style="min-height: 40px;">✍️ Compose</button>
               <button id="refreshBtn" class="btn btn-secondary" style="min-height: 40px;">🔄 Refresh</button>
             </div>
           </div>
-          <div class="filters">
-            <button class="filter-btn active" data-folder="inbox">Inbox</button>
-            <button class="filter-btn" data-folder="sent">Sent</button>
-            <button class="filter-btn" data-folder="trash">Trash</button>
+          <div class="filters" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="filter-btn active" data-folder="inbox">Inbox</button>
+              <button class="filter-btn" data-folder="sent">Sent</button>
+              <button class="filter-btn" data-folder="trash">Trash</button>
+            </div>
+            <select id="sortOrder" style="padding: 8px 12px; border: 2px solid #DAA520; border-radius: 8px; font-size: 0.9rem; font-weight: 600; background: white; cursor: pointer; min-height: 40px;">
+              <option value="newest">📅 Newest First</option>
+              <option value="oldest">📅 Oldest First</option>
+            </select>
           </div>
           <div id="messageList" class="list"></div>
         </div>
