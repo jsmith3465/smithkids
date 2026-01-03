@@ -835,8 +835,17 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
         // Add "Mark as Answered" button (for owner only)
         if (!isAnswered && isOwner) {
             actionsHtml += `
-                <button class="btn-answered" onclick="handleMarkAsAnswered(${request.request_id}, ${currentUserUid}, true)" style="margin-left: ${!isOwner && !hasUserPrayed ? '10px' : '0'};">
-                    🙌 Mark as Answered
+                <button class="btn btn-success" onclick="handleMarkAsAnswered(${request.request_id}, ${currentUserUid}, true)" style="
+                    padding: 15px 30px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    margin-left: ${!isOwner && !hasUserPrayed ? '10px' : '0'};
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    border: 2px solid #28a745;
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40, 167, 69, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40, 167, 69, 0.3)'">
+                    ✅ Mark as Answered
                 </button>
             `;
         }
