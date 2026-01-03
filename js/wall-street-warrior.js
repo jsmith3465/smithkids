@@ -498,16 +498,31 @@ function viewStockDetails(ticker) {
 // Load watchlist
 async function loadWatchlist() {
     const watchlistGrid = document.getElementById('watchlistGrid');
-    if (!watchlistGrid) return;
+    if (!watchlistGrid) {
+        console.error('watchlistGrid element not found');
+        return;
+    }
+    
+    // Ensure viewingUserUid is set
+    if (!viewingUserUid) {
+        viewingUserUid = currentUserUid;
+    }
     
     try {
+        console.log('Loading watchlist for user:', viewingUserUid);
+        
         const { data: watchlist, error } = await supabase
             .from('stock_watchlist')
             .select('*')
             .eq('user_uid', viewingUserUid)
             .order('added_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching watchlist from database:', error);
+            throw error;
+        }
+        
+        console.log('Watchlist data received:', watchlist);
         
         watchlistGrid.innerHTML = '';
         
@@ -518,7 +533,16 @@ async function loadWatchlist() {
         
         // Get current prices for all watchlist items
         const tickers = watchlist.map(w => w.ticker_symbol);
-        const prices = await getStockPrices(tickers);
+        console.log('Fetching prices for tickers:', tickers);
+        
+        let prices = {};
+        try {
+            prices = await getStockPrices(tickers);
+            console.log('Prices received:', prices);
+        } catch (priceError) {
+            console.error('Error fetching stock prices (continuing with cached/default values):', priceError);
+            // Continue without prices - show watchlist items anyway
+        }
         
         watchlist.forEach(item => {
             const priceData = prices[item.ticker_symbol] || {};
@@ -540,19 +564,30 @@ async function loadWatchlist() {
                         <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;" onclick="removeFromWatchlist(${item.watchlist_id})">Remove</button>
                     ` : ''}
                 </div>
-                <div class="stock-price ${isPositive ? '' : 'negative'}" style="color: ${changeColor};">
-                    $${price.toFixed(2)}
-                </div>
-                <div style="color: ${changeColor}; font-size: 0.9rem;">
-                    ${isPositive ? '+' : ''}${change.toFixed(2)} (${changePercent})
-                </div>
+                ${price > 0 ? `
+                    <div class="stock-price ${isPositive ? '' : 'negative'}" style="color: ${changeColor};">
+                        $${price.toFixed(2)}
+                    </div>
+                    <div style="color: ${changeColor}; font-size: 0.9rem;">
+                        ${isPositive ? '+' : ''}${change.toFixed(2)} (${changePercent})
+                    </div>
+                ` : `
+                    <div style="color: #666; font-size: 0.9rem; font-style: italic;">Price loading...</div>
+                `}
             `;
             watchlistGrid.appendChild(watchlistItem);
         });
         
     } catch (error) {
         console.error('Error loading watchlist:', error);
-        watchlistGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading watchlist. Please refresh the page.</div>';
+        const errorMsg = error?.message || 'Unknown error';
+        watchlistGrid.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #dc3545; grid-column: 1 / -1;">
+                <div style="margin-bottom: 10px;">Error loading watchlist.</div>
+                <div style="font-size: 0.9rem; color: #666;">${escapeHtml(errorMsg)}</div>
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 15px;">Refresh Page</button>
+            </div>
+        `;
     }
 }
 
@@ -581,16 +616,31 @@ async function loadPortfolio() {
     const portfolioGrid = document.getElementById('portfolioGrid');
     const totalValueDiv = document.getElementById('totalPortfolioValue');
     
-    if (!portfolioGrid) return;
+    if (!portfolioGrid) {
+        console.error('portfolioGrid element not found');
+        return;
+    }
+    
+    // Ensure viewingUserUid is set
+    if (!viewingUserUid) {
+        viewingUserUid = currentUserUid;
+    }
     
     try {
+        console.log('Loading portfolio for user:', viewingUserUid);
+        
         const { data: portfolio, error } = await supabase
             .from('stock_portfolio')
             .select('*')
             .eq('user_uid', viewingUserUid)
             .order('added_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching portfolio from database:', error);
+            throw error;
+        }
+        
+        console.log('Portfolio data received:', portfolio);
         
         portfolioGrid.innerHTML = '';
         
@@ -602,19 +652,28 @@ async function loadPortfolio() {
         
         // Get current prices for all portfolio items
         const tickers = portfolio.map(p => p.ticker_symbol);
-        const prices = await getStockPrices(tickers);
+        console.log('Fetching prices for portfolio tickers:', tickers);
+        
+        let prices = {};
+        try {
+            prices = await getStockPrices(tickers);
+            console.log('Portfolio prices received:', prices);
+        } catch (priceError) {
+            console.error('Error fetching stock prices (continuing with basis prices):', priceError);
+            // Continue without prices - use basis prices
+        }
         
         let totalValue = 0;
         
         portfolio.forEach(holding => {
             const priceData = prices[holding.ticker_symbol] || {};
-            const currentPrice = priceData.current_price || holding.basis_per_share;
+            const currentPrice = priceData.current_price || parseFloat(holding.basis_per_share) || 0;
             const shares = parseFloat(holding.shares) || 0;
             const basis = parseFloat(holding.basis_per_share) || 0;
             const currentValue = currentPrice * shares;
             const totalBasis = basis * shares;
             const gainLoss = currentValue - totalBasis;
-            const gainLossPercent = basis > 0 ? ((gainLoss / totalBasis) * 100) : 0;
+            const gainLossPercent = totalBasis > 0 ? ((gainLoss / totalBasis) * 100) : 0;
             
             totalValue += currentValue;
             
@@ -641,14 +700,16 @@ async function loadPortfolio() {
                 <div style="margin: 10px 0;">
                     <div style="font-size: 0.9rem; color: #666;">Shares: ${shares.toFixed(2)}</div>
                     <div style="font-size: 0.9rem; color: #666;">Basis: $${basis.toFixed(2)}/share</div>
-                    <div style="font-size: 0.9rem; color: #666;">Current: $${currentPrice.toFixed(2)}/share</div>
+                    <div style="font-size: 0.9rem; color: #666;">Current: ${priceData.current_price ? `$${currentPrice.toFixed(2)}/share` : '<span style="font-style: italic; color: #999;">Loading...</span>'}</div>
                 </div>
                 <div class="portfolio-value" style="color: ${gainLossColor};">
                     Value: $${currentValue.toFixed(2)}
                 </div>
-                <div style="color: ${gainLossColor}; font-size: 0.9rem; margin-top: 5px;">
-                    ${isPositive ? '+' : ''}$${gainLoss.toFixed(2)} (${isPositive ? '+' : ''}${gainLossPercent.toFixed(2)}%)
-                </div>
+                ${priceData.current_price ? `
+                    <div style="color: ${gainLossColor}; font-size: 0.9rem; margin-top: 5px;">
+                        ${isPositive ? '+' : ''}$${gainLoss.toFixed(2)} (${isPositive ? '+' : ''}${gainLossPercent.toFixed(2)}%)
+                    </div>
+                ` : ''}
             `;
             portfolioGrid.appendChild(portfolioItem);
         });
@@ -659,7 +720,17 @@ async function loadPortfolio() {
         
     } catch (error) {
         console.error('Error loading portfolio:', error);
-        portfolioGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading portfolio. Please refresh the page.</div>';
+        const errorMsg = error?.message || 'Unknown error';
+        portfolioGrid.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #dc3545; grid-column: 1 / -1;">
+                <div style="margin-bottom: 10px;">Error loading portfolio.</div>
+                <div style="font-size: 0.9rem; color: #666;">${escapeHtml(errorMsg)}</div>
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 15px;">Refresh Page</button>
+            </div>
+        `;
+        if (totalValueDiv) {
+            totalValueDiv.textContent = 'Error';
+        }
     }
 }
 
@@ -667,32 +738,44 @@ async function loadPortfolio() {
 async function getStockPrices(tickers) {
     const prices = {};
     
-    // Check cache first
-    const { data: cachedPrices } = await supabase
-        .from('stock_price_cache')
-        .select('*')
-        .in('ticker_symbol', tickers)
-        .gte('last_updated', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // 5 minute cache
+    if (!tickers || tickers.length === 0) {
+        return prices;
+    }
     
-    const cachedMap = {};
-    if (cachedPrices) {
-        cachedPrices.forEach(cache => {
-            cachedMap[cache.ticker_symbol] = cache;
-            prices[cache.ticker_symbol] = {
-                current_price: parseFloat(cache.current_price),
-                change_amount: parseFloat(cache.change_amount || 0),
-                change_percent: cache.change_percent || '0.00%'
-            };
-        });
+    // Check cache first (if table exists)
+    try {
+        const { data: cachedPrices, error: cacheError } = await supabase
+            .from('stock_price_cache')
+            .select('*')
+            .in('ticker_symbol', tickers)
+            .gte('last_updated', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // 5 minute cache
+        
+        if (cacheError) {
+            // Table might not exist or RLS issue - continue without cache
+            console.warn('Error accessing price cache (continuing without cache):', cacheError);
+        } else if (cachedPrices) {
+            const cachedMap = {};
+            cachedPrices.forEach(cache => {
+                cachedMap[cache.ticker_symbol] = cache;
+                prices[cache.ticker_symbol] = {
+                    current_price: parseFloat(cache.current_price) || 0,
+                    change_amount: parseFloat(cache.change_amount || 0),
+                    change_percent: cache.change_percent || '0.00%'
+                };
+            });
+        }
+    } catch (cacheError) {
+        console.warn('Error checking price cache (continuing without cache):', cacheError);
     }
     
     // Fetch missing or stale prices
-    const missingTickers = tickers.filter(t => !cachedMap[t]);
+    const cachedTickers = Object.keys(prices);
+    const missingTickers = tickers.filter(t => !cachedTickers.includes(t));
     
     for (const ticker of missingTickers) {
         try {
             const stockData = await searchStock(ticker);
-            if (stockData && stockData.price) {
+            if (stockData && stockData.price && !isNaN(stockData.price)) {
                 const change = stockData.change || 0;
                 const changePercent = stockData.changePercent || '0.00%';
                 
@@ -702,21 +785,27 @@ async function getStockPrices(tickers) {
                     change_percent: changePercent
                 };
                 
-                // Update cache
-                await supabase
-                    .from('stock_price_cache')
-                    .upsert({
-                        ticker_symbol: ticker,
-                        current_price: stockData.price,
-                        previous_close: stockData.previousClose,
-                        change_amount: change,
-                        change_percent: changePercent.replace('%', ''),
-                        volume: stockData.volume,
-                        last_updated: new Date().toISOString()
-                    });
+                // Try to update cache (ignore errors if table doesn't exist)
+                try {
+                    await supabase
+                        .from('stock_price_cache')
+                        .upsert({
+                            ticker_symbol: ticker,
+                            current_price: stockData.price,
+                            previous_close: stockData.previousClose || stockData.price,
+                            change_amount: change,
+                            change_percent: changePercent.replace('%', ''),
+                            volume: stockData.volume || 0,
+                            last_updated: new Date().toISOString()
+                        });
+                } catch (cacheUpdateError) {
+                    // Ignore cache update errors
+                    console.warn(`Could not update cache for ${ticker}:`, cacheUpdateError);
+                }
             }
         } catch (error) {
             console.error(`Error fetching price for ${ticker}:`, error);
+            // Continue with other tickers
         }
     }
     
