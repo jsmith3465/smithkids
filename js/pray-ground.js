@@ -651,7 +651,8 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
     
     if (!modal) return;
     
-    // Refresh prayer count and status
+    // Refresh prayer count and status, and get user names
+    let prayerUserNames = [];
     try {
         const { data: prayers } = await supabase
             .from('prayer_prayers')
@@ -661,6 +662,44 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
         if (prayers) {
             prayerCount = prayers.length;
             hasUserPrayed = prayers.some(p => p.user_uid === currentUserUid);
+            
+            // Get names of users who prayed
+            const prayerUserIds = prayers.map(p => p.user_uid);
+            const prayerUsers = prayerUserIds.map(uid => {
+                const user = userMap[uid];
+                if (user) {
+                    return (user.First_Name && user.Last_Name)
+                        ? `${user.First_Name} ${user.Last_Name}`
+                        : user.Username || 'Unknown';
+                }
+                return null;
+            }).filter(name => name !== null);
+            
+            // If some users aren't in userMap, fetch them
+            const missingUserIds = prayerUserIds.filter(uid => !userMap[uid]);
+            if (missingUserIds.length > 0) {
+                try {
+                    const { data: missingUsers } = await supabase
+                        .from('Users')
+                        .select('UID, First_Name, Last_Name, Username')
+                        .in('UID', missingUserIds);
+                    
+                    if (missingUsers) {
+                        missingUsers.forEach(user => {
+                            const name = (user.First_Name && user.Last_Name)
+                                ? `${user.First_Name} ${user.Last_Name}`
+                                : user.Username || 'Unknown';
+                            prayerUsers.push(name);
+                            // Also add to userMap for future use
+                            userMap[user.UID] = user;
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Error fetching missing user names:', error);
+                }
+            }
+            
+            prayerUserNames = prayerUsers;
         }
     } catch (error) {
         console.warn('Error refreshing prayer count:', error);
@@ -682,15 +721,36 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
     
     // Set status
     if (modalStatus) {
+        let prayerCountHtml = '';
+        if (prayerCount > 0) {
+            const prayerText = `🙏 ${prayerCount} ${prayerCount === 1 ? 'person has' : 'people have'} prayed for this`;
+            
+            if (prayerUserNames.length > 0) {
+                // Create a tooltip with all user names
+                const tooltipText = prayerUserNames.join(', ');
+                prayerCountHtml = `
+                    <span 
+                        style="margin-left: 15px; color: #1976D2; font-weight: 600; font-size: 1rem; cursor: help; position: relative; display: inline-block;" 
+                        title="${escapeHtml(tooltipText)}"
+                        class="prayer-count-tooltip"
+                    >
+                        ${prayerText}
+                    </span>
+                `;
+            } else {
+                prayerCountHtml = `
+                    <span style="margin-left: 15px; color: #1976D2; font-weight: 600; font-size: 1rem;">
+                        ${prayerText}
+                    </span>
+                `;
+            }
+        }
+        
         modalStatus.innerHTML = `
             <span class="prayer-request-status-badge ${isAnswered ? 'answered' : 'active'}">
                 ${isAnswered ? '✓ Answered' : '⏳ Active'}
             </span>
-            ${prayerCount > 0 ? `
-                <span style="margin-left: 15px; color: #1976D2; font-weight: 600; font-size: 1rem;">
-                    🙏 ${prayerCount} ${prayerCount === 1 ? 'person has' : 'people have'} prayed for this
-                </span>
-            ` : ''}
+            ${prayerCountHtml}
         `;
     }
     
