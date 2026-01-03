@@ -259,10 +259,23 @@ async function loadPrayerRequests(currentUserUid) {
     if (!prayerRequestsList) return;
     
     try {
+        // First, try a simple query to check if table exists and is accessible
         const { data: requests, error } = await supabase
             .from('prayer_requests')
             .select('request_id, user_uid, title, details, status, created_at, answered_at, answered_by_uid, praise_report')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(1); // Limit to 1 for initial check
+        
+        // Log the error for debugging
+        if (error) {
+            console.error('Supabase error details:', {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint,
+                fullError: error
+            });
+        }
         
         // Get prayer counts for each request
         const requestIds = requests ? requests.map(r => r.request_id) : [];
@@ -379,7 +392,7 @@ async function loadPrayerRequests(currentUserUid) {
             if (!isOwner && !hasUserPrayed && !isAnswered) {
                 // "I Prayed For This" button for requests user didn't create
                 actionsHtml = `
-                    <button class="btn btn-small" onclick="event.stopPropagation(); markAsPrayedFor(${request.request_id}, ${currentUserUid}, ${request.user_uid})" style="
+                    <button class="btn btn-small" onclick="event.stopPropagation(); markAsPrayedForFromTable(${request.request_id}, ${currentUserUid}, ${request.user_uid})" style="
                         padding: 8px 16px;
                         font-size: 0.9rem;
                         margin-right: 5px;
@@ -451,12 +464,21 @@ async function loadPrayerRequests(currentUserUid) {
         if (isMissingTable) {
             prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
                 Prayer requests table is not set up yet.<br>
-                <small style="color: #666; margin-top: 10px; display: block;">Run <code>create_pray_ground_table.sql</code> in Supabase SQL Editor to create the table.</small>
+                <small style="color: #666; margin-top: 10px; display: block;">
+                    Run <code>setup_pray_ground_complete.sql</code> in Supabase SQL Editor to create the table.<br>
+                    <strong>Error details:</strong> ${errorMsg}<br>
+                    <strong>Error code:</strong> ${errorCode || 'N/A'}
+                </small>
             </div>`;
         } else {
             prayerRequestsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #dc3545;">
                 Error loading prayer requests: ${errorMsg}<br>
-                <small style="color: #666; margin-top: 10px; display: block;">Error code: ${errorCode || 'N/A'}</small>
+                <small style="color: #666; margin-top: 10px; display: block;">
+                    Error code: ${errorCode || 'N/A'}<br>
+                    <br>
+                    <strong>If the table exists, this might be an RLS (Row Level Security) issue.</strong><br>
+                    Make sure you've run <code>setup_pray_ground_complete.sql</code> in Supabase SQL Editor.
+                </small>
             </div>`;
         }
     }
@@ -717,12 +739,19 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
     // Add praise report section
     const modalPraiseReport = document.getElementById('modalPraiseReport');
     if (modalPraiseReport) {
-        if (isAnswered && isOwner) {
-            // Show editable praise report for owner
+        if (isOwner) {
+            // Show editable praise report for owner (available at any time)
+            const placeholderText = isAnswered 
+                ? 'Describe how God answered this prayer...' 
+                : 'Share updates, answered prayers, or how God is working in this situation...';
+            const labelText = isAnswered 
+                ? 'Share how God answered this prayer:' 
+                : 'Add a praise report or update (you can edit this anytime):';
+            
             modalPraiseReport.innerHTML = `
                 <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
                     <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
-                    <p style="color: #666; margin-bottom: 15px; font-style: italic;">Share how God answered this prayer:</p>
+                    <p style="color: #666; margin-bottom: 15px; font-style: italic;">${labelText}</p>
                     <textarea id="praiseReportText" style="
                         width: 100%;
                         padding: 15px;
@@ -734,16 +763,21 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
                         font-family: inherit;
                         box-sizing: border-box;
                         margin-bottom: 15px;
-                    " placeholder="Describe how God answered this prayer...">${escapeHtml(request.praise_report || '')}</textarea>
+                    " placeholder="${placeholderText}">${escapeHtml(request.praise_report || '')}</textarea>
                     <button class="btn btn-success" onclick="savePraiseReport(${request.request_id}, ${currentUserUid})" style="
                         padding: 12px 24px;
                         font-size: 1rem;
                         font-weight: 600;
-                    ">💾 Save Praise Report</button>
+                    ">💾 ${request.praise_report ? 'Update' : 'Save'} Praise Report</button>
+                    ${request.praise_report ? `
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 10px; font-style: italic;">
+                            You can edit this praise report at any time by updating the text above and clicking "Update Praise Report".
+                        </p>
+                    ` : ''}
                 </div>
             `;
-        } else if (isAnswered && request.praise_report) {
-            // Show read-only praise report for others
+        } else if (request.praise_report) {
+            // Show read-only praise report for others (if it exists)
             modalPraiseReport.innerHTML = `
                 <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
                     <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
@@ -758,16 +792,19 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
                     ">${escapeHtml(request.praise_report)}</div>
                 </div>
             `;
-        } else if (isAnswered && !isOwner) {
-            // Show placeholder if answered but no praise report yet
-            modalPraiseReport.innerHTML = `
-                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
-                    <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
-                    <p style="color: #666; font-style: italic;">A praise report will be added soon!</p>
-                </div>
-            `;
         } else {
-            modalPraiseReport.innerHTML = '';
+            // No praise report yet - only show placeholder if answered
+            if (isAnswered) {
+                modalPraiseReport.innerHTML = `
+                    <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                        <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
+                        <p style="color: #666; font-style: italic;">A praise report will be added soon!</p>
+                    </div>
+                `;
+            } else {
+                // Don't show anything if not answered and no praise report
+                modalPraiseReport.innerHTML = '';
+            }
         }
     }
     
@@ -844,8 +881,13 @@ function setupPrayerModal() {
     });
 }
 
+// Mark prayer request as prayed for from table (reloads table)
+async function markAsPrayedForFromTable(requestId, userUid, posterUid) {
+    await markAsPrayedFor(requestId, userUid, posterUid, true);
+}
+
 // Mark prayer request as prayed for
-async function markAsPrayedFor(requestId, userUid, posterUid) {
+async function markAsPrayedFor(requestId, userUid, posterUid, fromTable = false) {
     try {
         // Check if user has already prayed for this request
         const { data: existingPrayer, error: checkError } = await supabase
@@ -941,7 +983,7 @@ async function markAsPrayedFor(requestId, userUid, posterUid) {
         `;
         
         // Send message to the original poster
-        await supabase
+        const { error: messageError } = await supabase
             .from('message_boxes')
             .insert({
                 from_user_uid: userUid,
@@ -952,10 +994,19 @@ async function markAsPrayedFor(requestId, userUid, posterUid) {
                 is_read: false
             });
         
-        // Close and reopen modal to refresh prayer count
-        closePrayerModal();
+        if (messageError) {
+            console.error('Error sending message to poster:', messageError);
+            // Don't fail the whole operation if message fails, but log it
+        } else {
+            console.log('Message sent successfully to poster:', posterUid);
+        }
         
-        // Reload prayer requests to update counts
+        // Close modal if it was open (only if called from modal, not from table)
+        if (!fromTable) {
+            closePrayerModal();
+        }
+        
+        // Reload prayer requests to update the table (including action buttons)
         await loadPrayerRequests(userUid);
         
         // Show success message
@@ -1010,6 +1061,7 @@ async function savePraiseReport(requestId, userUid) {
 window.markAsAnswered = markAsAnswered;
 window.handleMarkAsAnswered = handleMarkAsAnswered;
 window.markAsPrayedFor = markAsPrayedFor;
+window.markAsPrayedForFromTable = markAsPrayedForFromTable;
 window.openPrayerModal = openPrayerModal;
 window.openPrayerModalById = openPrayerModalById;
 window.closePrayerModal = closePrayerModal;

@@ -76,17 +76,30 @@ async function checkAuthentication() {
         }
         
         // Check if account is suspended (verify with database)
+        // Use a timeout to prevent hanging
         try {
-            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-            const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
-            const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const suspensionCheckPromise = (async () => {
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                const SUPABASE_URL = 'https://frlajamhyyectdrcbrnd.supabase.co';
+                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZybGFqYW1oeXllY3RkcmNicm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA4ODksImV4cCI6MjA4MjQ1Njg4OX0.QAH0GME5_iYkz6SZjfqdL3q9E9Jo1qKv6YWFk2exAtY';
+                const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                const { data: userData, error: userError } = await supabase
+                    .from('Users')
+                    .select('is_suspended')
+                    .eq('UID', session.uid)
+                    .single();
+                
+                return { userData, userError };
+            })();
             
-            const { data: userData, error: userError } = await supabase
-                .from('Users')
-                .select('is_suspended')
-                .eq('UID', session.uid)
-                .single();
+            // Add 5 second timeout to prevent hanging
+            const timeoutPromise = new Promise((resolve) => 
+                setTimeout(() => resolve({ userData: null, userError: { message: 'Timeout' } }), 5000)
+            );
+            
+            const result = await Promise.race([suspensionCheckPromise, timeoutPromise]);
+            const { userData, userError } = result;
             
             if (!userError && userData && userData.is_suspended) {
                 sessionStorage.removeItem('userSession');
@@ -234,17 +247,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         logoutBtn.addEventListener('click', handleLogout);
     }
 
-    // Check authentication
-    const isAuthenticated = await checkAuthentication();
-    
-    // Export authentication status for use in other scripts
+    // Initialize authStatus with default values to prevent hanging
     window.authStatus = {
-        isAuthenticated: isAuthenticated,
+        isAuthenticated: false,
         getSession: () => {
             const sessionData = sessionStorage.getItem('userSession');
             return sessionData ? JSON.parse(sessionData) : null;
         }
     };
+
+    // Check authentication with timeout
+    let isAuthenticated = false;
+    try {
+        // Add overall timeout to prevent hanging
+        const authPromise = checkAuthentication();
+        const timeoutPromise = new Promise((resolve) => {
+            setTimeout(() => {
+                console.error('Authentication check timed out after 10 seconds');
+                resolve(false);
+            }, 10000); // 10 second timeout
+        });
+        
+        isAuthenticated = await Promise.race([authPromise, timeoutPromise]);
+    } catch (error) {
+        console.error('Error during authentication check:', error);
+        isAuthenticated = false;
+    }
+    
+    // Update authentication status
+    window.authStatus.isAuthenticated = isAuthenticated;
     
     // Check for feature announcements if user just logged in
     if (isAuthenticated) {
