@@ -162,7 +162,7 @@ async function loadBadges(userUid) {
     // Load credit amounts for all badges
     for (const badge of availableBadges) {
         const badgeCard = document.createElement('div');
-        badgeCard.className = `badge-card ${badge.earned ? 'earned' : 'badge-locked'}`;
+        badgeCard.className = `badge-card ${badge.earned ? 'earned' : ''}`;
         
         // Get credit amount from database
         const creditAmount = await getCreditAmount(badge.name, 'credit', badge.id === 'all_fruits' ? 100 : 20);

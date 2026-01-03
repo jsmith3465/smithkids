@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(checkAuth);
                 if (window.authStatus.isAuthenticated) {
                     initializeTabs();
+                    createGameCategories();
                     loadStatistics('snake'); // Load default tab
                 } else {
                     const authCheck = document.getElementById('authCheck');
@@ -54,19 +55,210 @@ function switchTab(tabName) {
     document.querySelectorAll('.stats-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.getElementById(`${tabName}TabBtn`).classList.add('active');
+    const tabBtn = document.getElementById(`${tabName}TabBtn`);
+    if (tabBtn) tabBtn.classList.add('active');
     
     // Update tab content
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById(`${tabName}Tab`).classList.add('active');
+    const tabContent = document.getElementById(`${tabName}Tab`);
+    if (tabContent) tabContent.classList.add('active');
+    
+    // Update game category cards
+    document.querySelectorAll('.game-category').forEach(card => {
+        card.classList.remove('active');
+    });
+    const categoryCard = document.querySelector(`[data-game="${tabName}"]`);
+    if (categoryCard) categoryCard.classList.add('active');
+    
+    // Show detailed view
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    if (tabContent) {
+        tabContent.style.display = 'block';
+    }
     
     // Load stats for this tab if not already loaded
     if (!loadedTabs.has(tabName)) {
         loadStatistics(tabName);
     }
 }
+
+// Create game category cards
+async function createGameCategories() {
+    const categoriesContainer = document.getElementById('gamesCategories');
+    if (!categoriesContainer) return;
+    
+    const games = [
+        { id: 'snake', name: 'Snake', icon: '🐍' },
+        { id: 'tictactoe', name: 'Tic Tac Toe', icon: '⭕❌' },
+        { id: 'bibletrivia', name: 'Bible Trivia', icon: '📖' },
+        { id: 'hangman', name: 'Hangman', icon: '🚷' },
+        { id: 'galaga', name: 'Galaga', icon: '🛸' },
+        { id: 'breakout', name: 'Breakout', icon: '🎾' },
+        { id: 'tetris', name: 'Tetris', icon: '🧩' },
+        { id: 'pacman', name: 'Pac-Man', icon: '👻' },
+        { id: 'blockblast', name: 'Block Blast', icon: '💥' }
+    ];
+    
+    const session = window.authStatus?.getSession();
+    if (!session) return;
+    
+    categoriesContainer.innerHTML = '';
+    
+    for (const game of games) {
+        const card = document.createElement('div');
+        card.className = 'game-category';
+        if (game.id === 'snake') {
+            card.classList.add('active'); // Set first game as active
+        }
+        card.setAttribute('data-game', game.id);
+        
+        // Get quick stats for this game
+        const quickStats = await getQuickStats(game.id, session.uid);
+        
+        card.innerHTML = `
+            <div class="game-category-header" onclick="switchToGame('${game.id}')">
+                <div class="game-category-icon">${game.icon}</div>
+                <div class="game-category-name">${game.name}</div>
+            </div>
+            <div class="game-category-stats">
+                ${quickStats}
+            </div>
+        `;
+        
+        categoriesContainer.appendChild(card);
+    }
+}
+
+// Get quick stats for a game
+async function getQuickStats(gameId, userUid) {
+    try {
+        switch(gameId) {
+            case 'snake': {
+                const { data } = await supabase
+                    .from('snake_scores')
+                    .select('score')
+                    .eq('user_uid', userUid)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+                const highScore = data?.score || 0;
+                const { count } = await supabase
+                    .from('snake_scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid);
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">High Score:</span>
+                        <span class="stat-value">${highScore.toLocaleString()}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played:</span>
+                        <span class="stat-value">${count || 0}</span>
+                    </div>
+                `;
+            }
+            case 'tetris': {
+                const { data } = await supabase
+                    .from('tetris_scores')
+                    .select('score')
+                    .eq('user_uid', userUid)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+                const highScore = data?.score || 0;
+                const { count } = await supabase
+                    .from('tetris_scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid);
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">High Score:</span>
+                        <span class="stat-value">${highScore.toLocaleString()}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played:</span>
+                        <span class="stat-value">${count || 0}</span>
+                    </div>
+                `;
+            }
+            case 'pacman': {
+                const { data } = await supabase
+                    .from('pacman_scores')
+                    .select('score')
+                    .eq('user_uid', userUid)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+                const highScore = data?.score || 0;
+                const { count } = await supabase
+                    .from('pacman_scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid);
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">High Score:</span>
+                        <span class="stat-value">${highScore.toLocaleString()}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played:</span>
+                        <span class="stat-value">${count || 0}</span>
+                    </div>
+                `;
+            }
+            case 'blockblast': {
+                const { data } = await supabase
+                    .from('block_blast_scores')
+                    .select('score')
+                    .eq('user_uid', userUid)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+                const highScore = data?.score || 0;
+                const { count } = await supabase
+                    .from('block_blast_scores')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_uid', userUid);
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">High Score:</span>
+                        <span class="stat-value">${highScore.toLocaleString()}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played:</span>
+                        <span class="stat-value">${count || 0}</span>
+                    </div>
+                `;
+            }
+            default:
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">Click to view stats</span>
+                    </div>
+                `;
+        }
+    } catch (error) {
+        console.error(`Error getting quick stats for ${gameId}:`, error);
+        return `
+            <div class="stat-item">
+                <span class="stat-label">Click to view stats</span>
+            </div>
+        `;
+    }
+}
+
+// Make function available globally
+window.switchToGame = function(gameId) {
+    switchTab(gameId);
+    // Scroll to detailed view
+    const tabContent = document.getElementById(`${gameId}Tab`);
+    if (tabContent) {
+        tabContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
 
 async function loadStatistics(tabName) {
     loadedTabs.add(tabName);

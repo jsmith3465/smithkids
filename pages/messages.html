@@ -24,8 +24,29 @@
     .msg-row:hover { background: #f8f9fa; }
     .msg-subject { font-weight: 400; color: #999; }
     .msg-row.unread .msg-subject { font-weight: 700; color: #333; }
+    .msg-reply-badge { 
+      display: inline-block; 
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); 
+      color: white; 
+      padding: 2px 8px; 
+      border-radius: 6px; 
+      font-size: 0.75rem; 
+      font-weight: 700; 
+      margin-right: 8px; 
+      vertical-align: middle;
+    }
+    .msg-subject-wrapper { display: flex; align-items: center; }
     .msg-meta { font-size: 0.85rem; color: #666; margin-top: 2px; }
     .msg-time { font-size: 0.8rem; color: #666; white-space: nowrap; }
+    .viewer-reply-indicator {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      display: inline-block;
+    }
     .empty { padding: 16px; color: #666; text-align: center; }
 
     .viewer { padding: 14px 16px; }
@@ -76,6 +97,10 @@
           <div class="panel-header">
             <div class="panel-title">📬 Mailbox</div>
             <div class="toolbar">
+              <select id="sortOrder" style="padding: 8px 12px; border: 2px solid #DAA520; border-radius: 8px; font-size: 0.9rem; font-weight: 600; background: white; cursor: pointer; min-height: 40px;">
+                <option value="newest">📅 Newest First</option>
+                <option value="oldest">📅 Oldest First</option>
+              </select>
               <button id="composeBtn" class="btn btn-primary" style="min-height: 40px;">✍️ Compose</button>
               <button id="refreshBtn" class="btn btn-secondary" style="min-height: 40px;">🔄 Refresh</button>
             </div>

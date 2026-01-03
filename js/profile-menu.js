@@ -306,7 +306,7 @@ async function createProfileMenu() {
                     text-align: left;
                     white-space: nowrap;
                 " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                    📊 View Statistics
+                    📊 Game Statistics
                 </a>
                 ${isAdmin ? `
                 <a href="${getPagePath('settings.html')}" style="

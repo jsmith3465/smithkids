@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistics - Smith Team Six</title>
+    <title>Game Statistics - Smith Team Six</title>
     <link rel="stylesheet" href="../style.css">
     <style>
         .stats-container {
@@ -17,42 +17,88 @@
             text-align: center;
         }
         
-        /* Tab Navigation */
-        .stats-tabs {
-            display: flex;
-            gap: 10px;
+        /* Game Categories */
+        .games-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
-            border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
+        }
+        
+        .game-category {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .game-category:hover {
+            border-color: #DAA520;
+            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .game-category.active {
+            border-color: #CC5500;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        }
+        
+        .game-category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .game-category-icon {
+            font-size: 2.5rem;
+        }
+        
+        .game-category-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            flex: 1;
+        }
+        
+        .game-category-stats {
+            text-align: left;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.95rem;
+        }
+        
+        .stat-label {
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Tab Navigation (hidden, used for content switching) */
+        .stats-tabs {
+            display: none;
         }
         
         .stats-tab {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            top: 2px;
-        }
-        
-        .stats-tab:hover {
-            color: #DAA520;
-            background: rgba(218, 165, 32, 0.05);
-        }
-        
-        .stats-tab.active {
-            color: #CC5500;
-            border-bottom-color: #CC5500;
+            display: none;
         }
         
         /* Tab Content */
         .tab-content {
             display: none;
+            margin-top: 30px;
         }
         
         .tab-content.active {
@@ -126,7 +172,12 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <!-- Tab Navigation -->
+            <!-- Game Categories Grid -->
+            <div class="games-categories" id="gamesCategories">
+                <!-- Games will be dynamically loaded here -->
+            </div>
+            
+            <!-- Hidden Tab Navigation (for content switching) -->
             <div class="stats-tabs">
                 <button class="stats-tab active" data-tab="snake" id="snakeTabBtn">🐍 Snake</button>
                 <button class="stats-tab" data-tab="tictactoe" id="tictactoeTabBtn">⭕❌ Tic Tac Toe</button>

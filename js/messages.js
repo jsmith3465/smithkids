@@ -7,6 +7,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let session = null;
 let currentFolder = 'inbox';
 let selectedMessageId = null;
+let sortOrder = 'newest'; // 'newest' or 'oldest'
 
 let usersById = new Map(); // UID -> user
 let boxByMessageId = new Map(); // message_id -> box row
@@ -121,9 +122,22 @@ function updateViewerButtons() {
 
 function renderMessageList() {
   const list = $('messageList');
-  const boxes = Array.from(boxByMessageId.values())
-    .filter((b) => b.folder === currentFolder)
-    .sort((a, b) => (new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)));
+  let boxes = Array.from(boxByMessageId.values())
+    .filter((b) => b.folder === currentFolder);
+  
+  // Sort by date received (created_at from message)
+  boxes = boxes.sort((a, b) => {
+    const msgA = messageById.get(a.message_id);
+    const msgB = messageById.get(b.message_id);
+    const dateA = new Date(msgA?.created_at || a.created_at || 0);
+    const dateB = new Date(msgB?.created_at || b.created_at || 0);
+    
+    if (sortOrder === 'oldest') {
+      return dateA - dateB; // Oldest first
+    } else {
+      return dateB - dateA; // Newest first (default)
+    }
+  });
 
   if (!boxes.length) {
     list.innerHTML = `<div class="empty">No messages in ${escapeHtml(currentFolder)}.</div>`;
@@ -155,11 +169,16 @@ function renderMessageList() {
 
       const unreadClass = box.folder === 'inbox' && !box.is_read ? 'unread' : '';
       const selectedClass = box.message_id === selectedMessageId ? 'style="background:#f8f9fa;"' : '';
+      const isReply = msg?.parent_message_id ? true : false;
+      const replyBadge = isReply ? '<span class="msg-reply-badge">↩️ REPLY</span>' : '';
 
       return `
         <div class="msg-row ${unreadClass}" data-message-id="${box.message_id}" ${selectedClass}>
           <div>
-            <div class="msg-subject">${escapeHtml(subject)}</div>
+            <div class="msg-subject-wrapper">
+              ${replyBadge}
+              <div class="msg-subject">${escapeHtml(subject)}</div>
+            </div>
             <div class="msg-meta">${escapeHtml(line2)}</div>
           </div>
           <div class="msg-time">${escapeHtml(time)}</div>
@@ -202,9 +221,13 @@ function renderViewer(messageId) {
   metaParts.push(`<strong>Sent:</strong> ${escapeHtml(formatTime(msg.created_at))}`);
   if (box.folder === 'trash') metaParts.push(`<strong>Trash:</strong> ${escapeHtml(formatTime(box.trashed_at || box.deleted_at || box.updated_at))}`);
 
+  // Add reply indicator if this is a reply
+  const isReply = msg.parent_message_id ? true : false;
+  const replyIndicator = isReply ? '<div class="viewer-reply-indicator">↩️ This is a Reply</div>' : '';
+  
   $('viewSubject').textContent = subject;
   $('viewMeta').innerHTML = metaParts.join(' • ');
-  $('viewBody').innerHTML = msg.body_html || '';
+  $('viewBody').innerHTML = replyIndicator + (msg.body_html || '');
 
   $('viewerEmpty').classList.add('hidden');
   $('viewerContent').classList.remove('hidden');
@@ -638,6 +661,15 @@ function setupEventHandlers() {
   onClick('refreshBtn', async () => {
     await loadMailbox();
   });
+
+  // Sort order dropdown
+  const sortOrderSelect = $('sortOrder');
+  if (sortOrderSelect) {
+    sortOrderSelect.addEventListener('change', (e) => {
+      sortOrder = e.target.value;
+      renderMessageList();
+    });
+  }
 
   onClick('composeBtn', () => {
     openComposeModal({
