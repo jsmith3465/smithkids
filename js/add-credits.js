@@ -1758,7 +1758,7 @@ async function loadUserBalanceForTransfer(userId, type) {
     try {
         const { data: creditData, error } = await supabase
             .from('User_Credits')
-            .select('balance')
+            .select('balance, savings_balance')
             .eq('user_uid', userId)
             .single();
         
@@ -1767,13 +1767,20 @@ async function loadUserBalanceForTransfer(userId, type) {
             return;
         }
         
-        const balance = creditData ? creditData.balance : 0;
+        const availableBalance = creditData ? (creditData.balance || 0) : 0;
+        const savingsBalance = creditData ? (creditData.savings_balance || 0) : 0;
+        const totalBalance = availableBalance + savingsBalance;
         
         if (type === 'from') {
             const balanceDiv = document.getElementById('transferFromBalance');
-            const balanceAmount = document.getElementById('transferFromBalanceAmount');
-            if (balanceDiv && balanceAmount) {
-                balanceAmount.textContent = balance.toLocaleString();
+            const availableAmount = document.getElementById('transferFromAvailableAmount');
+            const savingsAmount = document.getElementById('transferFromSavingsAmount');
+            const totalAmount = document.getElementById('transferFromTotalAmount');
+            
+            if (balanceDiv && availableAmount && savingsAmount && totalAmount) {
+                availableAmount.textContent = availableBalance.toLocaleString();
+                savingsAmount.textContent = savingsBalance.toLocaleString();
+                totalAmount.textContent = totalBalance.toLocaleString();
                 balanceDiv.style.display = 'block';
             }
         }
@@ -1840,10 +1847,10 @@ async function transferCredits() {
             }
         });
         
-        // Check if FROM user has enough credits
+        // Check if FROM user has enough total credits (available + savings)
         const { data: fromCredit, error: fromError } = await supabase
             .from('User_Credits')
-            .select('credit_id, balance')
+            .select('credit_id, balance, savings_balance')
             .eq('user_uid', fromUserId)
             .single();
         
@@ -1851,10 +1858,12 @@ async function transferCredits() {
             throw fromError;
         }
         
-        const fromBalance = fromCredit?.balance || 0;
+        const fromAvailableBalance = fromCredit?.balance || 0;
+        const fromSavingsBalance = fromCredit?.savings_balance || 0;
+        const fromTotalBalance = fromAvailableBalance + fromSavingsBalance;
         
-        if (fromBalance < amount) {
-            showError(`Insufficient credits. User has ${fromBalance} credits available.`);
+        if (fromTotalBalance < amount) {
+            showError(`Insufficient credits. User has ${fromTotalBalance.toLocaleString()} total credits (${fromAvailableBalance.toLocaleString()} available + ${fromSavingsBalance.toLocaleString()} savings).`);
             return;
         }
         
@@ -1862,13 +1871,33 @@ async function transferCredits() {
         transferBtn.disabled = true;
         transferBtn.textContent = 'Transferring...';
         
-        // Deduct from FROM user
-        const newFromBalance = fromBalance - amount;
+        // Calculate how much to deduct from available vs savings
+        let newFromAvailableBalance = fromAvailableBalance;
+        let newFromSavingsBalance = fromSavingsBalance;
+        let amountFromAvailable = 0;
+        let amountFromSavings = 0;
         
+        if (fromAvailableBalance >= amount) {
+            // All from available
+            amountFromAvailable = amount;
+            newFromAvailableBalance = fromAvailableBalance - amount;
+        } else {
+            // Some from available, rest from savings
+            amountFromAvailable = fromAvailableBalance;
+            amountFromSavings = amount - fromAvailableBalance;
+            newFromAvailableBalance = 0;
+            newFromSavingsBalance = fromSavingsBalance - amountFromSavings;
+        }
+        
+        // Update FROM user balances
         if (fromCredit) {
             const { error: updateFromError } = await supabase
                 .from('User_Credits')
-                .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
+                .update({ 
+                    balance: newFromAvailableBalance,
+                    savings_balance: newFromSavingsBalance,
+                    updated_at: new Date().toISOString() 
+                })
                 .eq('credit_id', fromCredit.credit_id);
             
             if (updateFromError) throw updateFromError;
@@ -1910,18 +1939,36 @@ async function transferCredits() {
             if (insertToError) throw insertToError;
         }
         
-        // Create transaction for FROM user (debit)
-        const { error: transFromError } = await supabase
-            .from('Credit_Transactions')
-            .insert({
-                from_user_uid: fromUserId,
-                to_user_uid: toUserId,
-                amount: amount,
-                transaction_type: 'credit_transfer_out',
-                description: `Transferred ${amount} credits to ${toUserName} (authorized by ${adminName})`
-            });
+        // Create transaction(s) for FROM user (debit)
+        // Record available credits deduction if any
+        if (amountFromAvailable > 0) {
+            const { error: transFromAvailableError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: fromUserId,
+                    to_user_uid: toUserId,
+                    amount: amountFromAvailable,
+                    transaction_type: 'credit_transfer_out',
+                    description: `Transferred ${amountFromAvailable.toLocaleString()} credits from Available Balance to ${toUserName} (authorized by ${adminName})`
+                });
+            
+            if (transFromAvailableError) throw transFromAvailableError;
+        }
         
-        if (transFromError) throw transFromError;
+        // Record savings credits deduction if any
+        if (amountFromSavings > 0) {
+            const { error: transFromSavingsError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    from_user_uid: fromUserId,
+                    to_user_uid: toUserId,
+                    amount: amountFromSavings,
+                    transaction_type: 'credit_transfer_out',
+                    description: `Transferred ${amountFromSavings.toLocaleString()} credits from Savings Account to ${toUserName} (authorized by ${adminName})`
+                });
+            
+            if (transFromSavingsError) throw transFromSavingsError;
+        }
         
         // Create transaction for TO user (credit)
         const { error: transToError } = await supabase
@@ -1936,7 +1983,21 @@ async function transferCredits() {
         
         if (transToError) throw transToError;
         
-        showSuccess(`Successfully transferred ${amount} credits from ${fromUserName} to ${toUserName}.`);
+        // Build success message with details
+        let successMsg = `Successfully transferred ${amount.toLocaleString()} credits from ${fromUserName} to ${toUserName}.`;
+        if (amountFromAvailable > 0 && amountFromSavings > 0) {
+            successMsg += ` (${amountFromAvailable.toLocaleString()} from Available, ${amountFromSavings.toLocaleString()} from Savings)`;
+        } else if (amountFromSavings > 0) {
+            successMsg += ` (${amountFromSavings.toLocaleString()} from Savings)`;
+        }
+        
+        showSuccess(successMsg);
+        
+        // Refresh balance display if FROM user is still selected
+        const selectedFromUserId = document.getElementById('transferFromUser').value;
+        if (selectedFromUserId) {
+            await loadUserBalanceForTransfer(parseInt(selectedFromUserId), 'from');
+        }
         
         // Reset form
         document.getElementById('transferFromUser').value = '';
