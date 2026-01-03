@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS stock_portfolio (
     user_uid BIGINT NOT NULL REFERENCES "Users"("UID"),
     ticker_symbol TEXT NOT NULL,
     company_name TEXT,
-    shares INTEGER NOT NULL DEFAULT 0 CHECK (shares >= 0),
+    shares NUMERIC(18, 4) NOT NULL DEFAULT 0 CHECK (shares >= 0),
     basis_per_share DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (basis_per_share >= 0),
     purchase_date DATE,
     added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -50,37 +50,41 @@ ALTER TABLE stock_portfolio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_price_cache ENABLE ROW LEVEL SECURITY;
 
 -- Watchlist policies
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON stock_watchlist;
 CREATE POLICY "Enable read access for authenticated users" ON stock_watchlist
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON stock_watchlist;
 CREATE POLICY "Enable insert for authenticated users" ON stock_watchlist
     FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Enable delete for request owner" ON stock_watchlist
-    FOR DELETE USING (
-        EXISTS (
-            SELECT 1 FROM "Users"
-            WHERE "Users"."UID" = stock_watchlist.user_uid
-        )
-    );
+DROP POLICY IF EXISTS "Enable delete for watchlist owner" ON stock_watchlist;
+CREATE POLICY "Enable delete for watchlist owner" ON stock_watchlist
+    FOR DELETE USING (true);
 
 -- Portfolio policies
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON stock_portfolio;
 CREATE POLICY "Enable read access for authenticated users" ON stock_portfolio
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON stock_portfolio;
 CREATE POLICY "Enable insert for authenticated users" ON stock_portfolio
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON stock_portfolio;
 CREATE POLICY "Enable update for authenticated users" ON stock_portfolio
     FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Enable delete for authenticated users" ON stock_portfolio;
 CREATE POLICY "Enable delete for authenticated users" ON stock_portfolio
     FOR DELETE USING (true);
 
 -- Price cache policies (read-only for all, but we'll update via service)
+DROP POLICY IF EXISTS "Enable read access for all users" ON stock_price_cache;
 CREATE POLICY "Enable read access for all users" ON stock_price_cache
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Enable insert/update for authenticated users" ON stock_price_cache;
 CREATE POLICY "Enable insert/update for authenticated users" ON stock_price_cache
     FOR ALL USING (true);
 

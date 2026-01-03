@@ -184,6 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             sessionStorage.setItem('userSession', JSON.stringify(sessionData));
 
+            // Set a flag to check announcements after redirect
+            sessionStorage.setItem('checkAnnouncements', 'true');
+
             // Redirect to main page
             window.location.href = '../index.html';
         } catch (error) {

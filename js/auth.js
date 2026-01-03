@@ -246,6 +246,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
     
+    // Check for feature announcements if user just logged in
+    if (isAuthenticated) {
+        const session = window.authStatus.getSession();
+        const shouldCheckAnnouncements = sessionStorage.getItem('checkAnnouncements') === 'true';
+        
+        if (shouldCheckAnnouncements && session) {
+            sessionStorage.removeItem('checkAnnouncements');
+            // Import and check announcements
+            import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
+                setTimeout(() => {
+                    checkFeatureAnnouncements(session.uid);
+                }, 1000); // Wait 1 second for page to fully load
+            }).catch(error => {
+                console.error('Error loading feature announcements:', error);
+            });
+        }
+    }
+    
     // Scroll to top for all pages except login
     scrollToTop();
 });

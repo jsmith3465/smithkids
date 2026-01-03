@@ -60,6 +60,7 @@ async function checkUserAccess() {
     try {
         setupPrayerRequestForm(session.uid);
         setupSubmitToggle();
+        setupPrayerModal();
         await loadPrayerRequests(session.uid);
     } catch (error) {
         console.error('Error initializing Pray Ground:', error);
@@ -129,31 +130,43 @@ async function submitPrayerRequest(userUid) {
         if (insertError) throw insertError;
         
         // Get user info for message
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
             .from('Users')
             .select('First_Name, Last_Name, Username')
             .eq('UID', userUid)
             .single();
         
+        if (userError) {
+            console.error('Error fetching user data:', userError);
+        }
+        
         const userName = (userData?.First_Name && userData?.Last_Name)
             ? `${userData.First_Name} ${userData.Last_Name}`
             : userData?.Username || 'A family member';
         
-        // Send message to all users
-        const { data: allUsers } = await supabase
+        // Get current date/time for message
+        const now = new Date();
+        const dateStr = now.toLocaleDateString() + ' at ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Send message to all users except the poster
+        const { data: allUsers, error: usersError } = await supabase
             .from('Users')
             .select('UID');
+        
+        if (usersError) {
+            console.error('Error fetching all users:', usersError);
+        }
         
         if (allUsers && allUsers.length > 0) {
             const messageContent = `
                 <div style="padding: 20px;">
                     <h3 style="color: #1976D2; margin-top: 0;">🙏 New Prayer Request</h3>
-                    <p><strong>Submitted by:</strong> ${userName}</p>
-                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                    <p><strong>Title:</strong> ${title}</p>
+                    <p><strong>Submitted by:</strong> ${escapeHtml(userName)}</p>
+                    <p><strong>Date:</strong> ${escapeHtml(dateStr)}</p>
+                    <p><strong>Title:</strong> ${escapeHtml(title)}</p>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
                         <strong>Prayer Request:</strong><br>
-                        ${details.replace(/\n/g, '<br>')}
+                        ${escapeHtml(details).replace(/\n/g, '<br>')}
                     </div>
                     <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                         <a href="${getPagePath('pray-ground.html')}" style="
@@ -169,21 +182,35 @@ async function submitPrayerRequest(userUid) {
                 </div>
             `;
             
+            // Send message to all users except the poster
+            const messagePromises = [];
             for (const user of allUsers) {
                 // Don't send message to the person who submitted it
                 if (user.UID !== userUid) {
-                    await supabase
-                        .from('message_boxes')
-                        .insert({
-                            from_user_uid: userUid,
-                            to_user_uid: user.UID,
-                            subject: `New Prayer Request: ${title}`,
-                            body: messageContent,
-                            folder: 'inbox',
-                            is_read: false
-                        });
+                    messagePromises.push(
+                        supabase
+                            .from('message_boxes')
+                            .insert({
+                                from_user_uid: userUid,
+                                to_user_uid: user.UID,
+                                subject: `New Prayer Request: ${escapeHtml(title)}`,
+                                body: messageContent,
+                                folder: 'inbox',
+                                is_read: false
+                            })
+                    );
                 }
             }
+            
+            // Wait for all messages to be sent
+            const messageResults = await Promise.allSettled(messagePromises);
+            const failedMessages = messageResults.filter(r => r.status === 'rejected');
+            
+            if (failedMessages.length > 0) {
+                console.warn('Some messages failed to send:', failedMessages);
+            }
+            
+            console.log(`Prayer request notification sent to ${allUsers.length - 1} family members`);
         }
         
         // Show success message
@@ -251,6 +278,25 @@ async function loadPrayerRequests(currentUserUid) {
             });
         }
         
+        // Create table
+        const table = document.createElement('table');
+        table.className = 'prayer-requests-table';
+        
+        // Table header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Posted By</th>
+                <th>Status</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+        
+        // Table body
+        const tbody = document.createElement('tbody');
+        
         requests.forEach(request => {
             const user = userMap[request.user_uid];
             const authorName = (user?.First_Name && user?.Last_Name)
@@ -263,43 +309,28 @@ async function loadPrayerRequests(currentUserUid) {
             const requestDate = new Date(request.created_at);
             const dateStr = requestDate.toLocaleDateString() + ' ' + requestDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
-            let answeredInfo = '';
-            if (isAnswered && request.answered_at) {
-                const answeredDate = new Date(request.answered_at);
-                const answeredDateStr = answeredDate.toLocaleDateString();
-                answeredInfo = `<div class="answered-badge">✓ Answered on ${answeredDateStr}</div>`;
-            }
+            const row = document.createElement('tr');
+            row.className = isAnswered ? 'answered' : '';
+            row.style.cursor = 'pointer';
+            row.onclick = () => openPrayerModal(request, userMap, currentUserUid);
             
-            const requestCard = document.createElement('div');
-            requestCard.className = `prayer-request-card ${isAnswered ? 'answered' : ''}`;
-            requestCard.id = `prayer_${request.request_id}`;
-            
-            requestCard.innerHTML = `
-                <div class="prayer-request-header">
-                    <div class="prayer-request-title">${escapeHtml(request.title)}</div>
-                    <div class="prayer-request-status ${isAnswered ? 'answered' : 'active'}">
+            row.innerHTML = `
+                <td class="prayer-request-title-cell">${escapeHtml(request.title)}</td>
+                <td>${escapeHtml(dateStr)}</td>
+                <td>${escapeHtml(authorName)}</td>
+                <td>
+                    <span class="prayer-request-status-badge ${isAnswered ? 'answered' : 'active'}">
                         ${isAnswered ? '✓ Answered' : '⏳ Active'}
-                    </div>
-                </div>
-                <div class="prayer-request-details">${escapeHtml(request.details).replace(/\n/g, '<br>')}</div>
-                ${answeredInfo}
-                <div class="prayer-request-meta">
-                    <div>
-                        <span class="prayer-request-author">Submitted by: ${escapeHtml(authorName)}</span>
-                        <span class="prayer-request-date"> • ${dateStr}</span>
-                    </div>
-                </div>
-                ${!isAnswered && isOwner ? `
-                    <div class="prayer-request-actions">
-                        <button class="btn-answered" onclick="markAsAnswered(${request.request_id}, ${currentUserUid})">
-                            🙌 Mark as Answered
-                        </button>
-                    </div>
-                ` : ''}
+                    </span>
+                </td>
             `;
             
-            prayerRequestsList.appendChild(requestCard);
+            tbody.appendChild(row);
         });
+        
+        table.appendChild(tbody);
+        prayerRequestsList.innerHTML = '';
+        prayerRequestsList.appendChild(table);
         
     } catch (error) {
         console.error('Error loading prayer requests:', error);
@@ -424,6 +455,9 @@ async function markAsAnswered(requestId, userUid) {
             }
         }
         
+        // Close modal if open
+        closePrayerModal();
+        
         // Reload prayer requests
         await loadPrayerRequests(userUid);
         
@@ -436,8 +470,136 @@ async function markAsAnswered(requestId, userUid) {
     }
 }
 
-// Make markAsAnswered available globally
+// Open prayer request modal
+function openPrayerModal(request, userMap, currentUserUid) {
+    const modal = document.getElementById('prayerModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalStatus = document.getElementById('modalStatus');
+    const modalDetails = document.getElementById('modalDetails');
+    const modalMeta = document.getElementById('modalMeta');
+    const modalActions = document.getElementById('modalActions');
+    
+    if (!modal) return;
+    
+    const user = userMap[request.user_uid];
+    const authorName = (user?.First_Name && user?.Last_Name)
+        ? `${user.First_Name} ${user.Last_Name}`
+        : user?.Username || 'Unknown';
+    
+    const isOwner = request.user_uid === currentUserUid;
+    const isAnswered = request.status === 'answered';
+    
+    const requestDate = new Date(request.created_at);
+    const dateStr = requestDate.toLocaleDateString() + ' at ' + requestDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Set title
+    if (modalTitle) modalTitle.textContent = escapeHtml(request.title);
+    
+    // Set status
+    if (modalStatus) {
+        modalStatus.innerHTML = `
+            <span class="prayer-request-status-badge ${isAnswered ? 'answered' : 'active'}">
+                ${isAnswered ? '✓ Answered' : '⏳ Active'}
+            </span>
+        `;
+    }
+    
+    // Set details
+    if (modalDetails) {
+        modalDetails.textContent = request.details;
+    }
+    
+    // Set meta information
+    if (modalMeta) {
+        let metaHtml = `
+            <div class="prayer-modal-meta-item">
+                <span class="prayer-modal-meta-label">Posted by:</span>
+                <span>${escapeHtml(authorName)}</span>
+            </div>
+            <div class="prayer-modal-meta-item">
+                <span class="prayer-modal-meta-label">Date:</span>
+                <span>${escapeHtml(dateStr)}</span>
+            </div>
+        `;
+        
+        if (isAnswered && request.answered_at) {
+            const answeredDate = new Date(request.answered_at);
+            const answeredDateStr = answeredDate.toLocaleDateString() + ' at ' + answeredDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const answerer = userMap[request.answered_by_uid];
+            const answererName = answerer 
+                ? ((answerer.First_Name && answerer.Last_Name) ? `${answerer.First_Name} ${answerer.Last_Name}` : answerer.Username || 'Unknown')
+                : 'Unknown';
+            
+            metaHtml += `
+                <div class="prayer-modal-meta-item">
+                    <span class="prayer-modal-meta-label">Answered on:</span>
+                    <span>${escapeHtml(answeredDateStr)}</span>
+                </div>
+                <div class="prayer-modal-meta-item">
+                    <span class="prayer-modal-meta-label">Marked as answered by:</span>
+                    <span>${escapeHtml(answererName)}</span>
+                </div>
+            `;
+        }
+        
+        modalMeta.innerHTML = metaHtml;
+    }
+    
+    // Set actions
+    if (modalActions) {
+        if (!isAnswered && isOwner) {
+            modalActions.innerHTML = `
+                <button class="btn-answered" onclick="markAsAnswered(${request.request_id}, ${currentUserUid}); closePrayerModal();">
+                    🙌 Mark as Answered
+                </button>
+            `;
+        } else {
+            modalActions.innerHTML = '';
+        }
+    }
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
+// Close prayer modal
+function closePrayerModal() {
+    const modal = document.getElementById('prayerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Setup modal close handlers
+function setupPrayerModal() {
+    const modal = document.getElementById('prayerModal');
+    const closeBtn = document.getElementById('closeModal');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePrayerModal);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closePrayerModal();
+            }
+        });
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closePrayerModal();
+        }
+    });
+}
+
+// Make functions available globally
 window.markAsAnswered = markAsAnswered;
+window.openPrayerModal = openPrayerModal;
+window.closePrayerModal = closePrayerModal;
 
 // Show message
 function showPrayerMessage(message, type) {
@@ -461,4 +623,5 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
