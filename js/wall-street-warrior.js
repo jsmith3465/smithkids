@@ -103,6 +103,7 @@ async function checkUserAccess() {
         
         await loadWatchlist();
         await loadPortfolio();
+        await loadRecommendedSearches();
     } catch (error) {
         console.error('Error initializing Wall Street Warrior:', error);
     }
@@ -429,6 +430,152 @@ async function searchStock(query) {
         return null;
     }
 }
+
+// Load recommended searches (trending stocks)
+async function loadRecommendedSearches() {
+    const recommendedList = document.getElementById('recommendedStocksList');
+    if (!recommendedList) return;
+    
+    try {
+        // List of popular stocks that are often in the news
+        // These are major companies that frequently make headlines
+        const defaultStocks = [
+            { symbol: 'AAPL', name: 'Apple Inc.' },
+            { symbol: 'MSFT', name: 'Microsoft Corporation' },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+            { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+            { symbol: 'TSLA', name: 'Tesla Inc.' }
+        ];
+        
+        let stocksToShow = defaultStocks;
+        
+        // Try to fetch real-time trending data from Alpha Vantage NEWS_SENTIMENT
+        if (ALPHA_VANTAGE_API_KEY && ALPHA_VANTAGE_API_KEY !== 'demo') {
+            try {
+                // Use a timeout to avoid hanging if API is slow
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                
+                const newsResponse = await fetch(
+                    `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=technology&apikey=${ALPHA_VANTAGE_API_KEY}&limit=10`,
+                    { signal: controller.signal }
+                );
+                clearTimeout(timeoutId);
+                
+                const newsData = await newsResponse.json();
+                
+                // Check for API errors
+                if (newsData['Error Message'] || (newsData.Note && newsData.Note.includes('Thank you for using Alpha Vantage!'))) {
+                    throw new Error('API rate limit or error');
+                }
+                
+                if (newsData.feed && newsData.feed.length > 0) {
+                    // Extract unique tickers from news articles
+                    const tickerCounts = {};
+                    newsData.feed.forEach(article => {
+                        if (article.ticker_sentiment && article.ticker_sentiment.length > 0) {
+                            article.ticker_sentiment.forEach(tickerData => {
+                                const ticker = tickerData.ticker;
+                                if (ticker && ticker.length <= 5 && !ticker.includes('.')) {
+                                    tickerCounts[ticker] = (tickerCounts[ticker] || 0) + 1;
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Get top 5 most mentioned tickers
+                    const topTickers = Object.entries(tickerCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([ticker]) => ticker);
+                    
+                    if (topTickers.length >= 3) {
+                        // Use the top tickers from news
+                        stocksToShow = topTickers.map(ticker => ({
+                            symbol: ticker,
+                            name: ticker // Will be updated if we can fetch company name
+                        }));
+                        
+                        // Try to get company names (but don't wait too long)
+                        const namePromises = topTickers.slice(0, 3).map(async (ticker, index) => {
+                            try {
+                                const quoteResponse = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${ALPHA_VANTAGE_API_KEY}`);
+                                const quoteData = await quoteResponse.json();
+                                if (quoteData['Global Quote'] && quoteData['Global Quote']['01. symbol']) {
+                                    stocksToShow[index].name = quoteData['Global Quote']['01. symbol'];
+                                }
+                            } catch (e) {
+                                // Keep default name
+                            }
+                        });
+                        
+                        // Don't wait for all - just start them
+                        Promise.allSettled(namePromises);
+                    }
+                }
+            } catch (newsError) {
+                // Silently fall back to default stocks
+                console.log('Using default recommended stocks:', newsError.message);
+            }
+        }
+        
+        // Display the recommended stocks
+        recommendedList.innerHTML = stocksToShow.map(stock => `
+            <button class="btn btn-secondary" onclick="searchRecommendedStock('${escapeHtml(stock.symbol)}')" style="
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                white-space: nowrap;
+                transition: all 0.2s ease;
+            " onmouseover="this.style.transform='scale(1.05)'; this.style.background='#1976D2'; this.style.color='white';" onmouseout="this.style.transform='scale(1)'; this.style.background=''; this.style.color='';">
+                ${escapeHtml(stock.symbol)} - ${escapeHtml(stock.name)}
+            </button>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading recommended searches:', error);
+        // Show default stocks even on error
+        const defaultStocks = [
+            { symbol: 'AAPL', name: 'Apple Inc.' },
+            { symbol: 'MSFT', name: 'Microsoft Corporation' },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+            { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+            { symbol: 'TSLA', name: 'Tesla Inc.' }
+        ];
+        const recommendedList = document.getElementById('recommendedStocksList');
+        if (recommendedList) {
+            recommendedList.innerHTML = defaultStocks.map(stock => `
+                <button class="btn btn-secondary" onclick="searchRecommendedStock('${escapeHtml(stock.symbol)}')" style="
+                    padding: 10px 20px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    white-space: nowrap;
+                ">
+                    ${escapeHtml(stock.symbol)} - ${escapeHtml(stock.name)}
+                </button>
+            `).join('');
+        }
+    }
+}
+
+// Search for a recommended stock
+function searchRecommendedStock(symbol) {
+    const searchInput = document.getElementById('stockSearchInput');
+    if (searchInput) {
+        searchInput.value = symbol;
+        handleStockSearch();
+        // Scroll to search results
+        setTimeout(() => {
+            const searchResults = document.getElementById('searchResults');
+            if (searchResults) {
+                searchResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
+    }
+}
+
+// Make function available globally
+window.searchRecommendedStock = searchRecommendedStock;
 
 // Display search result
 function displaySearchResult(stockData) {
