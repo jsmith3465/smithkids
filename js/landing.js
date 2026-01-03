@@ -166,6 +166,13 @@ async function initializeLanding() {
     }
     
     console.log('Initializing landing page for user:', session);
+    console.log('Session data:', {
+        uid: session.uid,
+        username: session.username,
+        firstName: session.firstName,
+        lastName: session.lastName,
+        userType: session.userType
+    });
     
     // Show main content first
     const authCheck = document.getElementById('authCheck');
@@ -174,92 +181,124 @@ async function initializeLanding() {
     if (mainContent) mainContent.classList.remove('hidden');
     
     // Wait a moment to ensure DOM is fully ready
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Set greeting
-    const greetingText = document.getElementById('greetingText');
-    const userName = document.getElementById('userName');
-    
-    if (greetingText && userName) {
-        const displayName = (session.firstName && session.lastName) 
-            ? `${session.firstName} ${session.lastName}` 
-            : session.username || 'User';
+    // Set greeting - with multiple retry attempts
+    const setGreeting = () => {
+        const greetingText = document.getElementById('greetingText');
+        const userName = document.getElementById('userName');
         
-        greetingText.textContent = getTimeBasedGreeting() + ',';
-        userName.textContent = displayName;
-        console.log('Set greeting for:', displayName);
-    } else {
-        console.error('Greeting elements not found. Available elements:', {
-            greetingText: !!greetingText,
-            userName: !!userName,
-            mainContent: !!mainContent
-        });
-        // Try again after a short delay
+        if (greetingText && userName) {
+            const displayName = (session.firstName && session.lastName) 
+                ? `${session.firstName} ${session.lastName}` 
+                : (session.username || 'User');
+            
+            const greeting = getTimeBasedGreeting();
+            greetingText.textContent = greeting + ',';
+            userName.textContent = displayName;
+            console.log('Successfully set greeting:', greeting, 'for user:', displayName);
+            return true;
+        } else {
+            console.warn('Greeting elements not found yet. Retrying...', {
+                greetingText: !!greetingText,
+                userName: !!userName,
+                mainContent: !!mainContent
+            });
+            return false;
+        }
+    };
+    
+    // Try to set greeting immediately
+    if (!setGreeting()) {
+        // Retry after delays
         setTimeout(() => {
-            const retryGreetingText = document.getElementById('greetingText');
-            const retryUserName = document.getElementById('userName');
-            if (retryGreetingText && retryUserName) {
-                const displayName = (session.firstName && session.lastName) 
-                    ? `${session.firstName} ${session.lastName}` 
-                    : session.username || 'User';
-                retryGreetingText.textContent = getTimeBasedGreeting() + ',';
-                retryUserName.textContent = displayName;
-                console.log('Set greeting on retry for:', displayName);
+            if (!setGreeting()) {
+                setTimeout(() => setGreeting(), 300);
             }
         }, 200);
     }
     
-    // Set quote or Bible verse
-    try {
-        const quote = getRandomQuote();
+    // Set quote or Bible verse - with retry logic
+    const setQuote = () => {
         const quoteTextEl = document.getElementById('quoteText');
         const quoteAuthorEl = document.getElementById('quoteAuthor');
         
         if (!quoteTextEl || !quoteAuthorEl) {
-            console.error('Quote elements not found');
-        } else if (quote && quote.text) {
-            quoteTextEl.textContent = `"${quote.text}"`;
+            console.warn('Quote elements not found yet. Retrying...', {
+                quoteTextEl: !!quoteTextEl,
+                quoteAuthorEl: !!quoteAuthorEl
+            });
+            return false;
+        }
+        
+        try {
+            const quote = getRandomQuote();
+            console.log('Got quote:', quote);
             
-            if (quote.type === 'bible') {
-                // For Bible verses, make the reference a clickable link
-                const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
-                const referenceLink = document.createElement('a');
-                referenceLink.href = `pages/bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
-                referenceLink.textContent = reference;
-                referenceLink.style.color = '#CC5500';
-                referenceLink.style.textDecoration = 'none';
-                referenceLink.style.fontWeight = '600';
-                referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
-                referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+            if (quote && quote.text) {
+                quoteTextEl.textContent = `"${quote.text}"`;
                 
-                // Add click event to award bonus credit
-                referenceLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await awardBibleVerseBonus(session.uid, quote.book, quote.chapter, quote.verse);
-                    // Navigate to the Bible page after awarding credit
-                    window.location.href = referenceLink.href;
-                });
-                
-                quoteAuthorEl.innerHTML = '';
-                quoteAuthorEl.appendChild(document.createTextNode('— '));
-                quoteAuthorEl.appendChild(referenceLink);
-                quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
+                if (quote.type === 'bible') {
+                    // For Bible verses, make the reference a clickable link
+                    const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
+                    const referenceLink = document.createElement('a');
+                    referenceLink.href = `pages/bible.html?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
+                    referenceLink.textContent = reference;
+                    referenceLink.style.color = '#CC5500';
+                    referenceLink.style.textDecoration = 'none';
+                    referenceLink.style.fontWeight = '600';
+                    referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+                    referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+                    
+                    // Add click event to award bonus credit
+                    referenceLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        await awardBibleVerseBonus(session.uid, quote.book, quote.chapter, quote.verse);
+                        // Navigate to the Bible page after awarding credit
+                        window.location.href = referenceLink.href;
+                    });
+                    
+                    quoteAuthorEl.innerHTML = '';
+                    quoteAuthorEl.appendChild(document.createTextNode('— '));
+                    quoteAuthorEl.appendChild(referenceLink);
+                    quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
+                } else {
+                    quoteAuthorEl.textContent = `— ${quote.author || 'Unknown'}`;
+                }
+                console.log('Successfully set quote');
+                return true;
             } else {
-                quoteAuthorEl.textContent = `— ${quote.author || 'Unknown'}`;
+                console.error('Invalid quote data:', quote);
+                quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
+                quoteAuthorEl.textContent = '— Proverbs 3:5';
+                return true;
             }
-        } else {
-            console.error('Invalid quote data:', quote);
+        } catch (error) {
+            console.error('Error setting quote:', error);
             quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
             quoteAuthorEl.textContent = '— Proverbs 3:5';
+            return true;
         }
-    } catch (error) {
-        console.error('Error setting quote:', error);
-        const quoteTextEl = document.getElementById('quoteText');
-        const quoteAuthorEl = document.getElementById('quoteAuthor');
-        if (quoteTextEl && quoteAuthorEl) {
-            quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
-            quoteAuthorEl.textContent = '— Proverbs 3:5';
-        }
+    };
+    
+    // Try to set quote immediately
+    if (!setQuote()) {
+        // Retry after delays
+        setTimeout(() => {
+            if (!setQuote()) {
+                setTimeout(() => {
+                    if (!setQuote()) {
+                        // Final fallback
+                        const quoteTextEl = document.getElementById('quoteText');
+                        const quoteAuthorEl = document.getElementById('quoteAuthor');
+                        if (quoteTextEl && quoteAuthorEl) {
+                            quoteTextEl.textContent = '"Trust in the Lord with all your heart."';
+                            quoteAuthorEl.textContent = '— Proverbs 3:5';
+                        }
+                    }
+                }, 300);
+            }
+        }, 200);
     }
     
     // Load Fruit of the Spirit badges for standard users
