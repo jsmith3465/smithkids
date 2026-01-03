@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red, White & Who - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .red-white-who-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .red-white-who-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #dc2626 0%, #1e40af 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .red-white-who-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .red-white-who-header p {
+            font-size: 1.2rem;
+            margin: 0;
+            opacity: 0.95;
+        }
+        
+        .marketplace-filters {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .individuals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .individual-card {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .individual-card:hover {
+            border-color: #DAA520;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(218, 165, 32, 0.4);
+        }
+        
+        .individual-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .individual-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .individual-card .years {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .individual-card .key-events {
+            color: #1976D2;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+        
+        .biography-page {
+            display: none;
+        }
+        
+        .biography-page.active {
+            display: block;
+        }
+        
+        .biography-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+        
+        .biography-header-content {
+            flex: 1;
+        }
+        
+        .biography-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+            color: #333;
+        }
+        
+        .biography-header .years {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .biography-header img {
+            width: 200px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #DAA520;
+            margin-left: 30px;
+        }
+        
+        .take-quiz-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .take-quiz-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+        }
+        
+        .take-quiz-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .key-facts-section {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .key-facts-section h3 {
+            margin: 0 0 15px 0;
+            color: #1976D2;
+        }
+        
+        .key-facts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .key-fact-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #DAA520;
+        }
+        
+        .key-fact-item strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .biographical-summary {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+        
+        .photo-gallery {
+            margin-top: 30px;
+        }
+        
+        .photo-gallery h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .photo-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .photo-gallery-item {
+            text-align: center;
+        }
+        
+        .photo-gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 10px;
+        }
+        
+        .photo-gallery-item .caption {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .quiz-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+        
+        .quiz-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .quiz-question {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #1976D2;
+        }
+        
+        .quiz-question h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .quiz-answer-option {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-answer-option:hover {
+            border-color: #1976D2;
+            background: #e3f2fd;
+        }
+        
+        .quiz-answer-option.selected {
+            border-color: #1976D2;
+            background: #bbdefb;
+        }
+        
+        .quiz-answer-option.correct {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .quiz-answer-option.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .quiz-results {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .quiz-results h3 {
+            margin: 0 0 15px 0;
+            font-size: 2rem;
+        }
+        
+        .quiz-results.perfect {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+        
+        .quiz-results.not-perfect {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+        
+        .back-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .back-button:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+        
+        <div id="mainContent" class="hidden">
+            <div class="red-white-who-container">
+                <div class="red-white-who-header">
+                    <h1>🇺🇸 Red, White & Who</h1>
+                    <p>Explore the lives of America's patriotic heroes and founding fathers</p>
+                </div>
+                
+                <!-- Marketplace View -->
+                <div id="marketplaceView">
+                    <div class="marketplace-filters">
+                        <h2 style="margin-top: 0; text-align: center; color: #333;">Browse Biographies</h2>
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="nameFilter">Search by Name</label>
+                                <input type="text" id="nameFilter" placeholder="Enter name...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="birthYearFrom">Birth Year (From)</label>
+                                <input type="number" id="birthYearFrom" placeholder="Year...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="birthYearTo">Birth Year (To)</label>
+                                <input type="number" id="birthYearTo" placeholder="Year...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="keyEventFilter">Key Event</label>
+                                <select id="keyEventFilter">
+                                    <option value="">All Events</option>
+                                    <option value="Signing of Declaration of Independence">Signing of Declaration of Independence</option>
+                                    <option value="Revolutionary War">Revolutionary War</option>
+                                    <option value="Constitutional Convention">Constitutional Convention</option>
+                                    <option value="Presidency">Presidency</option>
+                                    <!-- More options will be populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-buttons">
+                            <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                            <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                        </div>
+                    </div>
+                    
+                    <div id="individualsGrid" class="individuals-grid">
+                        <!-- Individual cards will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Biography Page View -->
+                <div id="biographyView" class="biography-page">
+                    <button class="back-button" onclick="showMarketplace()">← Back to Marketplace</button>
+                    
+                    <div class="biography-header">
+                        <div class="biography-header-content">
+                            <h2 id="biographyName"></h2>
+                            <div class="years" id="biographyYears"></div>
+                            <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
+                        </div>
+                        <img id="biographyMainPhoto" src="" alt="">
+                    </div>
+                    
+                    <div class="key-facts-section">
+                        <h3>Key Facts</h3>
+                        <div id="keyFactsGrid" class="key-facts-grid">
+                            <!-- Key facts will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="biographical-summary" id="biographicalSummary">
+                        <!-- Summary will be loaded here -->
+                    </div>
+                    
+                    <div class="photo-gallery">
+                        <h3>Photo Gallery</h3>
+                        <div id="photoGalleryGrid" class="photo-gallery-grid">
+                            <!-- Photos will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quiz Modal -->
+    <div id="quizModal" class="quiz-modal">
+        <div class="quiz-modal-content">
+            <h2 style="text-align: center; margin-bottom: 30px;">Quiz: <span id="quizIndividualName"></span></h2>
+            <div id="quizQuestions">
+                <!-- Quiz questions will be loaded here -->
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" id="submitQuizBtn" onclick="submitQuiz()" style="display: none;">Submit Quiz</button>
+                <button class="btn btn-secondary" id="closeQuizBtn" onclick="closeQuiz()" style="display: none;">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/red-white-who.js"></script>
+</body>
+</html>
+
