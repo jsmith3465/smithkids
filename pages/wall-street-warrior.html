@@ -241,23 +241,13 @@
             
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" data-tab="watchlist">⭐ Watchlist</button>
-                <button class="tab" data-tab="portfolio">💼 Portfolio</button>
+                <button class="tab active" data-tab="portfolio">💼 Portfolio</button>
+                <button class="tab" data-tab="watchlist">⭐ Watchlist</button>
                 <button class="tab" data-tab="search">🔍 Stock Search</button>
             </div>
             
-            <!-- Watchlist Tab -->
-            <div id="watchlistTab" class="tab-content active">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">⭐ My Watchlist</h2>
-                </div>
-                <div id="watchlistGrid" class="watchlist-grid">
-                    <div class="loading">Loading watchlist...</div>
-                </div>
-            </div>
-            
             <!-- Portfolio Tab -->
-            <div id="portfolioTab" class="tab-content">
+            <div id="portfolioTab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">💼 My Portfolio</h2>
                     <button class="btn btn-primary" id="addPortfolioBtn">+ Add Stock</button>
@@ -268,6 +258,16 @@
                 </div>
                 <div id="portfolioGrid" class="portfolio-grid">
                     <div class="loading">Loading portfolio...</div>
+                </div>
+            </div>
+            
+            <!-- Watchlist Tab -->
+            <div id="watchlistTab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">⭐ My Watchlist</h2>
+                </div>
+                <div id="watchlistGrid" class="watchlist-grid">
+                    <div class="loading">Loading watchlist...</div>
                 </div>
             </div>
             
