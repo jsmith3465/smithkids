@@ -7,10 +7,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Note: You'll need to get a free API key from Alpha Vantage (https://www.alphavantage.co/support/#api-key)
-// or use another stock API. For now, we'll use a placeholder that you can replace.
-// To get a free API key: https://www.alphavantage.co/support/#api-key
-const ALPHA_VANTAGE_API_KEY = 'demo'; // Replace with your actual API key from Alpha Vantage
+// Alpha Vantage API Key
+const ALPHA_VANTAGE_API_KEY = 'IJJQBBYU0ZUE20RQ';
 
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
@@ -223,10 +221,18 @@ async function handleStockSearch() {
         // First, try to get stock quote
         const stockData = await searchStock(query);
         
-        if (stockData && stockData.symbol) {
+        if (stockData && stockData.symbol && stockData.price && !isNaN(stockData.price)) {
             displaySearchResult(stockData);
         } else {
-            searchResults.innerHTML = '<div style="color: #dc3545; padding: 10px;">Stock not found. Please check the ticker symbol or company name.</div>';
+            searchResults.innerHTML = `
+                <div style="color: #dc3545; padding: 10px;">
+                    Stock not found. Please check the ticker symbol or company name.<br>
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        Note: Make sure you're using a valid ticker symbol (e.g., AAPL for Apple, MSFT for Microsoft).
+                        The app uses Yahoo Finance API which should work without an API key.
+                    </small>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('Error searching stock:', error);
@@ -234,49 +240,137 @@ async function handleStockSearch() {
     }
 }
 
-// Search for stock using Alpha Vantage API
+// Search for stock using Alpha Vantage API with fallback to Yahoo Finance
 async function searchStock(query) {
     try {
-        // Use Alpha Vantage Global Quote API
-        const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${query}&apikey=${ALPHA_VANTAGE_API_KEY}`);
-        const data = await response.json();
-        
-        if (data['Global Quote'] && data['Global Quote']['01. symbol']) {
-            const quote = data['Global Quote'];
-            return {
-                symbol: quote['01. symbol'],
-                name: quote['01. symbol'], // Alpha Vantage doesn't return company name in quote
-                price: parseFloat(quote['05. price']),
-                change: parseFloat(quote['09. change']),
-                changePercent: quote['10. change percent'],
-                volume: quote['06. volume'],
-                previousClose: parseFloat(quote['08. previous close'])
-            };
+        // First, try Alpha Vantage Global Quote API
+        if (ALPHA_VANTAGE_API_KEY && ALPHA_VANTAGE_API_KEY !== 'demo') {
+            try {
+                const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${query}&apikey=${ALPHA_VANTAGE_API_KEY}`);
+                const data = await response.json();
+                
+                if (data['Global Quote'] && data['Global Quote']['01. symbol']) {
+                    const quote = data['Global Quote'];
+                    const price = parseFloat(quote['05. price']);
+                    const change = parseFloat(quote['09. change']);
+                    
+                    if (!isNaN(price) && price > 0) {
+                        return {
+                            symbol: quote['01. symbol'],
+                            name: quote['01. symbol'],
+                            price: price,
+                            change: change,
+                            changePercent: quote['10. change percent'] || `${((change / (price - change)) * 100).toFixed(2)}%`,
+                            volume: quote['06. volume'],
+                            previousClose: parseFloat(quote['08. previous close']) || (price - change)
+                        };
+                    }
+                }
+                
+                // If quote doesn't work, try symbol search
+                const searchResponse = await fetch(`https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${query}&apikey=${ALPHA_VANTAGE_API_KEY}`);
+                const searchData = await searchResponse.json();
+                
+                if (searchData.bestMatches && searchData.bestMatches.length > 0) {
+                    const match = searchData.bestMatches[0];
+                    // Get quote for the best match
+                    return await searchStock(match['1. symbol']);
+                }
+            } catch (avError) {
+                console.log('Alpha Vantage API error, trying fallback:', avError);
+            }
         }
         
-        // If quote doesn't work, try symbol search
-        const searchResponse = await fetch(`https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${query}&apikey=${ALPHA_VANTAGE_API_KEY}`);
-        const searchData = await searchResponse.json();
+        // Fallback: Use Yahoo Finance API (free, no key required)
+        // Try direct API first, then with CORS proxy if needed
+        const yahooUrls = [
+            `https://query1.finance.yahoo.com/v8/finance/chart/${query}?interval=1d&range=1d`,
+            `https://query2.finance.yahoo.com/v8/finance/chart/${query}?interval=1d&range=1d`
+        ];
         
-        if (searchData.bestMatches && searchData.bestMatches.length > 0) {
-            const match = searchData.bestMatches[0];
-            // Get quote for the best match
-            return await searchStock(match['1. symbol']);
+        for (const url of yahooUrls) {
+            try {
+                const yahooResponse = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+                
+                if (!yahooResponse.ok) {
+                    console.log(`Yahoo Finance API returned ${yahooResponse.status} for ${url}`);
+                    continue; // Try next URL
+                }
+                
+                const yahooData = await yahooResponse.json();
+                console.log('Yahoo Finance response for', query, ':', yahooData);
+                
+                if (yahooData.chart && yahooData.chart.result && yahooData.chart.result.length > 0) {
+                    const result = yahooData.chart.result[0];
+                    
+                    // Check for errors in the result
+                    if (result.error) {
+                        console.error('Yahoo Finance error:', result.error);
+                        continue; // Try next URL
+                    }
+                    
+                    const meta = result.meta;
+                    
+                    if (meta && (meta.regularMarketPrice !== undefined || meta.currentPrice !== undefined)) {
+                        const currentPrice = meta.regularMarketPrice || meta.currentPrice;
+                        const previousClose = meta.previousClose || currentPrice;
+                        const change = currentPrice - previousClose;
+                        const changePercent = previousClose > 0 ? ((change / previousClose) * 100).toFixed(2) : '0.00';
+                        
+                        return {
+                            symbol: meta.symbol || query,
+                            name: meta.longName || meta.shortName || meta.symbol || query,
+                            price: currentPrice,
+                            change: change,
+                            changePercent: `${changePercent}%`,
+                            volume: meta.regularMarketVolume || meta.volume || 0,
+                            previousClose: previousClose
+                        };
+                    }
+                } else if (yahooData.chart && yahooData.chart.error) {
+                    console.error('Yahoo Finance chart error:', yahooData.chart.error);
+                    continue; // Try next URL
+                }
+                
+                // If we got here, the API call worked but no data
+                break;
+            } catch (yahooError) {
+                console.error('Yahoo Finance API error for', url, ':', yahooError);
+                // Continue to next URL
+                continue;
+            }
         }
         
+        // If all Yahoo Finance URLs failed, try one more approach with a simpler endpoint
+        try {
+            const simpleResponse = await fetch(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
+            if (simpleResponse.ok) {
+                const simpleData = await simpleResponse.json();
+                if (simpleData.quotes && simpleData.quotes.length > 0) {
+                    const quote = simpleData.quotes[0];
+                    // Use the symbol from search to get quote
+                    if (quote.symbol) {
+                        return await searchStock(quote.symbol);
+                    }
+                }
+            }
+        } catch (simpleError) {
+            console.error('Simple Yahoo Finance search error:', simpleError);
+        }
+        
+        // If all APIs fail, return null
+        console.error('All stock API attempts failed for:', query);
         return null;
+        
     } catch (error) {
         console.error('Error in stock search:', error);
-        // Fallback: return mock data for demo
-        return {
-            symbol: query,
-            name: query,
-            price: 100.00,
-            change: 2.50,
-            changePercent: '2.50%',
-            volume: '1000000',
-            previousClose: 97.50
-        };
+        return null;
     }
 }
 
