@@ -104,14 +104,16 @@ async function loadMarketplaceItems() {
         
         if (error) throw error;
         
-        // Get current savings balance
+        // Get current balances (both available and savings)
         const { data: creditData } = await supabase
             .from('User_Credits')
-            .select('savings_balance')
+            .select('balance, savings_balance')
             .eq('user_uid', session.uid)
             .single();
         
+        const availableBalance = creditData ? (creditData.balance || 0) : 0;
         const savingsBalance = creditData ? (creditData.savings_balance || 0) : 0;
+        const totalCredits = availableBalance + savingsBalance;
         
         if (!items || items.length === 0) {
             marketplaceItems.innerHTML = '<div class="no-items">No marketplace items available at this time.</div>';
@@ -126,8 +128,27 @@ async function loadMarketplaceItems() {
             const itemCard = document.createElement('div');
             itemCard.className = 'marketplace-item';
             
-            const canAfford = savingsBalance >= item.cost;
-            const purchaseBtn = canAfford ? 'enabled' : 'disabled';
+            const canAffordWithSavings = savingsBalance >= item.cost;
+            const canAffordWithTotal = totalCredits >= item.cost;
+            const needsTransfer = !canAffordWithSavings && canAffordWithTotal;
+            const purchaseBtn = canAffordWithSavings ? 'enabled' : 'disabled';
+            
+            // Create transfer message if needed
+            let transferMessage = '';
+            if (needsTransfer) {
+                const transferAmount = item.cost - savingsBalance;
+                transferMessage = `
+                    <div class="transfer-prompt" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 15px; margin-top: 10px; text-align: center;">
+                        <div style="font-weight: 600; color: #856404; margin-bottom: 8px;">
+                            💰 Transfer ${transferAmount} credits to Savings to purchase
+                        </div>
+                        <a href="${getPagePath('savings-account.html')}" 
+                           style="color: #1976D2; text-decoration: underline; font-weight: 600;">
+                            Go to Savings Account →
+                        </a>
+                    </div>
+                `;
+            }
             
             itemCard.innerHTML = `
                 <div class="item-icon">${item.icon || '🛍️'}</div>
@@ -138,15 +159,24 @@ async function loadMarketplaceItems() {
                         data-item-id="${item.item_id}" 
                         data-item-name="${item.name}"
                         data-item-cost="${item.cost}"
-                        ${!canAfford ? 'disabled' : ''}>
+                        data-needs-transfer="${needsTransfer}"
+                        data-transfer-amount="${needsTransfer ? (item.cost - savingsBalance) : 0}"
+                        ${!canAffordWithSavings ? 'disabled' : ''}>
                     Purchase
                 </button>
+                ${transferMessage}
             `;
             
             // Add click handler
             const btn = itemCard.querySelector('.purchase-btn');
-            if (canAfford) {
+            if (canAffordWithSavings) {
                 btn.addEventListener('click', () => purchaseItem(item.item_id, item.name, item.cost));
+            } else if (needsTransfer) {
+                // Show transfer prompt when clicking disabled button
+                btn.addEventListener('click', () => {
+                    const transferAmount = item.cost - savingsBalance;
+                    showTransferPrompt(item.name, item.cost, savingsBalance, availableBalance, transferAmount);
+                });
             }
             
             grid.appendChild(itemCard);
@@ -173,10 +203,10 @@ async function purchaseItem(itemId, itemName, itemCost) {
     }
     
     try {
-        // Get current savings balance (check but don't deduct yet)
+        // Get current balances (check but don't deduct yet)
         const { data: creditData, error: fetchError } = await supabase
             .from('User_Credits')
-            .select('credit_id, savings_balance')
+            .select('credit_id, balance, savings_balance')
             .eq('user_uid', session.uid)
             .single();
         
@@ -189,9 +219,17 @@ async function purchaseItem(itemId, itemName, itemCost) {
         }
         
         const currentSavings = creditData.savings_balance || 0;
+        const currentAvailable = creditData.balance || 0;
+        const totalCredits = currentSavings + currentAvailable;
         
         if (itemCost > currentSavings) {
-            showError(`Insufficient savings balance. You have ${currentSavings} credits in savings.`);
+            // Check if user has enough total credits
+            if (totalCredits >= itemCost) {
+                const transferAmount = itemCost - currentSavings;
+                showTransferPrompt(itemName, itemCost, currentSavings, currentAvailable, transferAmount);
+            } else {
+                showError(`Insufficient savings balance. You have ${currentSavings} credits in savings.`);
+            }
             await loadSavingsBalance();
             await loadMarketplaceItems();
             return;
@@ -306,5 +344,31 @@ function hideMessages() {
     const successDiv = document.getElementById('successMessage');
     if (errorDiv) errorDiv.style.display = 'none';
     if (successDiv) successDiv.style.display = 'none';
+}
+
+function showTransferPrompt(itemName, itemCost, currentSavings, currentAvailable, transferAmount) {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.innerHTML = `
+            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #856404; margin-bottom: 10px;">
+                    💰 Transfer Credits to Complete Purchase
+                </div>
+                <div style="color: #856404; margin-bottom: 15px;">
+                    You need ${itemCost} credits in your Savings Account to purchase "${itemName}".<br>
+                    You currently have ${currentSavings} credits in Savings and ${currentAvailable} credits available.<br>
+                    <strong>Please transfer ${transferAmount} credits to your Savings Account to complete this purchase.</strong>
+                </div>
+                <a href="${getPagePath('savings-account.html')}" 
+                   style="display: inline-block; background: #1976D2; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 10px;">
+                    Go to Savings Account →
+                </a>
+            </div>
+        `;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            hideMessages();
+        }, 10000); // Show for 10 seconds since it has a link
+    }
 }
 
