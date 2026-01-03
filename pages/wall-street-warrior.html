@@ -241,25 +241,13 @@
             
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" data-tab="search">🔍 Stock Search</button>
-                <button class="tab" data-tab="watchlist">⭐ Watchlist</button>
+                <button class="tab active" data-tab="watchlist">⭐ Watchlist</button>
                 <button class="tab" data-tab="portfolio">💼 Portfolio</button>
-            </div>
-            
-            <!-- Stock Search Tab -->
-            <div id="searchTab" class="tab-content active">
-                <div class="search-section">
-                    <h2 style="margin: 0 0 20px 0;">Search for Stocks</h2>
-                    <div class="search-box">
-                        <input type="text" id="stockSearchInput" placeholder="Enter ticker symbol (e.g., AAPL) or company name (e.g., Apple)">
-                        <button class="btn btn-primary" id="searchStockBtn">Search</button>
-                    </div>
-                    <div id="searchResults" class="search-results"></div>
-                </div>
+                <button class="tab" data-tab="search">🔍 Stock Search</button>
             </div>
             
             <!-- Watchlist Tab -->
-            <div id="watchlistTab" class="tab-content">
+            <div id="watchlistTab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">⭐ My Watchlist</h2>
                 </div>
@@ -280,6 +268,18 @@
                 </div>
                 <div id="portfolioGrid" class="portfolio-grid">
                     <div class="loading">Loading portfolio...</div>
+                </div>
+            </div>
+            
+            <!-- Stock Search Tab -->
+            <div id="searchTab" class="tab-content">
+                <div class="search-section">
+                    <h2 style="margin: 0 0 20px 0;">Search for Stocks</h2>
+                    <div class="search-box">
+                        <input type="text" id="stockSearchInput" placeholder="Enter ticker symbol (e.g., AAPL) or company name (e.g., Apple)">
+                        <button class="btn btn-primary" id="searchStockBtn">Search</button>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
                 </div>
             </div>
         </div>
