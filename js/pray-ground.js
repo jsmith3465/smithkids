@@ -60,6 +60,7 @@ async function checkUserAccess() {
     try {
         setupPrayerRequestForm(session.uid);
         setupSubmitToggle();
+        setupClosePrayerForm();
         setupPrayerModal();
         await loadPrayerRequests(session.uid);
     } catch (error) {
@@ -84,6 +85,18 @@ function setupSubmitToggle() {
                 submitSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
         }
+    });
+}
+
+// Setup close prayer form button
+function setupClosePrayerForm() {
+    const closeButton = document.getElementById('closePrayerForm');
+    const submitSection = document.getElementById('submitPrayerSection');
+    
+    if (!closeButton || !submitSection) return;
+    
+    closeButton.addEventListener('click', () => {
+        submitSection.style.display = 'none';
     });
 }
 

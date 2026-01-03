@@ -274,8 +274,25 @@
             </div>
             
             <!-- Submit Prayer Request Section (Hidden by default) -->
-            <div id="submitPrayerSection" class="submit-prayer-section" style="display: none;">
-                <h2>📝 Submit a Prayer Request</h2>
+            <div id="submitPrayerSection" class="submit-prayer-section" style="display: none; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">📝 Submit a Prayer Request</h2>
+                    <button id="closePrayerForm" type="button" style="
+                        background: none;
+                        border: none;
+                        font-size: 28px;
+                        color: #CC5500;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 35px;
+                        height: 35px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        transition: all 0.2s ease;
+                    " onmouseover="this.style.background='#ffeaa7'; this.style.color='#CC5500';" onmouseout="this.style.background='none'; this.style.color='#CC5500';" title="Close">×</button>
+                </div>
                 <form id="prayerRequestForm" style="display: flex; flex-direction: column; gap: 20px;">
                     <div>
                         <label for="prayerTitle" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Title:</label>
