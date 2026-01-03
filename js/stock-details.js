@@ -179,73 +179,86 @@ async function getStockOverview(ticker) {
         const response = await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${ALPHA_VANTAGE_API_KEY}`);
         const data = await response.json();
         
-        if (data.Symbol) {
-            // Return all available fields from the API
-            return {
-                name: data.Name || ticker,
-                description: data.Description,
-                sector: data.Sector,
-                industry: data.Industry,
-                marketCap: data.MarketCapitalization,
-                peRatio: data.PERatio,
-                forwardPE: data.ForwardPE,
-                pegRatio: data.PEGRatio,
-                eps: data.EPS,
-                epsForward: data.EPSForward,
-                dividendYield: data.DividendYield,
-                dividendPerShare: data.DividendPerShare,
-                dividendDate: data.DividendDate,
-                exDividendDate: data.ExDividendDate,
-                payoutRatio: data.PayoutRatio,
-                beta: data.Beta,
-                fiftyTwoWeekHigh: data['52WeekHigh'],
-                fiftyTwoWeekLow: data['52WeekLow'],
-                revenue: data.RevenueTTM,
-                revenuePerShare: data.RevenuePerShareTTM,
-                quarterlyRevenueGrowth: data.QuarterlyRevenueGrowthYOY,
-                grossProfit: data.GrossProfitTTM,
-                profitMargin: data.ProfitMargin,
-                operatingMargin: data.OperatingMarginTTM,
-                ebitda: data.EBITDA,
-                ebitdaPerShare: data.EBITDA,
-                bookValue: data.BookValue,
-                priceToBook: data.PriceToBookRatio,
-                priceToSales: data.PriceToSalesRatioTTM,
-                evToRevenue: data.EVToRevenue,
-                evToEBITDA: data.EVToEBITDA,
-                returnOnAssets: data.ReturnOnAssetsTTM,
-                returnOnEquity: data.ReturnOnEquityTTM,
-                returnOnInvestment: data.ReturnOnInvestmentTTM,
-                quarterlyEarningsGrowth: data.QuarterlyEarningsGrowthYOY,
-                sharesOutstanding: data.SharesOutstanding,
-                floatShares: data.SharesFloat,
-                sharesShort: data.SharesShort,
-                sharesShortPriorMonth: data.SharesShortPriorMonth,
-                shortRatio: data.ShortRatio,
-                shortPercentOutstanding: data.ShortPercentOutstanding,
-                shortPercentFloat: data.ShortPercentFloat,
-                percentInsiders: data.PercentInsiders,
-                percentInstitutions: data.PercentInstitutions,
-                forwardAnnualDividendRate: data.ForwardAnnualDividendRate,
-                forwardAnnualDividendYield: data.ForwardAnnualDividendYield,
-                trailingAnnualDividendRate: data.TrailingAnnualDividendRate,
-                trailingAnnualDividendYield: data.TrailingAnnualDividendYield,
-                fiveYearAverageDividendYield: data.FiveYearAverageDividendYield,
-                analystTargetPrice: data.AnalystTargetPrice,
-                analystRatingStrongBuy: data.AnalystRatingStrongBuy,
-                analystRatingBuy: data.AnalystRatingBuy,
-                analystRatingHold: data.AnalystRatingHold,
-                analystRatingSell: data.AnalystRatingSell,
-                analystRatingStrongSell: data.AnalystRatingStrongSell,
-                currency: data.Currency,
-                exchange: data.Exchange,
-                fiscalYearEnd: data.FiscalYearEnd,
-                latestQuarter: data.LatestQuarter,
-                assetType: data.AssetType
-            };
+        console.log('Alpha Vantage OVERVIEW response:', data);
+        
+        // Check for API errors
+        if (data['Error Message']) {
+            console.error('Alpha Vantage error:', data['Error Message']);
+            return {};
         }
         
-        return {};
+        if (data['Note']) {
+            console.warn('Alpha Vantage rate limit:', data['Note']);
+            return {};
+        }
+        
+        // Return all available fields from the API (even if Symbol is missing, some data might be available)
+        const overview = {
+            name: data.Name || null,
+            description: data.Description || null,
+            sector: data.Sector || null,
+            industry: data.Industry || null,
+            marketCap: data.MarketCapitalization || null,
+            peRatio: data.PERatio || null,
+            forwardPE: data.ForwardPE || null,
+            pegRatio: data.PEGRatio || null,
+            eps: data.EPS || null,
+            epsForward: data.EPSForward || null,
+            dividendYield: data.DividendYield || null,
+            dividendPerShare: data.DividendPerShare || null,
+            dividendDate: data.DividendDate || null,
+            exDividendDate: data.ExDividendDate || null,
+            payoutRatio: data.PayoutRatio || null,
+            beta: data.Beta || null,
+            fiftyTwoWeekHigh: data['52WeekHigh'] || null,
+            fiftyTwoWeekLow: data['52WeekLow'] || null,
+            revenue: data.RevenueTTM || null,
+            revenuePerShare: data.RevenuePerShareTTM || null,
+            quarterlyRevenueGrowth: data.QuarterlyRevenueGrowthYOY || null,
+            grossProfit: data.GrossProfitTTM || null,
+            profitMargin: data.ProfitMargin || null,
+            operatingMargin: data.OperatingMarginTTM || null,
+            ebitda: data.EBITDA || null,
+            ebitdaPerShare: data.EBITDA || null,
+            bookValue: data.BookValue || null,
+            priceToBook: data.PriceToBookRatio || null,
+            priceToSales: data.PriceToSalesRatioTTM || null,
+            evToRevenue: data.EVToRevenue || null,
+            evToEBITDA: data.EVToEBITDA || null,
+            returnOnAssets: data.ReturnOnAssetsTTM || null,
+            returnOnEquity: data.ReturnOnEquityTTM || null,
+            returnOnInvestment: data.ReturnOnInvestmentTTM || null,
+            quarterlyEarningsGrowth: data.QuarterlyEarningsGrowthYOY || null,
+            sharesOutstanding: data.SharesOutstanding || null,
+            floatShares: data.SharesFloat || null,
+            sharesShort: data.SharesShort || null,
+            sharesShortPriorMonth: data.SharesShortPriorMonth || null,
+            shortRatio: data.ShortRatio || null,
+            shortPercentOutstanding: data.ShortPercentOutstanding || null,
+            shortPercentFloat: data.ShortPercentFloat || null,
+            percentInsiders: data.PercentInsiders || null,
+            percentInstitutions: data.PercentInstitutions || null,
+            forwardAnnualDividendRate: data.ForwardAnnualDividendRate || null,
+            forwardAnnualDividendYield: data.ForwardAnnualDividendYield || null,
+            trailingAnnualDividendRate: data.TrailingAnnualDividendRate || null,
+            trailingAnnualDividendYield: data.TrailingAnnualDividendYield || null,
+            fiveYearAverageDividendYield: data.FiveYearAverageDividendYield || null,
+            analystTargetPrice: data.AnalystTargetPrice || null,
+            analystRatingStrongBuy: data.AnalystRatingStrongBuy || null,
+            analystRatingBuy: data.AnalystRatingBuy || null,
+            analystRatingHold: data.AnalystRatingHold || null,
+            analystRatingSell: data.AnalystRatingSell || null,
+            analystRatingStrongSell: data.AnalystRatingStrongSell || null,
+            currency: data.Currency || null,
+            exchange: data.Exchange || null,
+            fiscalYearEnd: data.FiscalYearEnd || null,
+            latestQuarter: data.LatestQuarter || null,
+            assetType: data.AssetType || null
+        };
+        
+        console.log('Processed overview data:', overview);
+        return overview;
+        
     } catch (error) {
         console.error('Error fetching stock overview:', error);
         return {};
@@ -420,24 +433,33 @@ function updateStockInfo(stockData) {
     
     // Helper function to format values
     const formatValue = (value, type = 'text') => {
-        if (!value || value === 'None' || value === '') return null;
+        if (value === null || value === undefined || value === 'None' || value === '' || value === 'N/A') return null;
         try {
             switch(type) {
                 case 'currency':
-                    return `$${parseFloat(value).toFixed(2)}`;
+                    const currencyVal = parseFloat(value);
+                    if (isNaN(currencyVal)) return null;
+                    return `$${currencyVal.toFixed(2)}`;
                 case 'percent':
-                    return `${(parseFloat(value) * 100).toFixed(2)}%`;
+                    const percentVal = parseFloat(value);
+                    if (isNaN(percentVal)) return null;
+                    return `${(percentVal * 100).toFixed(2)}%`;
                 case 'number':
+                    const numVal = parseFloat(value);
+                    if (isNaN(numVal)) return null;
                     return formatNumber(value);
                 case 'date':
                     return value;
                 default:
-                    return value;
+                    return String(value);
             }
         } catch (e) {
-            return value;
+            console.warn('Error formatting value:', value, e);
+            return null;
         }
     };
+    
+    console.log('Updating stock info with data:', stockData);
     
     // Basic Information
     if (stockData.sector) {
@@ -598,9 +620,47 @@ function updateStockInfo(stockData) {
         infoItems.push({ label: '% Held by Institutions', value: formatValue(stockData.percentInstitutions, 'percent'), category: 'shares' });
     }
     
+    // If no overview data, show at least basic quote information
     if (infoItems.length === 0) {
-        infoEl.innerHTML = '<div style="color: #666; padding: 20px; text-align: center;">Additional information not available for this stock.</div>';
-        return;
+        // Try to show at least some basic info from quote data
+        const basicInfo = [];
+        
+        if (stockData.price) {
+            basicInfo.push({ label: 'Current Price', value: formatValue(stockData.price, 'currency'), category: 'price' });
+        }
+        if (stockData.change !== undefined) {
+            basicInfo.push({ label: 'Change', value: `${stockData.change >= 0 ? '+' : ''}$${stockData.change.toFixed(2)}`, category: 'price' });
+        }
+        if (stockData.changePercent) {
+            basicInfo.push({ label: 'Change %', value: stockData.changePercent, category: 'price' });
+        }
+        if (stockData.volume) {
+            basicInfo.push({ label: 'Volume', value: formatValue(stockData.volume, 'number'), category: 'price' });
+        }
+        if (stockData.previousClose) {
+            basicInfo.push({ label: 'Previous Close', value: formatValue(stockData.previousClose, 'currency'), category: 'price' });
+        }
+        if (stockData.high) {
+            basicInfo.push({ label: 'Day High', value: formatValue(stockData.high, 'currency'), category: 'price' });
+        }
+        if (stockData.low) {
+            basicInfo.push({ label: 'Day Low', value: formatValue(stockData.low, 'currency'), category: 'price' });
+        }
+        
+        if (basicInfo.length > 0) {
+            infoItems.push(...basicInfo);
+        } else {
+            infoEl.innerHTML = `
+                <div style="color: #666; padding: 20px; text-align: center;">
+                    <div style="margin-bottom: 10px;">Additional information not available for this stock.</div>
+                    <div style="font-size: 0.9rem; color: #999;">
+                        The Alpha Vantage API may be rate-limited or the stock symbol may not be supported.
+                        <br>Try refreshing the page in a few moments.
+                    </div>
+                </div>
+            `;
+            return;
+        }
     }
     
     // Group items by category
@@ -769,48 +829,160 @@ async function loadPriceChart(ticker, period = '1mo') {
         
         const periodConfig = periodMap[period] || periodMap['1mo'];
         
-        // Try multiple Yahoo Finance endpoints
-        const yahooUrls = [
-            `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`,
-            `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`,
-            `https://query1.finance.yahoo.com/v7/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`
-        ];
-        
+        // Try Alpha Vantage first (no CORS issues)
         let data = null;
         let lastError = null;
         
-        for (const url of yahooUrls) {
-            try {
-                console.log('Trying chart URL:', url);
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                    mode: 'cors'
-                });
-                
-                if (!response.ok) {
-                    console.warn(`Response not OK for ${url}: ${response.status}`);
-                    continue;
+        try {
+            console.log('Trying Alpha Vantage for historical data...');
+            data = await getAlphaVantageHistoricalData(ticker, period);
+            if (data && data.prices && data.prices.length > 0) {
+                console.log('Successfully fetched data from Alpha Vantage');
+            } else {
+                data = null;
+            }
+        } catch (avError) {
+            console.warn('Alpha Vantage failed, trying Yahoo Finance:', avError);
+            lastError = avError;
+        }
+        
+        // If Alpha Vantage fails, try Yahoo Finance with CORS proxy
+        if (!data) {
+            const yahooUrls = [
+                `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`,
+                `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${periodConfig.interval}&range=${periodConfig.range}`
+            ];
+            
+            // Try with CORS proxy
+            const corsProxies = [
+                'https://api.allorigins.win/raw?url=',
+                'https://corsproxy.io/?',
+                '' // Direct (may fail due to CORS)
+            ];
+            
+            for (const proxy of corsProxies) {
+                for (const url of yahooUrls) {
+                    try {
+                        const proxiedUrl = proxy ? `${proxy}${encodeURIComponent(url)}` : url;
+                        console.log('Trying chart URL:', proxiedUrl);
+                        
+                        const response = await fetch(proxiedUrl, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                            mode: 'cors'
+                        });
+                        
+                        if (!response.ok) {
+                            console.warn(`Response not OK: ${response.status}`);
+                            continue;
+                        }
+                        
+                        const responseData = await response.json();
+                        console.log('Chart data response:', responseData);
+                        
+                        if (responseData.chart && responseData.chart.result && responseData.chart.result[0]) {
+                            data = responseData;
+                            break;
+                        }
+                    } catch (fetchError) {
+                        console.warn(`Error fetching:`, fetchError);
+                        lastError = fetchError;
+                        continue;
+                    }
                 }
-                
-                const responseData = await response.json();
-                console.log('Chart data response:', responseData);
-                
-                if (responseData.chart && responseData.chart.result && responseData.chart.result[0]) {
-                    data = responseData;
-                    break;
-                }
-            } catch (fetchError) {
-                console.warn(`Error fetching from ${url}:`, fetchError);
-                lastError = fetchError;
-                continue;
+                if (data) break;
             }
         }
         
+        // Handle Alpha Vantage data format
+        if (data && data.prices && data.prices.length > 0) {
+            const prices = data.prices;
+            const labels = data.labels;
+            
+            // Determine color based on price trend
+            const firstPrice = prices[0];
+            const lastPrice = prices[prices.length - 1];
+            const chartColor = lastPrice >= firstPrice ? '#28a745' : '#dc3545';
+            
+            // Destroy existing chart if it exists
+            if (priceChart) {
+                priceChart.destroy();
+            }
+            
+            // Create new chart
+            const ctx = chartCanvas.getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: prices,
+                        borderColor: chartColor,
+                        backgroundColor: chartColor + '20',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `$${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+            
+            if (chartLoading) chartLoading.style.display = 'none';
+            return;
+        }
+        
+        // Handle Yahoo Finance data format
         if (!data || !data.chart || !data.chart.result || !data.chart.result[0]) {
-            throw new Error(lastError?.message || 'No chart data available from Yahoo Finance');
+            throw new Error(lastError?.message || 'No chart data available from any source');
         }
         
         const result = data.chart.result[0];
@@ -998,6 +1170,108 @@ async function loadPriceChart(ticker, period = '1mo') {
             const ctx = chartCanvas.getContext('2d');
             ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
         }
+    }
+}
+
+// Get historical data from Alpha Vantage
+async function getAlphaVantageHistoricalData(ticker, period) {
+    try {
+        // Map period to Alpha Vantage output size
+        const outputSizeMap = {
+            '1d': 'compact', // Last 100 data points
+            '5d': 'compact',
+            '1mo': 'compact',
+            '3mo': 'full', // Up to 20 years
+            '6mo': 'full',
+            '1y': 'full',
+            '2y': 'full',
+            '5y': 'full'
+        };
+        
+        const outputSize = outputSizeMap[period] || 'compact';
+        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=${outputSize}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+        
+        console.log('Fetching Alpha Vantage historical data:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Alpha Vantage response:', data);
+        
+        // Check for API errors
+        if (data['Error Message']) {
+            throw new Error(data['Error Message']);
+        }
+        
+        if (data['Note']) {
+            throw new Error('API rate limit exceeded. Please try again later.');
+        }
+        
+        const timeSeries = data['Time Series (Daily)'];
+        if (!timeSeries) {
+            throw new Error('No time series data available');
+        }
+        
+        // Convert to arrays sorted by date
+        const dates = Object.keys(timeSeries).sort();
+        
+        // Filter dates based on period
+        const now = new Date();
+        let cutoffDate = new Date();
+        
+        switch(period) {
+            case '1d':
+            case '5d':
+                // For intraday, we can't use daily data, return null to try Yahoo
+                return null;
+            case '1mo':
+                cutoffDate.setMonth(now.getMonth() - 1);
+                break;
+            case '3mo':
+                cutoffDate.setMonth(now.getMonth() - 3);
+                break;
+            case '6mo':
+                cutoffDate.setMonth(now.getMonth() - 6);
+                break;
+            case '1y':
+                cutoffDate.setFullYear(now.getFullYear() - 1);
+                break;
+            case '2y':
+                cutoffDate.setFullYear(now.getFullYear() - 2);
+                break;
+            case '5y':
+                cutoffDate.setFullYear(now.getFullYear() - 5);
+                break;
+            default:
+                cutoffDate.setMonth(now.getMonth() - 1);
+        }
+        
+        const filteredDates = dates.filter(dateStr => {
+            const date = new Date(dateStr);
+            return date >= cutoffDate;
+        });
+        
+        // If filtering removed all dates, use all available
+        const datesToUse = filteredDates.length > 0 ? filteredDates : dates.slice(-30); // Last 30 days minimum
+        
+        const prices = datesToUse.map(date => parseFloat(timeSeries[date]['4. close']));
+        const labels = datesToUse.map(dateStr => {
+            const date = new Date(dateStr);
+            if (period === '1mo' || period === '3mo') {
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            } else {
+                return date.toLocaleDateString([], { month: 'short', year: 'numeric' });
+            }
+        });
+        
+        return { prices, labels };
+        
+    } catch (error) {
+        console.error('Error fetching Alpha Vantage historical data:', error);
+        throw error;
     }
 }
 
