@@ -84,6 +84,8 @@ class CheckersGame {
         this.moveCountDisplay = document.getElementById('moveCount');
         this.newGameBtn = document.getElementById('newGameBtn');
         this.newPlayersBtn = document.getElementById('newPlayersBtn');
+        this.computerDifficultySelect = document.getElementById('computerDifficulty');
+        this.computerDifficultyGroup = document.getElementById('computerDifficultyGroup');
         
         // Initialize Computer player
         this.players[this.COMPUTER_ID] = {
@@ -106,6 +108,12 @@ class CheckersGame {
         this.startGameBtn.addEventListener('click', () => this.startGame());
         this.newGameBtn.addEventListener('click', () => this.newGame());
         this.newPlayersBtn.addEventListener('click', () => this.newPlayers());
+        this.player2Select.addEventListener('change', () => this.updateDifficultyVisibility());
+        if (this.computerDifficultySelect) {
+            this.computerDifficultySelect.addEventListener('change', (e) => {
+                this.computerDifficulty = e.target.value;
+            });
+        }
     }
     
     async loadUsersFromDatabase() {
@@ -199,6 +207,8 @@ class CheckersGame {
             option2.textContent = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
             this.player2Select.appendChild(option2);
         });
+        
+        this.updateDifficultyVisibility();
     }
     
     async startGame() {
@@ -536,8 +546,18 @@ class CheckersGame {
         return playerId === this.COMPUTER_ID;
     }
     
+    updateDifficultyVisibility() {
+        const p2Id = this.player2Select?.value;
+        const hasComputer = this.isComputerPlayer(p2Id);
+        if (this.computerDifficultyGroup) {
+            this.computerDifficultyGroup.style.display = hasComputer ? 'block' : 'none';
+        }
+    }
+    
     computerMove() {
         if (!this.gameActive || this.isProcessingMove) return;
+        
+        this.isProcessingMove = true;
         
         // Find all possible moves
         const allMoves = [];
@@ -548,7 +568,15 @@ class CheckersGame {
                 if (piece && piece.color === this.currentPlayer) {
                     const moves = this.getPossibleMoves(row, col);
                     moves.forEach(move => {
-                        allMoves.push({ fromRow: row, fromCol: col, toRow: move.row, toCol: move.col, captureRow: move.captureRow, captureCol: move.captureCol });
+                        allMoves.push({ 
+                            fromRow: row, 
+                            fromCol: col, 
+                            toRow: move.row, 
+                            toCol: move.col, 
+                            captureRow: move.captureRow, 
+                            captureCol: move.captureCol,
+                            piece: piece
+                        });
                     });
                 }
             }
@@ -556,18 +584,87 @@ class CheckersGame {
         
         if (allMoves.length === 0) {
             // No moves available - game over
+            this.isProcessingMove = false;
             const winner = this.currentPlayer === 'red' ? 'black' : 'red';
             this.endGame(winner);
             return;
         }
         
-        // Prefer jumps over regular moves
+        // Separate jumps and regular moves
         const jumps = allMoves.filter(m => m.captureRow !== undefined);
-        const movesToUse = jumps.length > 0 ? jumps : allMoves;
+        const regularMoves = allMoves.filter(m => m.captureRow === undefined);
         
-        // Pick a random move
-        const move = movesToUse[Math.floor(Math.random() * movesToUse.length)];
-        this.makeMove(move.fromRow, move.fromCol, move.toRow, move.toCol);
+        // Select move based on difficulty
+        let selectedMove;
+        
+        if (this.computerDifficulty === 'easy') {
+            // Easy: Random move, prefer jumps if available
+            const movesToUse = jumps.length > 0 ? jumps : regularMoves;
+            selectedMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
+        } else if (this.computerDifficulty === 'moderate') {
+            // Moderate: Always prefer jumps, prefer moves that advance pieces
+            if (jumps.length > 0) {
+                // Prefer jumps that move pieces forward (toward king row)
+                const forwardJumps = jumps.filter(move => {
+                    const direction = this.currentPlayer === 'red' ? -1 : 1;
+                    return (move.toRow - move.fromRow) * direction > 0;
+                });
+                const movesToUse = forwardJumps.length > 0 ? forwardJumps : jumps;
+                selectedMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
+            } else {
+                // Prefer forward moves
+                const forwardMoves = regularMoves.filter(move => {
+                    const direction = this.currentPlayer === 'red' ? -1 : 1;
+                    return (move.toRow - move.fromRow) * direction > 0;
+                });
+                const movesToUse = forwardMoves.length > 0 ? forwardMoves : regularMoves;
+                selectedMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
+            }
+        } else {
+            // Hard: Strategic play - prefer jumps, king pieces, center control
+            if (jumps.length > 0) {
+                // Prefer jumps with kings, or jumps that create more jumps
+                const kingJumps = jumps.filter(move => move.piece.isKing);
+                const movesToUse = kingJumps.length > 0 ? kingJumps : jumps;
+                
+                // Evaluate jumps
+                const evaluatedJumps = movesToUse.map(move => {
+                    let score = 10; // Base score for jump
+                    if (move.piece.isKing) score += 5;
+                    // Prefer jumps that move toward center
+                    const centerDistance = Math.abs(move.toCol - 3.5);
+                    score += (4 - centerDistance);
+                    return { move, score };
+                });
+                
+                evaluatedJumps.sort((a, b) => b.score - a.score);
+                const topJumps = evaluatedJumps.slice(0, Math.max(1, Math.floor(evaluatedJumps.length * 0.3)));
+                selectedMove = topJumps[Math.floor(Math.random() * topJumps.length)].move;
+            } else {
+                // Evaluate regular moves
+                const evaluatedMoves = regularMoves.map(move => {
+                    let score = 0;
+                    if (move.piece.isKing) score += 3;
+                    // Prefer moves toward opponent's side
+                    const direction = this.currentPlayer === 'red' ? -1 : 1;
+                    if ((move.toRow - move.fromRow) * direction > 0) score += 2;
+                    // Prefer center control
+                    const centerDistance = Math.abs(move.toCol - 3.5);
+                    score += (4 - centerDistance);
+                    return { move, score };
+                });
+                
+                evaluatedMoves.sort((a, b) => b.score - a.score);
+                const topMoves = evaluatedMoves.slice(0, Math.max(1, Math.floor(evaluatedMoves.length * 0.3)));
+                selectedMove = topMoves[Math.floor(Math.random() * topMoves.length)].move;
+            }
+        }
+        
+        // Make the move after a short delay for better UX
+        setTimeout(() => {
+            this.isProcessingMove = false;
+            this.makeMove(selectedMove.fromRow, selectedMove.fromCol, selectedMove.toRow, selectedMove.toCol);
+        }, 300);
     }
     
     checkGameEnd() {

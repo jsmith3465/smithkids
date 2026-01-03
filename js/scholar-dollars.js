@@ -86,27 +86,76 @@ async function checkUserAccess() {
 
 async function loadQuarters() {
     try {
+        const quarterSelect = document.getElementById('quarterSelect');
+        if (!quarterSelect) {
+            console.error('Quarter select element not found');
+            return;
+        }
+        
         const { data, error } = await supabase
             .from('scholar_dollars_quarters')
             .select('*')
             .order('year', { ascending: false })
             .order('quarter_number', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching quarters:', error);
+            quarterSelect.innerHTML = '<option value="">Error loading quarters</option>';
+            throw error;
+        }
         
         quarters = data || [];
         
-        const quarterSelect = document.getElementById('quarterSelect');
-        quarterSelect.innerHTML = quarters.map(q => 
-            `<option value="${q.quarter_id}">${q.quarter_name}</option>`
-        ).join('');
+        if (quarters.length === 0) {
+            console.warn('No quarters found in database. The table may need to be initialized.');
+            quarterSelect.innerHTML = '<option value="">No quarters available</option>';
+            
+            // Try to insert Q3 2026 if it doesn't exist
+            try {
+                const { error: insertError } = await supabase
+                    .from('scholar_dollars_quarters')
+                    .insert({
+                        quarter_name: 'Q3 2026',
+                        quarter_number: 3,
+                        year: 2026,
+                        is_active: true
+                    });
+                
+                if (!insertError) {
+                    // Reload quarters after insert
+                    const { data: newData, error: reloadError } = await supabase
+                        .from('scholar_dollars_quarters')
+                        .select('*')
+                        .order('year', { ascending: false })
+                        .order('quarter_number', { ascending: false });
+                    
+                    if (!reloadError && newData) {
+                        quarters = newData;
+                    }
+                } else {
+                    console.error('Error inserting initial quarter:', insertError);
+                }
+            } catch (insertErr) {
+                console.error('Error attempting to create initial quarter:', insertErr);
+            }
+        }
         
         if (quarters.length > 0) {
+            quarterSelect.innerHTML = quarters.map(q => 
+                `<option value="${q.quarter_id}">${q.quarter_name}</option>`
+            ).join('');
+            
             currentQuarterId = quarters[0].quarter_id;
             quarterSelect.value = currentQuarterId;
+        } else {
+            quarterSelect.innerHTML = '<option value="">No quarters available. Please contact admin.</option>';
         }
     } catch (error) {
         console.error('Error loading quarters:', error);
+        const quarterSelect = document.getElementById('quarterSelect');
+        if (quarterSelect) {
+            quarterSelect.innerHTML = '<option value="">Error loading quarters</option>';
+        }
     }
 }
 

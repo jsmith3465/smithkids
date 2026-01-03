@@ -35,6 +35,7 @@ class ChessGame {
         this.users = [];
         this.isAdmin = false;
         this.isProcessingMove = false;
+        this.computerDifficulty = 'moderate'; // 'easy', 'moderate', 'hard'
         
         // Piece Unicode symbols
         this.pieces = {
@@ -103,6 +104,8 @@ class ChessGame {
         this.moveCountDisplay = document.getElementById('moveCount');
         this.newGameBtn = document.getElementById('newGameBtn');
         this.newPlayersBtn = document.getElementById('newPlayersBtn');
+        this.computerDifficultySelect = document.getElementById('computerDifficulty');
+        this.computerDifficultyGroup = document.getElementById('computerDifficultyGroup');
         
         // Initialize Computer player
         this.players[this.COMPUTER_ID] = {
@@ -125,7 +128,12 @@ class ChessGame {
         this.startGameBtn.addEventListener('click', () => this.startGame());
         this.newGameBtn.addEventListener('click', () => this.newGame());
         this.newPlayersBtn.addEventListener('click', () => this.newPlayers());
-        this.player2Select.addEventListener('change', () => {});
+        this.player2Select.addEventListener('change', () => this.updateDifficultyVisibility());
+        if (this.computerDifficultySelect) {
+            this.computerDifficultySelect.addEventListener('change', (e) => {
+                this.computerDifficulty = e.target.value;
+            });
+        }
     }
     
     async loadUsersFromDatabase() {
@@ -551,10 +559,20 @@ class ChessGame {
         return playerId === this.COMPUTER_ID;
     }
     
+    updateDifficultyVisibility() {
+        const p2Id = this.player2Select?.value;
+        const hasComputer = this.isComputerPlayer(p2Id);
+        if (this.computerDifficultyGroup) {
+            this.computerDifficultyGroup.style.display = hasComputer ? 'block' : 'none';
+        }
+    }
+    
     computerMove() {
         if (!this.gameActive || this.isProcessingMove) return;
         
-        // Simple AI: find all possible moves and pick a random one
+        this.isProcessingMove = true;
+        
+        // Find all possible moves
         const allMoves = [];
         
         for (let row = 0; row < 8; row++) {
@@ -563,7 +581,13 @@ class ChessGame {
                 if (piece && piece.color === this.currentPlayer) {
                     const moves = this.getPossibleMoves(row, col);
                     moves.forEach(move => {
-                        allMoves.push({ fromRow: row, fromCol: col, toRow: move.row, toCol: move.col });
+                        allMoves.push({ 
+                            fromRow: row, 
+                            fromCol: col, 
+                            toRow: move.row, 
+                            toCol: move.col,
+                            piece: piece
+                        });
                     });
                 }
             }
@@ -571,13 +595,80 @@ class ChessGame {
         
         if (allMoves.length === 0) {
             // No moves available - checkmate or stalemate
+            this.isProcessingMove = false;
             this.endGame('draw');
             return;
         }
         
-        // Pick a random move (simple AI)
-        const move = allMoves[Math.floor(Math.random() * allMoves.length)];
-        this.makeMove(move.fromRow, move.fromCol, move.toRow, move.toCol);
+        // Select move based on difficulty
+        let selectedMove;
+        
+        if (this.computerDifficulty === 'easy') {
+            // Easy: Random move
+            selectedMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+        } else if (this.computerDifficulty === 'moderate') {
+            // Moderate: Prefer captures, avoid losing pieces
+            const captures = allMoves.filter(move => {
+                const targetPiece = this.board[move.toRow][move.toCol];
+                return targetPiece && targetPiece.color !== this.currentPlayer;
+            });
+            
+            if (captures.length > 0) {
+                // Prefer capturing higher value pieces
+                const pieceValues = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
+                captures.sort((a, b) => {
+                    const aValue = pieceValues[this.board[a.toRow][a.toCol]?.type] || 0;
+                    const bValue = pieceValues[this.board[b.toRow][b.toCol]?.type] || 0;
+                    return bValue - aValue;
+                });
+                selectedMove = captures[0];
+            } else {
+                // No captures, pick random
+                selectedMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+            }
+        } else {
+            // Hard: Evaluate moves with look-ahead
+            const evaluatedMoves = allMoves.map(move => {
+                const score = this.evaluateMove(move);
+                return { move, score };
+            });
+            
+            // Sort by score (higher is better)
+            evaluatedMoves.sort((a, b) => b.score - a.score);
+            
+            // Pick from top moves (top 30% or at least top 3)
+            const topCount = Math.max(3, Math.floor(evaluatedMoves.length * 0.3));
+            const topMoves = evaluatedMoves.slice(0, topCount);
+            const randomTop = topMoves[Math.floor(Math.random() * topMoves.length)];
+            selectedMove = randomTop.move;
+        }
+        
+        // Make the move after a short delay for better UX
+        setTimeout(() => {
+            this.isProcessingMove = false;
+            this.makeMove(selectedMove.fromRow, selectedMove.fromCol, selectedMove.toRow, selectedMove.toCol);
+        }, 300);
+    }
+    
+    evaluateMove(move) {
+        // Simple evaluation: prefer captures, center control, piece development
+        let score = 0;
+        const targetPiece = this.board[move.toRow][move.toCol];
+        
+        // Capture bonus
+        if (targetPiece && targetPiece.color !== this.currentPlayer) {
+            const pieceValues = { pawn: 10, knight: 30, bishop: 30, rook: 50, queen: 90, king: 0 };
+            score += pieceValues[targetPiece.type] || 0;
+        }
+        
+        // Center control bonus
+        const centerDistance = Math.abs(move.toRow - 3.5) + Math.abs(move.toCol - 3.5);
+        score += (7 - centerDistance) * 2;
+        
+        // Avoid moving into danger (simplified)
+        // This is a basic check - full implementation would check if square is attacked
+        
+        return score;
     }
     
     checkGameEnd() {

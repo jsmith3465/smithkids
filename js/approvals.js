@@ -45,20 +45,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function checkAdminAccess() {
+    const authCheck = document.getElementById('authCheck');
+    const mainContent = document.getElementById('mainContent');
+    const adminCheck = document.getElementById('adminCheck');
+    const adminContent = document.getElementById('adminContent');
+    
+    if (!authCheck || !mainContent || !adminCheck || !adminContent) {
+        console.error('Required DOM elements not found');
+        return;
+    }
+    
     const session = window.authStatus?.getSession();
     if (!session) {
         window.location.href = getPagePath('login.html');
         return;
     }
     
+    // Show mainContent first
+    authCheck.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+    
+    // Check admin access
     if (session.userType !== 'admin') {
-        document.getElementById('adminCheck').innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
+        adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
+        adminContent.classList.add('hidden');
         return;
     }
     
-    document.getElementById('authCheck').classList.add('hidden');
-    document.getElementById('adminCheck').classList.add('hidden');
-    document.getElementById('adminContent').classList.remove('hidden');
+    // Hide admin check and show admin content
+    adminCheck.classList.add('hidden');
+    adminContent.classList.remove('hidden');
     
     await loadPendingApprovals();
     setupEventListeners();
