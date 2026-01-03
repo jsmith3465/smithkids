@@ -7,6 +7,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Store requests and user map for easy access
+let currentRequests = [];
+let currentUserMap = {};
+let currentPrayerCounts = {};
+let currentUserPrayers = new Set();
+
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
     const currentPath = window.location.pathname;
@@ -255,7 +261,7 @@ async function loadPrayerRequests(currentUserUid) {
     try {
         const { data: requests, error } = await supabase
             .from('prayer_requests')
-            .select('request_id, user_uid, title, details, status, created_at, answered_at, answered_by_uid')
+            .select('request_id, user_uid, title, details, status, created_at, answered_at, answered_by_uid, praise_report')
             .order('created_at', { ascending: false });
         
         // Get prayer counts for each request
@@ -323,6 +329,12 @@ async function loadPrayerRequests(currentUserUid) {
             });
         }
         
+        // Store in module-level variables for easy access
+        currentRequests = requests;
+        currentUserMap = userMap;
+        currentPrayerCounts = prayerCounts;
+        currentUserPrayers = userPrayers;
+        
         // Create table
         const table = document.createElement('table');
         table.className = 'prayer-requests-table';
@@ -335,6 +347,7 @@ async function loadPrayerRequests(currentUserUid) {
                 <th>Date</th>
                 <th>Posted By</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         `;
         table.appendChild(thead);
@@ -356,19 +369,69 @@ async function loadPrayerRequests(currentUserUid) {
             
             const row = document.createElement('tr');
             row.className = isAnswered ? 'answered' : '';
-            row.style.cursor = 'pointer';
+            row.style.cursor = 'default'; // Changed from 'pointer' since we have action buttons
             const prayerCount = prayerCounts[request.request_id] || 0;
             const hasUserPrayed = userPrayers.has(request.request_id);
-            row.onclick = () => openPrayerModal(request, userMap, currentUserUid, prayerCount, hasUserPrayed);
+            
+            // Create action buttons
+            let actionsHtml = '';
+            
+            if (!isOwner && !hasUserPrayed && !isAnswered) {
+                // "I Prayed For This" button for requests user didn't create
+                actionsHtml = `
+                    <button class="btn btn-small" onclick="event.stopPropagation(); markAsPrayedFor(${request.request_id}, ${currentUserUid}, ${request.user_uid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                        margin-right: 5px;
+                    ">🙏 I Prayed</button>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); openPrayerModalById(${request.request_id}, ${currentUserUid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                    ">View</button>
+                `;
+            } else if (!isOwner && hasUserPrayed) {
+                // Show that user has prayed
+                actionsHtml = `
+                    <span style="color: #28a745; font-size: 0.9rem; margin-right: 10px;">✓ Prayed</span>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); openPrayerModalById(${request.request_id}, ${currentUserUid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                    ">View</button>
+                `;
+            } else if (isOwner && !isAnswered) {
+                // "Mark as Answered" button for requests user created
+                actionsHtml = `
+                    <button class="btn btn-small btn-success" onclick="event.stopPropagation(); handleMarkAsAnswered(${request.request_id}, ${currentUserUid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                        margin-right: 5px;
+                    ">✓ Mark Answered</button>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); openPrayerModalById(${request.request_id}, ${currentUserUid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                    ">View</button>
+                `;
+            } else {
+                // Just view button for answered requests
+                actionsHtml = `
+                    <button class="btn btn-small" onclick="event.stopPropagation(); openPrayerModalById(${request.request_id}, ${currentUserUid})" style="
+                        padding: 8px 16px;
+                        font-size: 0.9rem;
+                    ">View</button>
+                `;
+            }
             
             row.innerHTML = `
-                <td class="prayer-request-title-cell">${escapeHtml(request.title)}</td>
-                <td>${escapeHtml(dateStr)}</td>
-                <td>${escapeHtml(authorName)}</td>
-                <td>
+                <td class="prayer-request-title-cell" onclick="openPrayerModalById(${request.request_id}, ${currentUserUid})" style="cursor: pointer;">${escapeHtml(request.title)}</td>
+                <td onclick="openPrayerModalById(${request.request_id}, ${currentUserUid})" style="cursor: pointer;">${escapeHtml(dateStr)}</td>
+                <td onclick="openPrayerModalById(${request.request_id}, ${currentUserUid})" style="cursor: pointer;">${escapeHtml(authorName)}</td>
+                <td onclick="openPrayerModalById(${request.request_id}, ${currentUserUid})" style="cursor: pointer;">
                     <span class="prayer-request-status-badge ${isAnswered ? 'answered' : 'active'}">
                         ${isAnswered ? '✓ Answered' : '⏳ Active'}
                     </span>
+                </td>
+                <td onclick="event.stopPropagation();" style="cursor: default;">
+                    ${actionsHtml}
                 </td>
             `;
             
@@ -399,11 +462,35 @@ async function loadPrayerRequests(currentUserUid) {
     }
 }
 
-// Mark prayer request as answered
-async function markAsAnswered(requestId, userUid) {
+// Handle mark as answered from list (asks about praise report)
+async function handleMarkAsAnswered(requestId, userUid, fromModal = false) {
     if (!confirm('Are you sure you want to mark this prayer request as answered? This will send a praise report to all family members.')) {
         return;
     }
+    
+    // Mark as answered
+    await markAsAnswered(requestId, userUid, false);
+    
+    // Ask if they want to add a praise report
+    const wantsPraiseReport = confirm('Would you like to add a praise report explaining how God answered this prayer?');
+    
+    if (wantsPraiseReport) {
+        if (fromModal) {
+            // If called from modal, just reload the modal content
+            await loadPrayerRequests(userUid);
+            await openPrayerModalById(requestId, userUid);
+        } else {
+            // If called from list, open the modal
+            await openPrayerModalById(requestId, userUid);
+        }
+    } else if (fromModal) {
+        // Close modal if called from modal and user doesn't want praise report
+        closePrayerModal();
+    }
+}
+
+// Mark prayer request as answered
+async function markAsAnswered(requestId, userUid, showSuccess = true) {
     
     try {
         const { error: updateError } = await supabase
@@ -509,12 +596,26 @@ async function markAsAnswered(requestId, userUid) {
         await loadPrayerRequests(userUid);
         
         // Show success message
-        showPrayerMessage('Prayer request marked as answered! Praise report sent to all family members.', 'success');
+        if (showSuccess) {
+            showPrayerMessage('Prayer request marked as answered! Praise report sent to all family members.', 'success');
+        }
         
     } catch (error) {
         console.error('Error marking prayer as answered:', error);
         showPrayerMessage('Error marking prayer as answered. Please try again.', 'error');
     }
+}
+
+// Open prayer request modal by ID (helper function)
+async function openPrayerModalById(requestId, currentUserUid) {
+    const request = currentRequests.find(r => r.request_id === requestId);
+    if (!request) {
+        console.error('Request not found:', requestId);
+        return;
+    }
+    const prayerCount = currentPrayerCounts[requestId] || 0;
+    const hasUserPrayed = currentUserPrayers.has(requestId);
+    await openPrayerModal(request, currentUserMap, currentUserUid, prayerCount, hasUserPrayed);
 }
 
 // Open prayer request modal
@@ -610,7 +711,64 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
             `;
         }
         
-        modalMeta.innerHTML = metaHtml;
+            modalMeta.innerHTML = metaHtml;
+    }
+    
+    // Add praise report section
+    const modalPraiseReport = document.getElementById('modalPraiseReport');
+    if (modalPraiseReport) {
+        if (isAnswered && isOwner) {
+            // Show editable praise report for owner
+            modalPraiseReport.innerHTML = `
+                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                    <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
+                    <p style="color: #666; margin-bottom: 15px; font-style: italic;">Share how God answered this prayer:</p>
+                    <textarea id="praiseReportText" style="
+                        width: 100%;
+                        padding: 15px;
+                        border: 2px solid #28a745;
+                        border-radius: 8px;
+                        font-size: 1rem;
+                        min-height: 150px;
+                        resize: vertical;
+                        font-family: inherit;
+                        box-sizing: border-box;
+                        margin-bottom: 15px;
+                    " placeholder="Describe how God answered this prayer...">${escapeHtml(request.praise_report || '')}</textarea>
+                    <button class="btn btn-success" onclick="savePraiseReport(${request.request_id}, ${currentUserUid})" style="
+                        padding: 12px 24px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                    ">💾 Save Praise Report</button>
+                </div>
+            `;
+        } else if (isAnswered && request.praise_report) {
+            // Show read-only praise report for others
+            modalPraiseReport.innerHTML = `
+                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                    <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
+                    <div style="
+                        background: #d4edda;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border: 2px solid #28a745;
+                        color: #155724;
+                        white-space: pre-wrap;
+                        line-height: 1.8;
+                    ">${escapeHtml(request.praise_report)}</div>
+                </div>
+            `;
+        } else if (isAnswered && !isOwner) {
+            // Show placeholder if answered but no praise report yet
+            modalPraiseReport.innerHTML = `
+                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                    <h3 style="color: #28a745; margin-bottom: 15px; font-size: 1.3rem;">🙌 Praise Report</h3>
+                    <p style="color: #666; font-style: italic;">A praise report will be added soon!</p>
+                </div>
+            `;
+        } else {
+            modalPraiseReport.innerHTML = '';
+        }
     }
     
     // Set actions
@@ -640,7 +798,7 @@ async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0
         // Add "Mark as Answered" button (for owner only)
         if (!isAnswered && isOwner) {
             actionsHtml += `
-                <button class="btn-answered" onclick="markAsAnswered(${request.request_id}, ${currentUserUid}); closePrayerModal();" style="margin-left: ${!isOwner && !hasUserPrayed ? '10px' : '0'};">
+                <button class="btn-answered" onclick="handleMarkAsAnswered(${request.request_id}, ${currentUserUid}, true)" style="margin-left: ${!isOwner && !hasUserPrayed ? '10px' : '0'};">
                     🙌 Mark as Answered
                 </button>
             `;
@@ -809,11 +967,53 @@ async function markAsPrayedFor(requestId, userUid, posterUid) {
     }
 }
 
+// Save praise report
+async function savePraiseReport(requestId, userUid) {
+    const praiseReportText = document.getElementById('praiseReportText');
+    if (!praiseReportText) return;
+    
+    const praiseReport = praiseReportText.value.trim();
+    
+    try {
+        const { error } = await supabase
+            .from('prayer_requests')
+            .update({ praise_report: praiseReport })
+            .eq('request_id', requestId)
+            .eq('user_uid', userUid); // Ensure only owner can update
+        
+        if (error) throw error;
+        
+        // Update the stored request
+        const requestIndex = currentRequests.findIndex(r => r.request_id === requestId);
+        if (requestIndex !== -1) {
+            currentRequests[requestIndex].praise_report = praiseReport;
+        }
+        
+        // Show success message
+        showPrayerMessage('Praise report saved successfully!', 'success');
+        
+        // Reload to refresh the display
+        await loadPrayerRequests(userUid);
+        
+        // Reopen modal to show updated praise report
+        setTimeout(() => {
+            openPrayerModalById(requestId, userUid);
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error saving praise report:', error);
+        showPrayerMessage('Error saving praise report. Please try again.', 'error');
+    }
+}
+
 // Make functions available globally
 window.markAsAnswered = markAsAnswered;
+window.handleMarkAsAnswered = handleMarkAsAnswered;
 window.markAsPrayedFor = markAsPrayedFor;
 window.openPrayerModal = openPrayerModal;
+window.openPrayerModalById = openPrayerModalById;
 window.closePrayerModal = closePrayerModal;
+window.savePraiseReport = savePraiseReport;
 
 // Show message
 function showPrayerMessage(message, type) {
