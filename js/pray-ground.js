@@ -245,6 +245,38 @@ async function loadPrayerRequests(currentUserUid) {
             .select('request_id, user_uid, title, details, status, created_at, answered_at, answered_by_uid')
             .order('created_at', { ascending: false });
         
+        // Get prayer counts for each request
+        const requestIds = requests ? requests.map(r => r.request_id) : [];
+        let prayerCounts = {};
+        let userPrayers = new Set();
+        
+        if (requestIds.length > 0) {
+            try {
+                // Get count of prayers for each request
+                const { data: prayers, error: prayersError } = await supabase
+                    .from('prayer_prayers')
+                    .select('request_id, user_uid')
+                    .in('request_id', requestIds);
+                
+                if (!prayersError && prayers) {
+                    // Count prayers per request
+                    prayers.forEach(prayer => {
+                        if (!prayerCounts[prayer.request_id]) {
+                            prayerCounts[prayer.request_id] = 0;
+                        }
+                        prayerCounts[prayer.request_id]++;
+                        
+                        // Track if current user has prayed
+                        if (prayer.user_uid === currentUserUid) {
+                            userPrayers.add(prayer.request_id);
+                        }
+                    });
+                }
+            } catch (prayerError) {
+                console.warn('Error fetching prayer counts (table may not exist):', prayerError);
+            }
+        }
+        
         if (error) throw error;
         
         prayerRequestsList.innerHTML = '';
@@ -312,7 +344,9 @@ async function loadPrayerRequests(currentUserUid) {
             const row = document.createElement('tr');
             row.className = isAnswered ? 'answered' : '';
             row.style.cursor = 'pointer';
-            row.onclick = () => openPrayerModal(request, userMap, currentUserUid);
+            const prayerCount = prayerCounts[request.request_id] || 0;
+            const hasUserPrayed = userPrayers.has(request.request_id);
+            row.onclick = () => openPrayerModal(request, userMap, currentUserUid, prayerCount, hasUserPrayed);
             
             row.innerHTML = `
                 <td class="prayer-request-title-cell">${escapeHtml(request.title)}</td>
@@ -471,7 +505,7 @@ async function markAsAnswered(requestId, userUid) {
 }
 
 // Open prayer request modal
-function openPrayerModal(request, userMap, currentUserUid) {
+async function openPrayerModal(request, userMap, currentUserUid, prayerCount = 0, hasUserPrayed = false) {
     const modal = document.getElementById('prayerModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalStatus = document.getElementById('modalStatus');
@@ -480,6 +514,21 @@ function openPrayerModal(request, userMap, currentUserUid) {
     const modalActions = document.getElementById('modalActions');
     
     if (!modal) return;
+    
+    // Refresh prayer count and status
+    try {
+        const { data: prayers } = await supabase
+            .from('prayer_prayers')
+            .select('user_uid')
+            .eq('request_id', request.request_id);
+        
+        if (prayers) {
+            prayerCount = prayers.length;
+            hasUserPrayed = prayers.some(p => p.user_uid === currentUserUid);
+        }
+    } catch (error) {
+        console.warn('Error refreshing prayer count:', error);
+    }
     
     const user = userMap[request.user_uid];
     const authorName = (user?.First_Name && user?.Last_Name)
@@ -501,6 +550,11 @@ function openPrayerModal(request, userMap, currentUserUid) {
             <span class="prayer-request-status-badge ${isAnswered ? 'answered' : 'active'}">
                 ${isAnswered ? '✓ Answered' : '⏳ Active'}
             </span>
+            ${prayerCount > 0 ? `
+                <span style="margin-left: 15px; color: #1976D2; font-weight: 600; font-size: 1rem;">
+                    🙏 ${prayerCount} ${prayerCount === 1 ? 'person has' : 'people have'} prayed for this
+                </span>
+            ` : ''}
         `;
     }
     
@@ -548,15 +602,38 @@ function openPrayerModal(request, userMap, currentUserUid) {
     
     // Set actions
     if (modalActions) {
+        let actionsHtml = '';
+        
+        // Add "I Prayed For This" button (for everyone except owner, and only if not already prayed)
+        if (!isOwner && !hasUserPrayed && !isAnswered) {
+            actionsHtml += `
+                <button class="btn btn-primary" onclick="markAsPrayedFor(${request.request_id}, ${currentUserUid}, ${request.user_uid})" style="
+                    padding: 15px 30px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    margin-right: 10px;
+                ">
+                    🙏 I Prayed For This
+                </button>
+            `;
+        } else if (!isOwner && hasUserPrayed) {
+            actionsHtml += `
+                <div style="padding: 15px 30px; font-size: 1.1rem; color: #28a745; font-weight: 600; display: inline-block;">
+                    ✓ You have prayed for this request
+                </div>
+            `;
+        }
+        
+        // Add "Mark as Answered" button (for owner only)
         if (!isAnswered && isOwner) {
-            modalActions.innerHTML = `
-                <button class="btn-answered" onclick="markAsAnswered(${request.request_id}, ${currentUserUid}); closePrayerModal();">
+            actionsHtml += `
+                <button class="btn-answered" onclick="markAsAnswered(${request.request_id}, ${currentUserUid}); closePrayerModal();" style="margin-left: ${!isOwner && !hasUserPrayed ? '10px' : '0'};">
                     🙌 Mark as Answered
                 </button>
             `;
-        } else {
-            modalActions.innerHTML = '';
         }
+        
+        modalActions.innerHTML = actionsHtml || '<div style="color: #999; font-style: italic;">No actions available</div>';
     }
     
     // Show modal
@@ -596,8 +673,132 @@ function setupPrayerModal() {
     });
 }
 
+// Mark prayer request as prayed for
+async function markAsPrayedFor(requestId, userUid, posterUid) {
+    try {
+        // Check if user has already prayed for this request
+        const { data: existingPrayer, error: checkError } = await supabase
+            .from('prayer_prayers')
+            .select('prayer_id')
+            .eq('request_id', requestId)
+            .eq('user_uid', userUid)
+            .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+            throw checkError;
+        }
+        
+        if (existingPrayer) {
+            alert('You have already prayed for this request!');
+            return;
+        }
+        
+        // Record that user prayed for this request
+        const { error: insertError } = await supabase
+            .from('prayer_prayers')
+            .insert({
+                request_id: requestId,
+                user_uid: userUid
+            });
+        
+        if (insertError) {
+            // Check if table doesn't exist
+            const isMissingTable = /does not exist/i.test(insertError.message) || 
+                                /schema cache/i.test(insertError.message) || 
+                                insertError.code === '42P01';
+            if (isMissingTable) {
+                alert('Prayer tracking is not set up yet. Please run create_prayer_prayers_table.sql in Supabase.');
+                return;
+            }
+            throw insertError;
+        }
+        
+        // Get prayer request details
+        const { data: request, error: requestError } = await supabase
+            .from('prayer_requests')
+            .select('title')
+            .eq('request_id', requestId)
+            .single();
+        
+        if (requestError) throw requestError;
+        
+        // Get user who prayed info
+        const { data: prayerUserData, error: prayerUserError } = await supabase
+            .from('Users')
+            .select('First_Name, Last_Name, Username')
+            .eq('UID', userUid)
+            .single();
+        
+        if (prayerUserError) throw prayerUserError;
+        
+        const prayerUserName = (prayerUserData?.First_Name && prayerUserData?.Last_Name)
+            ? `${prayerUserData.First_Name} ${prayerUserData.Last_Name}`
+            : prayerUserData?.Username || 'A family member';
+        
+        const now = new Date();
+        const dateStr = now.toLocaleDateString() + ' at ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Send encouraging message to the original poster
+        const messageContent = `
+            <div style="padding: 20px;">
+                <h3 style="color: #1976D2; margin-top: 0;">🙏 Someone Prayed For Your Request!</h3>
+                <p><strong>Great news!</strong> Someone in your family has lifted up your prayer request in prayer!</p>
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #1976D2;">
+                    <p style="margin: 0; font-weight: 600; color: #1565C0;">
+                        "${escapeHtml(request.title)}"
+                    </p>
+                </div>
+                <p><strong>Prayed by:</strong> ${escapeHtml(prayerUserName)}</p>
+                <p><strong>Date:</strong> ${escapeHtml(dateStr)}</p>
+                <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; border: 2px solid #28a745;">
+                    <p style="margin: 0; font-style: italic; color: #155724;">
+                        "Therefore, confess your sins to one another and pray for one another, that you may be healed. The prayer of a righteous person has great power as it is working." - James 5:16
+                    </p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a href="${getPagePath('pray-ground.html')}" style="
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background: #1976D2;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        font-weight: 600;
+                    ">View in Pray Ground</a>
+                </div>
+            </div>
+        `;
+        
+        // Send message to the original poster
+        await supabase
+            .from('message_boxes')
+            .insert({
+                from_user_uid: userUid,
+                to_user_uid: posterUid,
+                subject: `🙏 Someone Prayed For: ${request.title}`,
+                body: messageContent,
+                folder: 'inbox',
+                is_read: false
+            });
+        
+        // Close and reopen modal to refresh prayer count
+        closePrayerModal();
+        
+        // Reload prayer requests to update counts
+        await loadPrayerRequests(userUid);
+        
+        // Show success message
+        showPrayerMessage('Thank you for praying! The requester has been notified.', 'success');
+        
+    } catch (error) {
+        console.error('Error marking as prayed for:', error);
+        showPrayerMessage('Error recording your prayer. Please try again.', 'error');
+    }
+}
+
 // Make functions available globally
 window.markAsAnswered = markAsAnswered;
+window.markAsPrayedFor = markAsPrayedFor;
 window.openPrayerModal = openPrayerModal;
 window.closePrayerModal = closePrayerModal;
 
