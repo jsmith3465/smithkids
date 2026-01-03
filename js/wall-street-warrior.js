@@ -76,6 +76,31 @@ async function checkUserAccess() {
             await setupAdminUserSelector();
         }
         
+        // Check for URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const tickerParam = urlParams.get('ticker');
+        
+        // Switch to specified tab if provided
+        if (tabParam) {
+            const tabButton = document.querySelector(`[data-tab="${tabParam}"]`);
+            if (tabButton) {
+                tabButton.click();
+            }
+        }
+        
+        // Pre-fill portfolio form with ticker if provided
+        if (tickerParam && tabParam === 'portfolio') {
+            // Wait a bit for the tab to switch, then open modal
+            setTimeout(() => {
+                openPortfolioModal();
+                const tickerInput = document.getElementById('portfolioTicker');
+                if (tickerInput) {
+                    tickerInput.value = tickerParam.toUpperCase();
+                }
+            }, 300);
+        }
+        
         await loadWatchlist();
         await loadPortfolio();
     } catch (error) {
@@ -433,10 +458,10 @@ async function addToWatchlist(ticker, companyName) {
     }
 }
 
-// View stock details (opens external link)
+// View stock details (opens internal page)
 function viewStockDetails(ticker) {
-    // Open Google Finance or Yahoo Finance
-    window.open(`https://www.google.com/finance/quote/${ticker}`, '_blank');
+    // Navigate to internal stock details page
+    window.location.href = getPagePath(`stock-details.html?ticker=${encodeURIComponent(ticker)}`);
 }
 
 // Load watchlist
