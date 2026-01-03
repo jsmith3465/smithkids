@@ -31,6 +31,11 @@ CREATE INDEX IF NOT EXISTS idx_user_views_announcement ON user_announcement_view
 ALTER TABLE feature_announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_announcement_views ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotent execution)
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON feature_announcements;
+DROP POLICY IF EXISTS "Enable read access for users" ON user_announcement_views;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON user_announcement_views;
+
 -- Policies for feature_announcements
 CREATE POLICY "Enable read access for all authenticated users" ON feature_announcements
     FOR SELECT USING (true);
