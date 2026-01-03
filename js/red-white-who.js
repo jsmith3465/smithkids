@@ -629,7 +629,24 @@ async function submitQuiz() {
     
     const score = correctCount;
     const isPerfect = score === 5;
-    const creditsAwarded = isPerfect ? 10 : 0;
+    
+    // Check if user has already passed this quiz (earned credits) for this individual
+    // We need to check BEFORE saving the current attempt
+    let hasAlreadyPassed = false;
+    try {
+        const { data: previousAttempts } = await supabase
+            .from('red_white_who_quiz_attempts')
+            .select('credits_awarded')
+            .eq('user_uid', currentUserUid)
+            .eq('individual_id', currentIndividual.individual_id)
+            .gt('credits_awarded', 0);
+        
+        hasAlreadyPassed = previousAttempts && previousAttempts.length > 0;
+    } catch (error) {
+        console.error('Error checking previous attempts:', error);
+    }
+    
+    const creditsAwarded = (isPerfect && !hasAlreadyPassed) ? 5 : 0;
     
     // Save quiz attempt
     try {
@@ -656,8 +673,8 @@ async function submitQuiz() {
                 credits_awarded: creditsAwarded
             });
         
-        // Award credits if perfect score
-        if (isPerfect) {
+        // Award credits if perfect score and hasn't passed before
+        if (isPerfect && !hasAlreadyPassed) {
             await awardQuizCredits(currentIndividual.individual_id, currentIndividual.name);
         }
         
@@ -685,8 +702,8 @@ async function submitQuiz() {
         console.error('Error saving quiz attempt:', error);
     }
     
-    // Show results
-    showQuizResults(score, isPerfect, creditsAwarded);
+    // Show results (pass hasAlreadyPassed flag)
+    showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed);
 }
 
 async function awardQuizCredits(individualId, individualName) {
@@ -698,7 +715,7 @@ async function awardQuizCredits(individualId, individualName) {
             .eq('user_uid', currentUserUid)
             .single();
         
-        const newBalance = (existingCredit?.balance || 0) + 10;
+        const newBalance = (existingCredit?.balance || 0) + 5;
         
         if (existingCredit) {
             await supabase
@@ -708,7 +725,7 @@ async function awardQuizCredits(individualId, individualName) {
         } else {
             await supabase
                 .from('User_Credits')
-                .insert({ user_uid: currentUserUid, balance: 10 });
+                .insert({ user_uid: currentUserUid, balance: 5 });
         }
         
         // Record transaction
@@ -716,7 +733,7 @@ async function awardQuizCredits(individualId, individualName) {
             .from('Credit_Transactions')
             .insert({
                 to_user_uid: currentUserUid,
-                amount: 10,
+                amount: 5,
                 transaction_type: 'credit_added',
                 game_type: 'red_white_who_quiz',
                 description: `Red, White & Who: Perfect quiz score for ${individualName}`
@@ -726,8 +743,19 @@ async function awardQuizCredits(individualId, individualName) {
     }
 }
 
-function showQuizResults(score, isPerfect, creditsAwarded) {
+function showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed = false) {
     const quizQuestionsDiv = document.getElementById('quizQuestions');
+    
+    let creditsMessage = '';
+    if (isPerfect) {
+        if (hasAlreadyPassed) {
+            creditsMessage = '<p style="font-size: 1.1rem; color: #666; margin-top: 10px;">You\'ve already earned credits for this quiz, but great job on passing again! 🎉</p>';
+        } else if (creditsAwarded > 0) {
+            creditsMessage = `<p style="font-size: 1.2rem; color: #155724; font-weight: 600; margin-top: 10px;">🎊 Congratulations! You earned ${creditsAwarded} credits!</p>`;
+        }
+    } else {
+        creditsMessage = '<p style="font-size: 1.1rem; color: #856404; margin-top: 10px;">You need a perfect score (5/5) to earn 5 credits. Try again!</p>';
+    }
     
     const resultsHtml = `
         <div class="quiz-results ${isPerfect ? 'perfect' : 'not-perfect'}">
@@ -735,23 +763,17 @@ function showQuizResults(score, isPerfect, creditsAwarded) {
             <p style="font-size: 1.5rem; margin: 15px 0;">
                 You got <strong>${score} out of 5</strong> questions correct.
             </p>
-            ${isPerfect ? `
-                <p style="font-size: 1.2rem; color: #155724; font-weight: 600;">
-                    🎊 Congratulations! You earned 10 credits!
-                </p>
-            ` : `
-                <p style="font-size: 1.1rem; color: #856404;">
-                    You need a perfect score (5/5) to earn 10 credits. Try again!
-                </p>
-            `}
+            ${creditsMessage}
         </div>
     `;
     
     quizQuestionsDiv.insertAdjacentHTML('beforeend', resultsHtml);
     document.getElementById('closeQuizBtn').style.display = 'inline-block';
     
-    if (isPerfect) {
-        showMessage('Congratulations! You earned 10 credits for a perfect quiz score!', 'success');
+    if (isPerfect && creditsAwarded > 0) {
+        showMessage(`Congratulations! You earned ${creditsAwarded} credits for a perfect quiz score!`, 'success');
+    } else if (isPerfect && hasAlreadyPassed) {
+        showMessage('Great job passing the quiz again! You\'ve already earned credits for this quiz.', 'info');
     }
 }
 
