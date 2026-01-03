@@ -57,44 +57,137 @@
             opacity: 0.95;
         }
         
-        .marketplace-filters {
+        .search-tiles-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .search-tile {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 30px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 3px 10px rgba(218, 165, 32, 0.2);
+        }
+        
+        .search-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(218, 165, 32, 0.4);
+            border-color: #CC5500;
+        }
+        
+        .search-tile.active {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            border-color: #CC5500;
+        }
+        
+        .search-tile-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .search-tile-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .search-tile-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .filter-panel {
             background: #f8f9fa;
             border: 2px solid #e0e0e0;
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 30px;
+            display: none;
         }
         
-        .filters-grid {
+        .filter-panel.active {
+            display: block;
+        }
+        
+        .filter-panel h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        
+        .years-filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
             margin-bottom: 20px;
         }
         
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .filter-group label {
+        .year-range-tile {
+            background: white;
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
         }
         
-        .filter-group input,
-        .filter-group select {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+        .year-range-tile:hover {
+            background: #fff3cd;
+            transform: scale(1.05);
         }
         
-        .filter-buttons {
+        .year-range-tile.selected {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            border-color: #CC5500;
+        }
+        
+        .key-events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .key-event-tile {
+            background: white;
+            border: 2px solid #1976D2;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            color: #1976D2;
+        }
+        
+        .key-event-tile:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+        }
+        
+        .key-event-tile.selected {
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+            color: white;
+            border-color: #1565C0;
+        }
+        
+        .filter-actions {
             display: flex;
             gap: 10px;
             justify-content: center;
+            margin-top: 20px;
         }
         
         .individuals-grid {
@@ -425,36 +518,45 @@
                 
                 <!-- Marketplace View -->
                 <div id="marketplaceView">
-                    <div class="marketplace-filters">
-                        <h2 style="margin-top: 0; text-align: center; color: #333;">Browse Biographies</h2>
-                        <div class="filters-grid">
-                            <div class="filter-group">
-                                <label for="nameFilter">Search by Name</label>
-                                <input type="text" id="nameFilter" placeholder="Enter name...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="birthYearFrom">Birth Year (From)</label>
-                                <input type="number" id="birthYearFrom" placeholder="Year...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="birthYearTo">Birth Year (To)</label>
-                                <input type="number" id="birthYearTo" placeholder="Year...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="keyEventFilter">Key Event</label>
-                                <select id="keyEventFilter">
-                                    <option value="">All Events</option>
-                                    <option value="Signing of Declaration of Independence">Signing of Declaration of Independence</option>
-                                    <option value="Revolutionary War">Revolutionary War</option>
-                                    <option value="Constitutional Convention">Constitutional Convention</option>
-                                    <option value="Presidency">Presidency</option>
-                                    <!-- More options will be populated dynamically -->
-                                </select>
-                            </div>
+                    <div class="search-tiles-container">
+                        <div class="search-tile active" onclick="showViewAll()" id="viewAllTile">
+                            <div class="search-tile-icon">📚</div>
+                            <div class="search-tile-title">View All</div>
+                            <div class="search-tile-description">See all biographies</div>
                         </div>
-                        <div class="filter-buttons">
-                            <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
-                            <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                        <div class="search-tile" onclick="showYearsFilter()" id="yearsTile">
+                            <div class="search-tile-icon">📅</div>
+                            <div class="search-tile-title">Years Lived</div>
+                            <div class="search-tile-description">Filter by time period</div>
+                        </div>
+                        <div class="search-tile" onclick="showKeyEventsFilter()" id="keyEventsTile">
+                            <div class="search-tile-icon">⭐</div>
+                            <div class="search-tile-title">Key Events</div>
+                            <div class="search-tile-description">Filter by important events</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Years Filter Panel -->
+                    <div class="filter-panel" id="yearsFilterPanel">
+                        <h3>📅 Filter by Years Lived</h3>
+                        <div class="years-filter-grid" id="yearsFilterGrid">
+                            <!-- Year range tiles will be generated here -->
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" onclick="applyYearFilter()">Show Results</button>
+                            <button class="btn btn-secondary" onclick="clearYearFilter()">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Events Filter Panel -->
+                    <div class="filter-panel" id="keyEventsFilterPanel">
+                        <h3>⭐ Filter by Key Events</h3>
+                        <div class="key-events-grid" id="keyEventsGrid">
+                            <!-- Key event tiles will be generated here -->
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" onclick="applyKeyEventFilter()">Show Results</button>
+                            <button class="btn btn-secondary" onclick="clearKeyEventFilter()">Clear</button>
                         </div>
                     </div>
                     

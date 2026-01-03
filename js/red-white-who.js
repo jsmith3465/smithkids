@@ -15,6 +15,9 @@ let currentQuizQuestions = [];
 let currentQuizAnswers = {};
 let quizSubmitted = false;
 let allKeyEvents = [];
+let selectedYearRange = null;
+let selectedKeyEvent = null;
+let currentFilterType = 'all'; // 'all', 'years', 'keyEvents'
 
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
@@ -71,25 +74,85 @@ async function checkUserAccess() {
     try {
         await loadAllIndividuals();
         await loadKeyEvents();
-        setupEventListeners();
     } catch (error) {
         console.error('Error initializing Red, White & Who:', error);
     }
 }
 
-function setupEventListeners() {
-    // Filter inputs
-    document.getElementById('nameFilter').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') applyFilters();
-    });
+function setupYearRanges() {
+    // Get all birth years and create meaningful ranges
+    const birthYears = allIndividuals
+        .map(i => i.birth_year)
+        .filter(y => y !== null && y !== undefined)
+        .sort((a, b) => a - b);
     
-    document.getElementById('birthYearFrom').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') applyFilters();
-    });
+    if (birthYears.length === 0) return;
     
-    document.getElementById('birthYearTo').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') applyFilters();
+    const minYear = birthYears[0];
+    const maxYear = birthYears[birthYears.length - 1];
+    
+    // Create year range tiles (e.g., 1700s, 1800s, etc.)
+    const yearRanges = [];
+    const startDecade = Math.floor(minYear / 100) * 100;
+    const endDecade = Math.ceil(maxYear / 100) * 100;
+    
+    for (let decade = startDecade; decade <= endDecade; decade += 100) {
+        const rangeStart = decade;
+        const rangeEnd = decade + 99;
+        const label = decade < 1000 
+            ? `${rangeStart}s-${rangeEnd}s` 
+            : `${Math.floor(rangeStart / 100)}00s`;
+        
+        yearRanges.push({
+            start: rangeStart,
+            end: rangeEnd,
+            label: label
+        });
+    }
+    
+    // Also add some specific historical periods
+    yearRanges.push(
+        { start: 1730, end: 1780, label: 'Founding Fathers Era' },
+        { start: 1800, end: 1900, label: '1800s' },
+        { start: 1900, end: 2000, label: '1900s' }
+    );
+    
+    // Remove duplicates and sort
+    const uniqueRanges = [];
+    const seen = new Set();
+    yearRanges.forEach(range => {
+        const key = `${range.start}-${range.end}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueRanges.push(range);
+        }
     });
+    uniqueRanges.sort((a, b) => a.start - b.start);
+    
+    const yearsGrid = document.getElementById('yearsFilterGrid');
+    if (yearsGrid) {
+        yearsGrid.innerHTML = uniqueRanges.map(range => {
+            const escapedLabel = escapeHtml(range.label);
+            return `
+                <div class="year-range-tile" onclick="selectYearRange(${range.start}, ${range.end}, ${JSON.stringify(range.label)})" 
+                     data-start="${range.start}" data-end="${range.end}">
+                    ${escapedLabel}
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+function setupKeyEventTiles() {
+    const keyEventsGrid = document.getElementById('keyEventsGrid');
+    if (keyEventsGrid && allKeyEvents.length > 0) {
+        keyEventsGrid.innerHTML = allKeyEvents.map(event => `
+            <div class="key-event-tile" onclick="selectKeyEvent('${escapeHtml(event)}')" 
+                 data-event="${escapeHtml(event)}">
+                ${escapeHtml(event)}
+            </div>
+        `).join('');
+    }
 }
 
 async function loadAllIndividuals() {
@@ -103,6 +166,10 @@ async function loadAllIndividuals() {
         
         allIndividuals = data || [];
         displayIndividuals(allIndividuals);
+        
+        // Setup year ranges and key events after loading individuals
+        setupYearRanges();
+        setupKeyEventTiles();
     } catch (error) {
         console.error('Error loading individuals:', error);
         document.getElementById('individualsGrid').innerHTML = 
@@ -120,24 +187,6 @@ async function loadKeyEvents() {
     });
     
     allKeyEvents = Array.from(eventsSet).sort();
-    
-    // Update the key event filter dropdown
-    const keyEventFilter = document.getElementById('keyEventFilter');
-    if (keyEventFilter) {
-        // Keep the "All Events" option
-        const allEventsOption = keyEventFilter.querySelector('option[value=""]');
-        keyEventFilter.innerHTML = '';
-        if (allEventsOption) {
-            keyEventFilter.appendChild(allEventsOption);
-        }
-        
-        allKeyEvents.forEach(event => {
-            const option = document.createElement('option');
-            option.value = event;
-            option.textContent = event;
-            keyEventFilter.appendChild(option);
-        });
-    }
 }
 
 function displayIndividuals(individuals) {
@@ -171,42 +220,126 @@ function displayIndividuals(individuals) {
     }).join('');
 }
 
-function applyFilters() {
-    const nameFilter = document.getElementById('nameFilter').value.toLowerCase().trim();
-    const birthYearFrom = document.getElementById('birthYearFrom').value;
-    const birthYearTo = document.getElementById('birthYearTo').value;
-    const keyEventFilter = document.getElementById('keyEventFilter').value;
+// Tile-based filter functions
+function showViewAll() {
+    currentFilterType = 'all';
+    selectedYearRange = null;
+    selectedKeyEvent = null;
     
-    let filtered = allIndividuals.filter(individual => {
-        // Name filter
-        if (nameFilter && !individual.name.toLowerCase().includes(nameFilter)) {
-            return false;
+    // Update tile states
+    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
+    document.getElementById('viewAllTile').classList.add('active');
+    
+    // Hide filter panels
+    document.getElementById('yearsFilterPanel').classList.remove('active');
+    document.getElementById('keyEventsFilterPanel').classList.remove('active');
+    
+    // Clear selections
+    document.querySelectorAll('.year-range-tile').forEach(tile => tile.classList.remove('selected'));
+    document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
+    
+    // Show all individuals
+    displayIndividuals(allIndividuals);
+}
+
+function showYearsFilter() {
+    currentFilterType = 'years';
+    
+    // Update tile states
+    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
+    document.getElementById('yearsTile').classList.add('active');
+    
+    // Show/hide filter panels
+    document.getElementById('yearsFilterPanel').classList.add('active');
+    document.getElementById('keyEventsFilterPanel').classList.remove('active');
+}
+
+function showKeyEventsFilter() {
+    currentFilterType = 'keyEvents';
+    
+    // Update tile states
+    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
+    document.getElementById('keyEventsTile').classList.add('active');
+    
+    // Show/hide filter panels
+    document.getElementById('keyEventsFilterPanel').classList.add('active');
+    document.getElementById('yearsFilterPanel').classList.remove('active');
+}
+
+function selectYearRange(start, end, label) {
+    // Toggle selection
+    const tiles = document.querySelectorAll('.year-range-tile');
+    tiles.forEach(tile => {
+        if (parseInt(tile.dataset.start) === start && parseInt(tile.dataset.end) === end) {
+            if (tile.classList.contains('selected')) {
+                tile.classList.remove('selected');
+                selectedYearRange = null;
+            } else {
+                tiles.forEach(t => t.classList.remove('selected'));
+                tile.classList.add('selected');
+                // Escape label to prevent XSS
+                selectedYearRange = { start, end, label: escapeHtml(label) };
+            }
         }
-        
-        // Birth year filters
-        if (birthYearFrom && individual.birth_year && individual.birth_year < parseInt(birthYearFrom)) {
-            return false;
+    });
+}
+
+function selectKeyEvent(event) {
+    // Toggle selection
+    const tiles = document.querySelectorAll('.key-event-tile');
+    tiles.forEach(tile => {
+        if (tile.dataset.event === event) {
+            if (tile.classList.contains('selected')) {
+                tile.classList.remove('selected');
+                selectedKeyEvent = null;
+            } else {
+                tiles.forEach(t => t.classList.remove('selected'));
+                tile.classList.add('selected');
+                selectedKeyEvent = event;
+            }
         }
-        if (birthYearTo && individual.birth_year && individual.birth_year > parseInt(birthYearTo)) {
-            return false;
-        }
-        
-        // Key event filter
-        if (keyEventFilter && (!individual.key_events || !individual.key_events.includes(keyEventFilter))) {
-            return false;
-        }
-        
-        return true;
+    });
+}
+
+function applyYearFilter() {
+    if (!selectedYearRange) {
+        alert('Please select a year range first!');
+        return;
+    }
+    
+    const filtered = allIndividuals.filter(individual => {
+        if (!individual.birth_year) return false;
+        return individual.birth_year >= selectedYearRange.start && 
+               individual.birth_year <= selectedYearRange.end;
     });
     
     displayIndividuals(filtered);
 }
 
-function clearFilters() {
-    document.getElementById('nameFilter').value = '';
-    document.getElementById('birthYearFrom').value = '';
-    document.getElementById('birthYearTo').value = '';
-    document.getElementById('keyEventFilter').value = '';
+function clearYearFilter() {
+    selectedYearRange = null;
+    document.querySelectorAll('.year-range-tile').forEach(tile => tile.classList.remove('selected'));
+    displayIndividuals(allIndividuals);
+}
+
+function applyKeyEventFilter() {
+    if (!selectedKeyEvent) {
+        alert('Please select a key event first!');
+        return;
+    }
+    
+    const filtered = allIndividuals.filter(individual => {
+        return individual.key_events && 
+               Array.isArray(individual.key_events) && 
+               individual.key_events.includes(selectedKeyEvent);
+    });
+    
+    displayIndividuals(filtered);
+}
+
+function clearKeyEventFilter() {
+    selectedKeyEvent = null;
+    document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
     displayIndividuals(allIndividuals);
 }
 
@@ -666,8 +799,15 @@ function escapeHtml(text) {
 // Make functions available globally
 window.viewBiography = viewBiography;
 window.showMarketplace = showMarketplace;
-window.applyFilters = applyFilters;
-window.clearFilters = clearFilters;
+window.showViewAll = showViewAll;
+window.showYearsFilter = showYearsFilter;
+window.showKeyEventsFilter = showKeyEventsFilter;
+window.selectYearRange = selectYearRange;
+window.selectKeyEvent = selectKeyEvent;
+window.applyYearFilter = applyYearFilter;
+window.clearYearFilter = clearYearFilter;
+window.applyKeyEventFilter = applyKeyEventFilter;
+window.clearKeyEventFilter = clearKeyEventFilter;
 window.startQuiz = startQuiz;
 window.selectAnswer = selectAnswer;
 window.submitQuiz = submitQuiz;
