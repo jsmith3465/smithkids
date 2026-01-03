@@ -170,6 +170,10 @@ async function initializeLanding() {
     // Initialize approval notifications
     await initializeApprovalNotifications();
     
+    // Check for feature announcements
+    const { checkFeatureAnnouncements } = await import('./feature-announcements.js');
+    await checkFeatureAnnouncements(session.uid);
+    
     // Initialize badge notifications
     try {
         const { initializeBadgeNotifications } = await import('./badge-notification-system.js');
