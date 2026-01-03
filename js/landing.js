@@ -174,14 +174,23 @@ async function initializeLanding() {
         userType: session.userType
     });
     
-    // Show main content first
+    // Show main content first - CRITICAL: Do this immediately and force display
     const authCheck = document.getElementById('authCheck');
     const mainContent = document.getElementById('mainContent');
-    if (authCheck) authCheck.classList.add('hidden');
-    if (mainContent) mainContent.classList.remove('hidden');
+    if (authCheck) {
+        authCheck.classList.add('hidden');
+        authCheck.style.display = 'none';
+    }
+    if (mainContent) {
+        mainContent.classList.remove('hidden');
+        mainContent.style.display = '';
+        // Force visibility
+        mainContent.style.visibility = 'visible';
+        mainContent.style.opacity = '1';
+    }
     
     // Wait a moment to ensure DOM is fully ready
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 150));
     
     // Set greeting - with multiple retry attempts
     const setGreeting = () => {
@@ -309,9 +318,14 @@ async function initializeLanding() {
     // Initialize approval notifications
     await initializeApprovalNotifications();
     
-    // Check for feature announcements
-    const { checkFeatureAnnouncements } = await import('./feature-announcements.js');
-    await checkFeatureAnnouncements(session.uid);
+    // Check for feature announcements (non-blocking - don't wait for it)
+    import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
+        checkFeatureAnnouncements(session.uid).catch(error => {
+            console.error('Error checking feature announcements (non-blocking):', error);
+        });
+    }).catch(error => {
+        console.error('Error loading feature announcements module (non-blocking):', error);
+    });
     
     // Initialize badge notifications
     try {
