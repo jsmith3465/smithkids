@@ -161,7 +161,7 @@ class TicTacToe {
         if (this.cancelGuestBtn) {
             this.cancelGuestBtn.addEventListener('click', () => this.cancelGuestEntry());
         }
-        this.player1Select.addEventListener('change', () => this.updateDifficultyVisibility());
+        // Player 1 is always the logged-in user, so no change listener needed
         this.player2Select.addEventListener('change', () => this.updateDifficultyVisibility());
         if (this.computerDifficultySelect) {
             this.computerDifficultySelect.addEventListener('change', (e) => {
@@ -270,9 +270,9 @@ class TicTacToe {
     }
     
     updateDifficultyVisibility() {
-        const p1Id = this.player1Select.value;
+        // Player 1 is always the logged-in user, so only check Player 2 for computer
         const p2Id = this.player2Select.value;
-        const hasComputer = this.isComputerPlayer(p1Id) || this.isComputerPlayer(p2Id);
+        const hasComputer = this.isComputerPlayer(p2Id);
         
         if (hasComputer && this.computerDifficultyGroup) {
             this.computerDifficultyGroup.classList.remove('hidden');
@@ -303,32 +303,43 @@ class TicTacToe {
     }
 
     updatePlayerSelects() {
-        const playerArray = Object.entries(this.players).sort((a, b) => {
+        const session = window.authStatus?.getSession();
+        const currentUserUid = session?.uid;
+        
+        if (!currentUserUid) {
+            console.error('No logged-in user found');
+            return;
+        }
+        
+        // Set Player 1 to always be the logged-in user
+        if (this.players[currentUserUid]) {
+            this.player1Select.innerHTML = '';
+            const option1 = document.createElement('option');
+            option1.value = currentUserUid;
+            option1.textContent = this.players[currentUserUid].name;
+            option1.selected = true;
+            this.player1Select.appendChild(option1);
+        } else {
+            this.player1Select.innerHTML = '<option value="">Loading...</option>';
+        }
+        
+        // Build Player 2 options (Computer + all other users except current user)
+        const playerArray = Object.entries(this.players).filter(([id]) => {
+            return id !== currentUserUid; // Exclude current user from Player 2 options
+        }).sort((a, b) => {
             // Put Computer first, then sort others alphabetically
             if (a[0] === this.COMPUTER_ID) return -1;
             if (b[0] === this.COMPUTER_ID) return 1;
             return a[1].name.localeCompare(b[1].name);
         });
 
-        // Save current selections
-        const p1Selected = this.player1Select.value;
+        // Save current Player 2 selection
         const p2Selected = this.player2Select.value;
 
-        // Clear and rebuild options
-        this.player1Select.innerHTML = '<option value="">Select a player...</option>';
+        // Clear and rebuild Player 2 options
         this.player2Select.innerHTML = '<option value="">Select a player...</option>';
 
         playerArray.forEach(([id, player]) => {
-            const option1 = document.createElement('option');
-            option1.value = id;
-            let p1Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
-            // Only show credit warning if not admin and player has no credits
-            if (!this.isAdmin && id !== this.COMPUTER_ID && player.credits !== undefined && player.credits < 1) {
-                p1Text += ' (No remaining credits - go workout)';
-            }
-            option1.textContent = p1Text;
-            this.player1Select.appendChild(option1);
-
             const option2 = document.createElement('option');
             option2.value = id;
             let p2Text = player.name + (id === this.COMPUTER_ID ? ' 🤖' : '');
@@ -340,11 +351,8 @@ class TicTacToe {
             this.player2Select.appendChild(option2);
         });
 
-        // Restore selections if they still exist
-        if (this.players[p1Selected]) {
-            this.player1Select.value = p1Selected;
-        }
-        if (this.players[p2Selected]) {
+        // Restore Player 2 selection if it still exists
+        if (this.players[p2Selected] && p2Selected !== currentUserUid) {
             this.player2Select.value = p2Selected;
         }
         
@@ -352,38 +360,44 @@ class TicTacToe {
     }
 
     async startGame() {
-        const p1Id = this.player1Select.value;
+        const session = window.authStatus?.getSession();
+        const currentUserUid = session?.uid;
+        
+        if (!currentUserUid) {
+            alert('You must be logged in to play!');
+            return;
+        }
+        
+        // Player 1 is always the logged-in user
+        const p1Id = currentUserUid.toString();
         const p2Id = this.player2Select.value;
 
-        if (!p1Id || !p2Id) {
-            alert('Please select both players!');
+        if (!p2Id) {
+            alert('Please select Player 2!');
             return;
         }
 
         if (p1Id === p2Id) {
-            alert('Please select two different players!');
+            alert('Please select a different player for Player 2!');
             return;
         }
         
-        const session = window.authStatus?.getSession();
         const isAdmin = session && session.userType === 'admin';
         
         // Check credits for both players (skip for admins and computer)
-        const p1IsComputer = this.isComputerPlayer(p1Id);
+        // Player 1 is always the logged-in user (not computer)
         const p2IsComputer = this.isComputerPlayer(p2Id);
         
         if (!isAdmin && !this.isAdmin) {
-            // Check Player 1 credits
-            if (!p1IsComputer) {
-                const p1Player = this.players[p1Id];
-                if (!p1Player || p1Player.credits === undefined || p1Player.credits < 1) {
-                    const playerName = p1Player ? p1Player.name : 'Player 1';
-                    alert(`${playerName} does not have enough credits to play. Please select a different player or have them earn more credits.`);
-                    return;
-                }
+            // Check Player 1 (logged-in user) credits
+            const p1Player = this.players[p1Id];
+            if (!p1Player || p1Player.credits === undefined || p1Player.credits < 1) {
+                const playerName = p1Player ? p1Player.name : 'You';
+                alert(`${playerName} do not have enough credits to play. Please earn more credits by working out or being helpful.`);
+                return;
             }
             
-            // Check Player 2 credits
+            // Check Player 2 credits (if not computer)
             if (!p2IsComputer) {
                 const p2Player = this.players[p2Id];
                 if (!p2Player || p2Player.credits === undefined || p2Player.credits < 1) {
@@ -393,27 +407,25 @@ class TicTacToe {
                 }
             }
             
-            // Deduct credits from both players
-            if (!p1IsComputer) {
-                const p1Player = this.players[p1Id];
-                const deductResult1 = await deductCredits(parseInt(p1Id), 'tic_tac_toe');
-                if (!deductResult1.success) {
-                    alert(`Unable to deduct credits from ${p1Player.name}. Please try again.`);
-                    return;
-                }
-                
-                // Update local credit balance
-                p1Player.credits = deductResult1.newBalance;
-                
-                // Show message if this was their last credit
-                if (deductResult1.newBalance === 0) {
-                    const firstName = p1Player.firstName || '';
-                    const lastName = p1Player.lastName || '';
-                    const fullName = `${firstName} ${lastName}`.trim() || p1Player.name;
-                    alert(`${fullName} has no more available credits. Please workout or be helpful in order to earn more credits!`);
-                }
+            // Deduct credits from Player 1 (logged-in user)
+            const deductResult1 = await deductCredits(parseInt(p1Id), 'tic_tac_toe');
+            if (!deductResult1.success) {
+                alert(`Unable to deduct credits. Please try again.`);
+                return;
             }
             
+            // Update local credit balance
+            p1Player.credits = deductResult1.newBalance;
+            
+            // Show message if this was their last credit
+            if (deductResult1.newBalance === 0) {
+                const firstName = p1Player.firstName || '';
+                const lastName = p1Player.lastName || '';
+                const fullName = `${firstName} ${lastName}`.trim() || p1Player.name;
+                alert(`${fullName} has no more available credits. Please workout or be helpful in order to earn more credits!`);
+            }
+            
+            // Deduct credits from Player 2 (if not computer)
             if (!p2IsComputer) {
                 const p2Player = this.players[p2Id];
                 const deductResult2 = await deductCredits(parseInt(p2Id), 'tic_tac_toe');
@@ -453,7 +465,7 @@ class TicTacToe {
             this.gameInfoSection.classList.remove('hidden');
         }
         
-        const hasComputer = this.isComputerPlayer(p1Id) || this.isComputerPlayer(p2Id);
+        const hasComputer = this.isComputerPlayer(p2Id); // Player 1 is always user, only check Player 2
         if (hasComputer && this.gameDifficultyGroup) {
             this.gameDifficultyGroup.classList.remove('hidden');
             if (this.gameComputerDifficultySelect) {
