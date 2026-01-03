@@ -278,10 +278,15 @@ async function getBadgeProgress(userUid, badgeId) {
             }
             
             case 'early_bird': {
-                // Get checklist data for the last 7 days
+                // Get the last 7 days
                 const sevenDaysAgo = new Date();
                 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                sevenDaysAgo.setHours(0, 0, 0, 0);
                 
+                // Build a map of dates that have completed checklists
+                const completedDates = new Set();
+                
+                // 1. Check Morning Checklist page completions
                 const { data: checklists } = await supabase
                     .from('Morning_Checklist')
                     .select('checklist_date, task_1, task_2, task_3, task_4, task_5, task_6')
@@ -289,9 +294,37 @@ async function getBadgeProgress(userUid, badgeId) {
                     .gte('checklist_date', sevenDaysAgo.toISOString().split('T')[0])
                     .order('checklist_date', { ascending: false });
                 
-                if (!checklists || checklists.length === 0) return 0;
+                if (checklists) {
+                    // Add dates where all 6 tasks are completed
+                    checklists.forEach(day => {
+                        if (day.task_1 && day.task_2 && day.task_3 && day.task_4 && day.task_5 && day.task_6) {
+                            completedDates.add(day.checklist_date);
+                        }
+                    });
+                }
                 
-                // Count consecutive days with all tasks completed
+                // 2. Check approved Morning Checklist chores
+                const { data: chores } = await supabase
+                    .from('Chores')
+                    .select('created_at, is_approved, description')
+                    .eq('user_uid', userUid)
+                    .eq('is_approved', true)
+                    .like('description', '%Morning checklist%')
+                    .gte('created_at', sevenDaysAgo.toISOString())
+                    .order('created_at', { ascending: false });
+                
+                if (chores) {
+                    // Add dates from approved chores (extract date from created_at)
+                    chores.forEach(chore => {
+                        if (chore.created_at) {
+                            const choreDate = new Date(chore.created_at);
+                            const dateStr = choreDate.toISOString().split('T')[0];
+                            completedDates.add(dateStr);
+                        }
+                    });
+                }
+                
+                // Count consecutive days from today backwards
                 let consecutiveDays = 0;
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -301,10 +334,7 @@ async function getBadgeProgress(userUid, badgeId) {
                     checkDate.setDate(checkDate.getDate() - i);
                     const dateStr = checkDate.toISOString().split('T')[0];
                     
-                    const dayChecklist = checklists.find(c => c.checklist_date === dateStr);
-                    if (dayChecklist && dayChecklist.task_1 && dayChecklist.task_2 && 
-                        dayChecklist.task_3 && dayChecklist.task_4 && 
-                        dayChecklist.task_5 && dayChecklist.task_6) {
+                    if (completedDates.has(dateStr)) {
                         consecutiveDays++;
                     } else {
                         break; // Stop counting if we hit an incomplete day

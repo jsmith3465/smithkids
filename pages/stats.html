@@ -17,73 +17,46 @@
             text-align: center;
         }
         
-        /* Game Categories */
-        .games-categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .game-category {
-            background: white;
+        /* Game Selector Dropdown */
+        .game-selector {
+            background: #f8f9fa;
             border: 2px solid #e0e0e0;
-            border-radius: 15px;
+            border-radius: 10px;
             padding: 20px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .game-category:hover {
-            border-color: #DAA520;
-            box-shadow: 0 5px 15px rgba(218, 165, 32, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .game-category.active {
-            border-color: #CC5500;
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-        }
-        
-        .game-category-header {
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         
-        .game-category-icon {
-            font-size: 2.5rem;
-        }
-        
-        .game-category-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #333;
-            flex: 1;
-        }
-        
-        .game-category-stats {
-            text-align: left;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-        
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            font-size: 0.95rem;
-        }
-        
-        .stat-label {
-            color: #666;
-        }
-        
-        .stat-value {
+        .game-selector label {
             font-weight: 600;
             color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .game-select {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 15px;
+            border: 2px solid #DAA520;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            color: #333;
+        }
+        
+        .game-select:hover {
+            border-color: #CC5500;
+        }
+        
+        .game-select:focus {
+            outline: none;
+            border-color: #CC5500;
+            box-shadow: 0 0 0 3px rgba(204, 85, 0, 0.1);
         }
         
         /* Tab Navigation (hidden, used for content switching) */
@@ -172,9 +145,21 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <!-- Game Categories Grid -->
-            <div class="games-categories" id="gamesCategories">
-                <!-- Games will be dynamically loaded here -->
+            <!-- Game Selector Dropdown -->
+            <div class="game-selector">
+                <label for="gameSelect">Select Game:</label>
+                <select id="gameSelect" class="game-select">
+                    <option value="">Choose a game...</option>
+                    <option value="snake">🐍 Snake</option>
+                    <option value="tictactoe">⭕❌ Tic Tac Toe</option>
+                    <option value="bibletrivia">📖 Bible Trivia</option>
+                    <option value="hangman">🚷 Hangman</option>
+                    <option value="galaga">🛸 Galaga</option>
+                    <option value="breakout">🎾 Breakout</option>
+                    <option value="tetris">🧩 Tetris</option>
+                    <option value="pacman">👻 Pac-Man</option>
+                    <option value="blockblast">💥 Block Blast</option>
+                </select>
             </div>
             
             <!-- Hidden Tab Navigation (for content switching) -->

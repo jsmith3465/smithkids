@@ -236,10 +236,15 @@ export async function checkEarlyBirdBadge(userUid) {
             return; // Already has the badge
         }
         
-        // Get checklist data for the last 7 days
+        // Get the last 7 days
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
         
+        // Build a map of dates that have completed checklists
+        const completedDates = new Set();
+        
+        // 1. Check Morning Checklist page completions
         const { data: checklists, error: checklistError } = await supabase
             .from('Morning_Checklist')
             .select('checklist_date, task_1, task_2, task_3, task_4, task_5, task_6')
@@ -249,20 +254,56 @@ export async function checkEarlyBirdBadge(userUid) {
         
         if (checklistError) {
             console.error('Error fetching checklists:', checklistError);
-            return;
+        } else if (checklists) {
+            // Add dates where all 6 tasks are completed
+            checklists.forEach(day => {
+                if (day.task_1 && day.task_2 && day.task_3 && day.task_4 && day.task_5 && day.task_6) {
+                    completedDates.add(day.checklist_date);
+                }
+            });
         }
         
-        if (!checklists || checklists.length < 7) {
-            return; // Not enough days
+        // 2. Check approved Morning Checklist chores
+        const { data: chores, error: choresError } = await supabase
+            .from('Chores')
+            .select('created_at, is_approved, description')
+            .eq('user_uid', userUid)
+            .eq('is_approved', true)
+            .like('description', '%Morning checklist%')
+            .gte('created_at', sevenDaysAgo.toISOString())
+            .order('created_at', { ascending: false });
+        
+        if (choresError) {
+            console.error('Error fetching Morning Checklist chores:', choresError);
+        } else if (chores) {
+            // Add dates from approved chores (extract date from created_at)
+            chores.forEach(chore => {
+                if (chore.created_at) {
+                    const choreDate = new Date(chore.created_at);
+                    const dateStr = choreDate.toISOString().split('T')[0];
+                    completedDates.add(dateStr);
+                }
+            });
         }
         
-        // Check if all 6 tasks are completed for each of the last 7 days
-        const last7Days = checklists.slice(0, 7);
-        const allComplete = last7Days.every(day => {
-            return day.task_1 && day.task_2 && day.task_3 && day.task_4 && day.task_5 && day.task_6;
-        });
+        // Check if we have 7 consecutive days
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
-        if (allComplete) {
+        let consecutiveDays = 0;
+        for (let i = 0; i < 7; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(checkDate.getDate() - i);
+            const dateStr = checkDate.toISOString().split('T')[0];
+            
+            if (completedDates.has(dateStr)) {
+                consecutiveDays++;
+            } else {
+                break; // Must be consecutive, so stop if we hit a missing day
+            }
+        }
+        
+        if (consecutiveDays >= 7) {
             await awardBadge(userUid, 'early_bird', 'Early Bird');
         }
     } catch (error) {

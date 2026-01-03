@@ -240,6 +240,55 @@ async function approveRequest(approvalId, approval, tokenId) {
             }
             
             showSuccess(`Purchase approved! ${userName}'s purchase has been processed and ${approval.credits_amount} credits deducted from savings.`, 'approved');
+        } else if (approval.approval_type === 'scholar_dollars') {
+            // For scholar dollars, ADD to balance
+            const newBalance = (existingCredit?.balance || 0) + approval.credits_amount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: approval.credits_amount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Update submission status
+            const { error: submissionError } = await supabase
+                .from('scholar_dollars_submissions')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: session.uid
+                })
+                .eq('submission_id', approval.source_id);
+            
+            if (submissionError) {
+                console.error('Error updating submission:', submissionError);
+            }
+            
+            // Record transaction
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    to_user_uid: approval.user_uid,
+                    amount: approval.credits_amount,
+                    transaction_type: 'credit_added',
+                    game_type: 'scholar_dollars',
+                    description: `Scholar Dollars: ${approval.description || 'Academic excellence'}`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+            }
+            
+            showSuccess(`Scholar Dollars approved! ${userName} has been awarded ${approval.credits_amount} credits for academic excellence.`, 'approved');
         } else if (approval.approval_type === 'fruit_nomination') {
             // For fruit nominations, ADD to balance and award badge
             const newBalance = (existingCredit?.balance || 0) + approval.credits_amount;

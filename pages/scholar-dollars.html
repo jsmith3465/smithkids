@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar Dollars - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .scholar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .scholar-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 3px solid #28a745;
+            border-radius: 15px;
+        }
+        
+        .scholar-header h1 {
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .quarter-selector {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .quarter-select {
+            padding: 10px 15px;
+            border: 2px solid #DAA520;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .subjects-section {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        
+        .subjects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .subjects-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subjects-table th {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .subjects-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .subjects-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .subjects-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .grade-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .grade-select.grade-a {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .grade-select.grade-b {
+            background: #cce5ff;
+            border-color: #007bff;
+            color: #004085;
+        }
+        
+        .grade-select.grade-c {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .grade-select.grade-d {
+            background: #ffeaa7;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        
+        .grade-select.grade-f {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: #999;
+            font-size: 1.2rem;
+            padding: 0 10px;
+        }
+        
+        .drag-handle:hover {
+            color: #DAA520;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .credits-summary {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .credits-summary h3 {
+            margin: 0 0 15px 0;
+            color: #856404;
+        }
+        
+        .credits-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #CC5500;
+        }
+        
+        .submit-section {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 3px solid #28a745;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .subjects-table {
+                font-size: 0.9rem;
+            }
+            
+            .subjects-table th,
+            .subjects-table td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scholar-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">💰 Scholar Dollars</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Profile menu will be inserted here -->
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="scholar-header">
+                <h1>💰 Scholar Dollars</h1>
+                <p>Track your grades and earn credits for academic excellence!</p>
+            </div>
+            
+            <!-- Quarter Selector -->
+            <div class="quarter-selector">
+                <div>
+                    <label for="quarterSelect" style="font-weight: 600; margin-right: 10px;">Select Quarter:</label>
+                    <select id="quarterSelect" class="quarter-select">
+                        <option value="">Loading quarters...</option>
+                    </select>
+                </div>
+                <div>
+                    <button class="btn btn-primary" id="addSubjectBtn">+ Add Subject</button>
+                </div>
+            </div>
+            
+            <!-- Credits Summary -->
+            <div class="credits-summary" id="creditsSummary" style="display: none;">
+                <h3>Estimated Credits for This Quarter</h3>
+                <div class="credits-amount" id="creditsAmount">0</div>
+                <p style="margin: 10px 0 0 0; color: #856404; font-size: 0.9rem;" id="creditsExplanation"></p>
+            </div>
+            
+            <!-- Subjects Table -->
+            <div class="subjects-section">
+                <div class="subjects-header">
+                    <h2 style="margin: 0;">Your Subjects</h2>
+                </div>
+                <div id="subjectsTableContainer">
+                    <div class="empty-state">No subjects added yet. Click "Add Subject" to get started!</div>
+                </div>
+            </div>
+            
+            <!-- Submit Section -->
+            <div class="submit-section" id="submitSection" style="display: none;">
+                <h3 style="margin: 0 0 15px 0; color: #155724;">Ready to Submit Grades?</h3>
+                <p style="margin: 0 0 20px 0; color: #155724;">Once submitted, your grades will be sent to admins for approval.</p>
+                <button class="btn btn-primary" id="submitGradesBtn" style="font-size: 1.1rem; padding: 15px 30px;">Submit Grades for Quarter</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Subject Modal -->
+    <div id="subjectModal" class="modal" style="display: none;" onclick="if(event.target === this) closeSubjectModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 id="subjectModalTitle">Add Subject</h2>
+            <form id="subjectForm">
+                <input type="hidden" id="subjectId">
+                <div class="input-group">
+                    <label for="subjectName">Subject Name:</label>
+                    <input type="text" id="subjectName" required placeholder="e.g., Math, Science, English">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>
+                    <button type="button" class="btn btn-secondary" id="cancelSubjectBtn" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/profile-menu.js"></script>
+    <script type="module" src="../js/scholar-dollars.js"></script>
+</body>
+</html>
+

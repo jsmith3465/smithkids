@@ -214,6 +214,28 @@ async function loadPendingApprovals() {
                         </div>
                     `;
                 }
+            } else if (approval.approval_type === 'scholar_dollars') {
+                badgeClass = 'badge-scholar';
+                badgeText = '💰 Scholar Dollars';
+                icon = '💰';
+                
+                // Get submission details
+                try {
+                    const { data: submission } = await supabase
+                        .from('scholar_dollars_submissions')
+                        .select('quarter_id, scholar_dollars_quarters!inner(quarter_name)')
+                        .eq('submission_id', approval.source_id)
+                        .single();
+                    
+                    if (submission) {
+                        detailsHtml = `
+                            <strong>Quarter:</strong> ${escapeHtml(submission.scholar_dollars_quarters.quarter_name || 'Unknown')}<br>
+                            <strong>Credits Requested:</strong> ${approval.credits_amount.toLocaleString()}
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error fetching scholar dollars submission:', error);
+                }
             }
             
             const approvalItem = document.createElement('div');
@@ -360,6 +382,18 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
                 .eq('nomination_id', sourceId);
             
             if (nominationError) throw nominationError;
+        } else if (approvalType === 'scholar_dollars') {
+            // Update scholar dollars submission status
+            const { error: submissionError } = await supabase
+                .from('scholar_dollars_submissions')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    approved_by_uid: session.uid
+                })
+                .eq('submission_id', sourceId);
+            
+            if (submissionError) throw submissionError;
         }
         
         // Handle credits based on approval type
@@ -414,6 +448,41 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
             }
             
             showSuccess(`Marketplace purchase approved! ${creditsAmount} credits deducted from user's savings.`);
+        } else if (approvalType === 'scholar_dollars') {
+            // For scholar dollars, ADD to balance
+            const newBalance = (existingCredit?.balance || 0) + creditsAmount;
+            
+            if (existingCredit) {
+                const { error: balanceUpdateError } = await supabase
+                    .from('User_Credits')
+                    .update({ balance: newBalance, updated_at: new Date().toISOString() })
+                    .eq('credit_id', existingCredit.credit_id);
+                
+                if (balanceUpdateError) throw balanceUpdateError;
+            } else {
+                const { error: balanceInsertError } = await supabase
+                    .from('User_Credits')
+                    .insert({ user_uid: approval.user_uid, balance: creditsAmount });
+                
+                if (balanceInsertError) throw balanceInsertError;
+            }
+            
+            // Record transaction
+            const { error: transError } = await supabase
+                .from('Credit_Transactions')
+                .insert({
+                    to_user_uid: approval.user_uid,
+                    amount: creditsAmount,
+                    transaction_type: 'credit_added',
+                    game_type: 'scholar_dollars',
+                    description: `Scholar Dollars: ${creditsAmount} credits for academic excellence`
+                });
+            
+            if (transError) {
+                console.error('Error recording transaction:', transError);
+            }
+            
+            showSuccess(`Scholar Dollars approved! ${creditsAmount} credits added to user's account.`);
         } else if (approvalType === 'fruit_nomination') {
             // For fruit nominations, ADD to balance and award badge
             const newBalance = (existingCredit?.balance || 0) + creditsAmount;
@@ -610,12 +679,23 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
         
         // Check for badge eligibility
         try {
-            const { checkAllBadges } = await import('./badge-checker.js');
+            const { checkAllBadges, checkEarlyBirdBadge } = await import('./badge-checker.js');
             let badgeContext = 'general';
             if (approvalType === 'workout') {
                 badgeContext = 'workout_approved';
             } else if (approvalType === 'chore') {
                 badgeContext = 'chore_approved';
+                // Check if this is a Morning Checklist chore
+                const { data: chore } = await supabase
+                    .from('Chores')
+                    .select('description')
+                    .eq('chore_id', sourceId)
+                    .single();
+                
+                if (chore && chore.description && chore.description.toLowerCase().includes('morning checklist')) {
+                    // Also check Early Bird badge for Morning Checklist chores
+                    await checkEarlyBirdBadge(approval.user_uid);
+                }
             } else if (approvalType === 'memory_verse') {
                 badgeContext = 'memory_verse_approved';
             }
