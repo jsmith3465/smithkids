@@ -72,6 +72,12 @@ async function checkUserAccess() {
         setupTabs();
         setupEventListeners();
         
+        // Initialize screener if tab exists
+        if (document.getElementById('screenerTab')) {
+            const { initScreener } = await import('./screener-ui.js');
+            initScreener();
+        }
+        
         if (isAdmin) {
             await setupAdminUserSelector();
         }

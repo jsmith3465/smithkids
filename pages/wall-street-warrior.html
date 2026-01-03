@@ -244,6 +244,7 @@
                 <button class="tab active" data-tab="portfolio">💼 Portfolio</button>
                 <button class="tab" data-tab="watchlist">⭐ Watchlist</button>
                 <button class="tab" data-tab="search">🔍 Stock Search</button>
+                <button class="tab" data-tab="screener">🔍 Stock Screener</button>
             </div>
             
             <!-- Portfolio Tab -->
@@ -297,7 +298,92 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Stock Screener Tab -->
+            <div id="screenerTab" class="tab-content">
+                <div class="disclaimer">
+                    <strong>⚠️ Educational Use Only</strong><br>
+                    This Buffett-inspired screener is for educational purposes only and does not constitute financial advice. 
+                    Data may be incomplete or inaccurate. Always conduct your own research and consult with a financial advisor 
+                    before making investment decisions.
+                </div>
+                
+                <div class="screener-container">
+                    <div class="screener-controls">
+                        <h3 style="margin-top: 0;">Screening Criteria</h3>
+                        
+                        <div class="param-group">
+                            <label for="tickerInput">Tickers (comma/space/newline separated):</label>
+                            <textarea id="tickerInput" class="ticker-input" placeholder="AAPL, MSFT, KO"></textarea>
+                        </div>
+                        
+                        <div id="screensList"></div>
+                        
+                        <div class="param-group" style="margin-top: 20px;">
+                            <label>
+                                <input type="checkbox" id="treatNaAsFail" checked>
+                                Treat "Insufficient Data" as FAIL
+                            </label>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="runScreenerBtn" style="width: 100%; margin-top: 20px;">
+                            Run Screener
+                        </button>
+                    </div>
+                    
+                    <div class="screener-results">
+                        <h3>Results</h3>
+                        <div id="screenerResultsContainer">
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                Enter tickers and select screening criteria, then click "Run Screener"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+    
+    <!-- DCF Panel Modal -->
+    <div id="dcfPanelOverlay" class="dcf-panel-overlay"></div>
+    <div id="dcfPanel" class="dcf-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">DCF Intrinsic Value Calculator</h2>
+            <button id="closeDcfPanel" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        
+        <div id="dcfCompanyInfo" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>
+        
+        <div class="param-group">
+            <label>Discount Rate (%):</label>
+            <input type="number" id="dcfDiscountRate" value="10" step="0.1" min="1" max="20">
+        </div>
+        
+        <div class="param-group">
+            <label>Growth Rate Years 1-5 (%):</label>
+            <input type="number" id="dcfGrowth1to5" value="6" step="0.1" min="0" max="50">
+        </div>
+        
+        <div class="param-group">
+            <label>Growth Rate Years 6-10 (%):</label>
+            <input type="number" id="dcfGrowth6to10" value="3" step="0.1" min="0" max="20">
+        </div>
+        
+        <div class="param-group">
+            <label>Terminal Growth Rate (%):</label>
+            <input type="number" id="dcfTerminalGrowth" value="2" step="0.1" min="0" max="5">
+        </div>
+        
+        <div class="param-group">
+            <label>Margin of Safety (%):</label>
+            <input type="number" id="dcfMarginOfSafety" value="25" step="1" min="0" max="50">
+        </div>
+        
+        <button class="btn btn-primary" id="calculateDcfBtn" style="width: 100%; margin-top: 15px;">
+            Calculate Intrinsic Value
+        </button>
+        
+        <div id="dcfResults" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: none;"></div>
     </div>
     
     <!-- Add/Edit Portfolio Modal -->
