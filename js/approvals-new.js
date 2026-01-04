@@ -237,17 +237,22 @@ async function loadPendingApprovals() {
             // Determine badge and details based on type
             const typeInfo = getApprovalTypeInfo(approval.approval_type, approval, nominationMap, marketplaceMap, dateStr);
             
+            // Extract simple description text for inline display
+            const simpleDescription = getSimpleDescription(approval.approval_type, typeInfo.detailsHtml, approval);
+            const hasComplexDetails = typeInfo.detailsHtml.includes('<div') || typeInfo.detailsHtml.includes('<br>') || typeInfo.detailsHtml.length > 100;
+            
             const approvalItem = document.createElement('div');
             approvalItem.className = 'approval-item';
             approvalItem.id = `approval_${approval.approval_id}`;
             approvalItem.innerHTML = `
                 <div class="approval-info">
-                    <div class="approval-header" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <div class="approval-header" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: ${hasComplexDetails ? '10px' : '0'};">
                         <span class="approval-date" style="color: #999; font-size: 0.9rem;">${dateStr}</span>
                         <span class="approval-type-badge ${typeInfo.badgeClass}">${typeInfo.badgeText}</span>
+                        <span class="approval-description" style="color: #666; font-size: 0.95rem;">${simpleDescription}</span>
                         <span class="approval-user" style="font-weight: 600; color: #333;">${escapeHtml(displayName)}</span>
                     </div>
-                    <div class="approval-details">${typeInfo.detailsHtml}</div>
+                    ${hasComplexDetails ? `<div class="approval-details" style="margin-top: 10px;">${typeInfo.detailsHtml}</div>` : ''}
                 </div>
                 <div class="approval-controls">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -272,6 +277,43 @@ async function loadPendingApprovals() {
         const errorMessage = error.message || 'Unknown error occurred';
         approvalsList.innerHTML = `<div class="no-approvals" style="color: #dc3545;">Error loading approvals: ${escapeHtml(errorMessage)}. Please try again or contact support.</div>`;
     }
+}
+
+function getSimpleDescription(approvalType, detailsHtml, approval) {
+    // For simple types, just return the description text
+    if (approvalType === 'workout' || approvalType === 'chore') {
+        return escapeHtml(approval.description || (approvalType === 'chore' ? 'Chore completed' : 'Workout completed'));
+    }
+    
+    // For memory verse, return simple text
+    if (approvalType === 'memory_verse') {
+        return escapeHtml(approval.description || 'Bible memory verse submitted');
+    }
+    
+    // For marketplace, extract item name
+    if (approvalType === 'marketplace_purchase' && detailsHtml.includes('Purchase:')) {
+        const match = detailsHtml.match(/Purchase: ([^-]+)/);
+        if (match) {
+            return escapeHtml(match[1].trim());
+        }
+    }
+    
+    // For scholar dollars, return simple text
+    if (approvalType === 'scholar_dollars') {
+        return escapeHtml(approval.description || 'Scholar Dollars submission');
+    }
+    
+    // For fruit nomination, return summary
+    if (approvalType === 'fruit_nomination') {
+        return 'Fruit Nomination';
+    }
+    
+    // For complex HTML, strip tags and return first line
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = detailsHtml;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    const firstLine = textContent.split('\n')[0].trim();
+    return escapeHtml(firstLine || 'Approval request');
 }
 
 function getApprovalTypeInfo(approvalType, approval, nominationMap, marketplaceMap, dateStr) {
