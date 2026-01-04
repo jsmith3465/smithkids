@@ -36,6 +36,7 @@ class ChessGame {
         this.isAdmin = false;
         this.isProcessingMove = false;
         this.computerDifficulty = 'moderate'; // 'easy', 'moderate', 'hard'
+        this.computerMoveAttempts = 0; // Track attempts to prevent infinite loops
         
         // Piece Unicode symbols
         this.pieces = {
@@ -325,6 +326,7 @@ class ChessGame {
         this.gameActive = true;
         this.gameStartTime = Date.now();
         this.gameMessage.style.visibility = 'hidden';
+        this.computerMoveAttempts = 0; // Reset attempts counter
         
         this.renderBoard();
         this.updateDisplay();
@@ -511,7 +513,10 @@ class ChessGame {
         if (this.isProcessingMove) return;
         
         const piece = this.board[fromRow][fromCol];
-        if (!piece || piece.color !== this.currentPlayer) return;
+        if (!piece || piece.color !== this.currentPlayer) {
+            console.log('Invalid piece or wrong player:', { fromRow, fromCol, piece, currentPlayer: this.currentPlayer });
+            return;
+        }
         
         // Check if move is valid - either from possibleMoves (player clicks) or validate directly (computer moves)
         let validMove = false;
@@ -525,7 +530,18 @@ class ChessGame {
         }
         
         if (!validMove) {
-            console.log('Invalid move attempted:', { fromRow, fromCol, toRow, toCol });
+            console.log('Invalid move attempted:', { fromRow, fromCol, toRow, toCol, piece: piece.type, color: piece.color });
+            // If this was a computer move that failed, we need to try again or end the game
+            if (this.isComputerTurn()) {
+                console.error('Computer attempted invalid move, trying to recover...');
+                this.isProcessingMove = false;
+                // Try to find any valid move for the computer
+                setTimeout(() => {
+                    if (this.gameActive && this.isComputerTurn()) {
+                        this.computerMove();
+                    }
+                }, 100);
+            }
             return;
         }
         
@@ -557,6 +573,7 @@ class ChessGame {
         this.updateDisplay();
         
         this.isProcessingMove = false;
+        this.computerMoveAttempts = 0; // Reset attempts on successful move
         
         // If computer's turn, make a move automatically
         if (this.gameActive && this.isComputerTurn()) {
@@ -586,6 +603,15 @@ class ChessGame {
     
     computerMove() {
         if (!this.gameActive || this.isProcessingMove) return;
+        
+        // Prevent infinite loops
+        this.computerMoveAttempts = (this.computerMoveAttempts || 0) + 1;
+        if (this.computerMoveAttempts > 10) {
+            console.error('Computer move attempts exceeded limit, ending game');
+            this.isProcessingMove = false;
+            this.endGame('draw');
+            return;
+        }
         
         this.isProcessingMove = true;
         
@@ -662,6 +688,31 @@ class ChessGame {
         
         // Make the move after a short delay for better UX
         setTimeout(() => {
+            // Double-check the move is still valid before executing
+            const piece = this.board[selectedMove.fromRow][selectedMove.fromCol];
+            if (!piece || piece.color !== this.currentPlayer) {
+                console.error('Computer move invalidated - piece changed or wrong player');
+                this.isProcessingMove = false;
+                // Try again if game is still active
+                if (this.gameActive && this.isComputerTurn()) {
+                    setTimeout(() => this.computerMove(), 100);
+                }
+                return;
+            }
+            
+            const possibleMoves = this.getPossibleMoves(selectedMove.fromRow, selectedMove.fromCol);
+            const isValidMove = possibleMoves.some(m => m.row === selectedMove.toRow && m.col === selectedMove.toCol);
+            
+            if (!isValidMove) {
+                console.error('Computer selected invalid move, trying another...');
+                this.isProcessingMove = false;
+                // Try again if game is still active
+                if (this.gameActive && this.isComputerTurn()) {
+                    setTimeout(() => this.computerMove(), 100);
+                }
+                return;
+            }
+            
             this.isProcessingMove = false;
             this.makeMove(selectedMove.fromRow, selectedMove.fromCol, selectedMove.toRow, selectedMove.toCol);
         }, 300);

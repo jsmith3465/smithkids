@@ -18,9 +18,11 @@ let currentQuestionIndex = 0;
 let allKeyEvents = [];
 let allKeyEventsGeneral = [];
 let selectedYearRange = null;
+let selectedPeriodRange = null;
 let selectedKeyEvent = null;
 let selectedKeyEventsGeneral = null;
-let currentFilterType = 'all'; // 'all', 'years', 'keyEvents', 'keyEventsGeneral'
+let currentFilterType = 'all'; // 'all', 'combined'
+let filterPanelVisible = false;
 
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
@@ -83,67 +85,35 @@ async function checkUserAccess() {
 }
 
 function setupYearRanges() {
-    // Get all birth years and create meaningful ranges
-    const birthYears = allIndividuals
-        .map(i => i.birth_year)
-        .filter(y => y !== null && y !== undefined)
-        .sort((a, b) => a - b);
+    // Create period ranges starting from 1550, every 50 years until present
+    const currentYear = new Date().getFullYear();
+    const periodRanges = [];
     
-    if (birthYears.length === 0) return;
-    
-    const minYear = birthYears[0];
-    const maxYear = birthYears[birthYears.length - 1];
-    
-    // Create year range tiles (e.g., 1700s, 1800s, etc.)
-    const yearRanges = [];
-    const startDecade = Math.floor(minYear / 100) * 100;
-    const endDecade = Math.ceil(maxYear / 100) * 100;
-    
-    for (let decade = startDecade; decade <= endDecade; decade += 100) {
-        const rangeStart = decade;
-        const rangeEnd = decade + 99;
-        const label = decade < 1000 
-            ? `${rangeStart}s-${rangeEnd}s` 
-            : `${Math.floor(rangeStart / 100)}00s`;
-        
-        yearRanges.push({
-            start: rangeStart,
-            end: rangeEnd,
+    for (let start = 1550; start < currentYear; start += 50) {
+        const end = Math.min(start + 49, currentYear);
+        const label = `${start}-${end}`;
+        periodRanges.push({
+            start: start,
+            end: end,
             label: label
         });
     }
     
-    // Also add some specific historical periods
-    yearRanges.push(
-        { start: 1730, end: 1780, label: 'Founding Fathers Era' },
-        { start: 1800, end: 1900, label: '1800s' },
-        { start: 1900, end: 2000, label: '1900s' }
-    );
-    
-    // Remove duplicates and sort
-    const uniqueRanges = [];
-    const seen = new Set();
-    yearRanges.forEach(range => {
-        const key = `${range.start}-${range.end}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueRanges.push(range);
-        }
-    });
-    uniqueRanges.sort((a, b) => a.start - b.start);
-    
-    const yearsGrid = document.getElementById('yearsFilterGrid');
-    if (yearsGrid) {
-        yearsGrid.innerHTML = uniqueRanges.map(range => {
+    const periodGrid = document.getElementById('periodLivedGrid');
+    if (periodGrid) {
+        periodGrid.innerHTML = periodRanges.map(range => {
             const escapedLabel = escapeHtml(range.label);
             return `
-                <div class="year-range-tile" onclick="selectYearRange(${range.start}, ${range.end}, ${JSON.stringify(range.label)})" 
+                <div class="year-range-tile" onclick="selectPeriodRange(${range.start}, ${range.end}, ${JSON.stringify(range.label)})" 
                      data-start="${range.start}" data-end="${range.end}">
                     ${escapedLabel}
                 </div>
             `;
         }).join('');
     }
+    
+    // Also setup key events grid (existing functionality)
+    setupKeyEventTiles();
 }
 
 function setupKeyEventTiles() {
@@ -223,11 +193,11 @@ async function loadAllIndividuals() {
             }
         }
         
+        // Default to showing all individuals
         displayIndividuals(allIndividuals);
         
-        // Setup year ranges and key events after loading individuals
+        // Setup filters after loading individuals
         setupYearRanges();
-        setupKeyEventTiles();
         loadKeyEventsGeneral();
     } catch (error) {
         console.error('Error loading individuals:', error);
@@ -315,30 +285,23 @@ function filterByKeyEventsGeneral(keyEventsGeneral) {
                 // Deselect if already active
                 btn.classList.remove('active');
                 selectedKeyEventsGeneral = null;
-                currentFilterType = 'all';
-                displayIndividuals(allIndividuals);
             } else {
                 // Select this button
                 btn.classList.add('active');
                 selectedKeyEventsGeneral = keyEventsGeneral;
-                currentFilterType = 'keyEventsGeneral';
                 
                 // Deselect other buttons
                 buttons.forEach(b => {
                     if (b !== btn) b.classList.remove('active');
                 });
-                
-                // Filter individuals
-                const filtered = allIndividuals.filter(individual => {
-                    return individual.key_events_general === keyEventsGeneral;
-                });
-                
-                displayIndividuals(filtered);
             }
         } else {
             btn.classList.remove('active');
         }
     });
+    
+    // Apply combined filters (will include this selection)
+    applyCombinedFilters();
 }
 
 function displayIndividuals(individuals) {
@@ -383,73 +346,44 @@ function displayIndividuals(individuals) {
     }).join('');
 }
 
-// Tile-based filter functions
-function showViewAll() {
-    currentFilterType = 'all';
-    selectedKeyEventsGeneral = null;
+// Filter panel toggle
+function toggleFilterPanel() {
+    const panel = document.getElementById('combinedFilterPanel');
+    const btn = document.getElementById('showFilterBtn');
     
-    // Clear active state on key events general buttons
-    const buttons = document.querySelectorAll('.key-events-general-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    selectedYearRange = null;
-    selectedKeyEvent = null;
+    if (!panel || !btn) return;
     
-    // Update tile states
-    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
-    document.getElementById('viewAllTile').classList.add('active');
+    filterPanelVisible = !filterPanelVisible;
     
-    // Hide filter panels
-    document.getElementById('yearsFilterPanel').classList.remove('active');
-    document.getElementById('keyEventsFilterPanel').classList.remove('active');
-    
-    // Clear selections
-    document.querySelectorAll('.year-range-tile').forEach(tile => tile.classList.remove('selected'));
-    document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
-    
-    // Show all individuals
-    displayIndividuals(allIndividuals);
+    if (filterPanelVisible) {
+        panel.style.display = 'block';
+        btn.textContent = '🔍 Hide Filters';
+    } else {
+        panel.style.display = 'none';
+        btn.textContent = '🔍 Show Filters';
+    }
 }
 
-function showYearsFilter() {
-    currentFilterType = 'years';
-    
-    // Update tile states
-    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
-    document.getElementById('yearsTile').classList.add('active');
-    
-    // Show/hide filter panels
-    document.getElementById('yearsFilterPanel').classList.add('active');
-    document.getElementById('keyEventsFilterPanel').classList.remove('active');
-}
-
-function showKeyEventsFilter() {
-    currentFilterType = 'keyEvents';
-    
-    // Update tile states
-    document.querySelectorAll('.search-tile').forEach(tile => tile.classList.remove('active'));
-    document.getElementById('keyEventsTile').classList.add('active');
-    
-    // Show/hide filter panels
-    document.getElementById('keyEventsFilterPanel').classList.add('active');
-    document.getElementById('yearsFilterPanel').classList.remove('active');
-}
-
-function selectYearRange(start, end, label) {
-    // Toggle selection
-    const tiles = document.querySelectorAll('.year-range-tile');
+function selectPeriodRange(start, end, label) {
+    // Toggle selection for period range
+    const tiles = document.querySelectorAll('#periodLivedGrid .year-range-tile');
     tiles.forEach(tile => {
         if (parseInt(tile.dataset.start) === start && parseInt(tile.dataset.end) === end) {
             if (tile.classList.contains('selected')) {
                 tile.classList.remove('selected');
-                selectedYearRange = null;
+                selectedPeriodRange = null;
             } else {
                 tiles.forEach(t => t.classList.remove('selected'));
                 tile.classList.add('selected');
-                // Escape label to prevent XSS
-                selectedYearRange = { start, end, label: escapeHtml(label) };
+                selectedPeriodRange = { start, end, label: escapeHtml(label) };
             }
         }
     });
+}
+
+function selectYearRange(start, end, label) {
+    // Legacy function - kept for compatibility but not used in new UI
+    selectPeriodRange(start, end, label);
 }
 
 function selectKeyEvent(event) {
@@ -469,57 +403,78 @@ function selectKeyEvent(event) {
     });
 }
 
-function applyYearFilter() {
-    if (!selectedYearRange) {
-        alert('Please select a year range first!');
-        return;
+function applyCombinedFilters() {
+    let filtered = allIndividuals;
+    
+    // Apply Period Lived filter
+    if (selectedPeriodRange) {
+        filtered = filtered.filter(individual => {
+            if (!individual.birth_year) return false;
+            return individual.birth_year >= selectedPeriodRange.start && 
+                   individual.birth_year <= selectedPeriodRange.end;
+        });
     }
     
-    const filtered = allIndividuals.filter(individual => {
-        if (!individual.birth_year) return false;
-        return individual.birth_year >= selectedYearRange.start && 
-               individual.birth_year <= selectedYearRange.end;
-    });
+    // Apply Key Events filter
+    if (selectedKeyEvent) {
+        filtered = filtered.filter(individual => {
+            if (!individual.key_events || typeof individual.key_events !== 'string' || individual.key_events.trim() === '') {
+                return false;
+            }
+            
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = individual.key_events;
+                const listItems = Array.from(tempDiv.querySelectorAll('li'));
+                return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
+            } catch (e) {
+                console.warn('Error parsing key_events HTML:', e);
+                return false;
+            }
+        });
+    }
     
+    // Apply Historical Period filter
+    if (selectedKeyEventsGeneral) {
+        filtered = filtered.filter(individual => {
+            return individual.key_events_general === selectedKeyEventsGeneral;
+        });
+    }
+    
+    currentFilterType = 'combined';
     displayIndividuals(filtered);
+}
+
+function clearAllFilters() {
+    selectedPeriodRange = null;
+    selectedKeyEvent = null;
+    selectedKeyEventsGeneral = null;
+    currentFilterType = 'all';
+    
+    // Clear visual selections
+    document.querySelectorAll('#periodLivedGrid .year-range-tile').forEach(tile => tile.classList.remove('selected'));
+    document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
+    document.querySelectorAll('.key-events-general-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Show all individuals
+    displayIndividuals(allIndividuals);
+}
+
+// Legacy functions - kept for compatibility
+function applyYearFilter() {
+    applyCombinedFilters();
 }
 
 function clearYearFilter() {
-    selectedYearRange = null;
-    document.querySelectorAll('.year-range-tile').forEach(tile => tile.classList.remove('selected'));
-    displayIndividuals(allIndividuals);
+    clearAllFilters();
 }
 
 function applyKeyEventFilter() {
-    if (!selectedKeyEvent) {
-        alert('Please select a key event first!');
-        return;
-    }
-    
-    const filtered = allIndividuals.filter(individual => {
-        // key_events is now stored as HTML TEXT
-        if (!individual.key_events || typeof individual.key_events !== 'string' || individual.key_events.trim() === '') {
-            return false;
-        }
-        
-        try {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = individual.key_events;
-            const listItems = Array.from(tempDiv.querySelectorAll('li'));
-            return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
-        } catch (e) {
-            console.warn('Error parsing key_events HTML:', e);
-            return false;
-        }
-    });
-    
-    displayIndividuals(filtered);
+    applyCombinedFilters();
 }
 
 function clearKeyEventFilter() {
-    selectedKeyEvent = null;
-    document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
-    displayIndividuals(allIndividuals);
+    clearAllFilters();
 }
 
 async function viewBiography(individualId) {
@@ -1122,11 +1077,12 @@ function escapeHtml(text) {
 window.viewBiography = viewBiography;
 window.filterByKeyEventsGeneral = filterByKeyEventsGeneral;
 window.showMarketplace = showMarketplace;
-window.showViewAll = showViewAll;
-window.showYearsFilter = showYearsFilter;
-window.showKeyEventsFilter = showKeyEventsFilter;
+window.toggleFilterPanel = toggleFilterPanel;
+window.selectPeriodRange = selectPeriodRange;
 window.selectYearRange = selectYearRange;
 window.selectKeyEvent = selectKeyEvent;
+window.applyCombinedFilters = applyCombinedFilters;
+window.clearAllFilters = clearAllFilters;
 window.applyYearFilter = applyYearFilter;
 window.clearYearFilter = clearYearFilter;
 window.applyKeyEventFilter = applyKeyEventFilter;

@@ -118,7 +118,11 @@
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            justify-content: center;
+            justify-content: flex-start;
+        }
+        
+        #combinedFilterPanel .key-events-general-buttons {
+            justify-content: flex-start;
         }
         
         .key-events-general-btn {
@@ -155,11 +159,6 @@
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 30px;
-            display: none;
-        }
-        
-        .filter-panel.active {
-            display: block;
         }
         
         .filter-panel h3 {
@@ -171,8 +170,8 @@
         
         .years-filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
             margin-bottom: 20px;
         }
         
@@ -611,53 +610,44 @@
                 
                 <!-- Marketplace View -->
                 <div id="marketplaceView">
-                    <div class="search-tiles-container">
-                        <div class="search-tile active" onclick="showViewAll()" id="viewAllTile">
-                            <div class="search-tile-icon">📚</div>
-                            <div class="search-tile-title">View All</div>
-                            <div class="search-tile-description">See all biographies</div>
-                        </div>
-                        <div class="search-tile" onclick="showYearsFilter()" id="yearsTile">
-                            <div class="search-tile-icon">📅</div>
-                            <div class="search-tile-title">Years Lived</div>
-                            <div class="search-tile-description">Filter by time period</div>
-                        </div>
-                        <div class="search-tile" onclick="showKeyEventsFilter()" id="keyEventsTile">
-                            <div class="search-tile-icon">⭐</div>
-                            <div class="search-tile-title">Key Events</div>
-                            <div class="search-tile-description">Filter by important events</div>
-                        </div>
+                    <!-- Show Filter Button -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <button class="btn btn-primary" onclick="toggleFilterPanel()" id="showFilterBtn" style="font-size: 1.1rem; padding: 12px 30px;">
+                            🔍 Show Filters
+                        </button>
                     </div>
                     
-                    <!-- Key Events General Buttons -->
-                    <div class="key-events-general-container" id="keyEventsGeneralContainer">
-                        <h3 style="margin-bottom: 20px; color: #333; font-size: 1.5rem;">Filter by Historical Period</h3>
-                        <div class="key-events-general-buttons" id="keyEventsGeneralButtons">
-                            <!-- Buttons will be generated here -->
+                    <!-- Combined Filter Panel -->
+                    <div class="filter-panel" id="combinedFilterPanel" style="display: none;">
+                        <h3 style="margin: 0 0 25px 0; color: #333; font-size: 1.8rem; text-align: center;">Filters</h3>
+                        
+                        <!-- Period Lived Filter -->
+                        <div style="margin-bottom: 40px;">
+                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">📅 Period Lived</h4>
+                            <div class="years-filter-grid" id="periodLivedGrid">
+                                <!-- Period range tiles will be generated here -->
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Years Filter Panel -->
-                    <div class="filter-panel" id="yearsFilterPanel">
-                        <h3>📅 Filter by Years Lived</h3>
-                        <div class="years-filter-grid" id="yearsFilterGrid">
-                            <!-- Year range tiles will be generated here -->
+                        
+                        <!-- Key Events Filter -->
+                        <div style="margin-bottom: 40px;">
+                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">⭐ Key Events</h4>
+                            <div class="key-events-grid" id="keyEventsGrid">
+                                <!-- Key event tiles will be generated here -->
+                            </div>
                         </div>
-                        <div class="filter-actions">
-                            <button class="btn btn-primary" onclick="applyYearFilter()">Show Results</button>
-                            <button class="btn btn-secondary" onclick="clearYearFilter()">Clear</button>
+                        
+                        <!-- Historical Period Filter -->
+                        <div style="margin-bottom: 40px;">
+                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">🏛️ Historical Period</h4>
+                            <div class="key-events-general-buttons" id="keyEventsGeneralButtons">
+                                <!-- Buttons will be generated here -->
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Key Events Filter Panel -->
-                    <div class="filter-panel" id="keyEventsFilterPanel">
-                        <h3>⭐ Filter by Key Events</h3>
-                        <div class="key-events-grid" id="keyEventsGrid">
-                            <!-- Key event tiles will be generated here -->
-                        </div>
-                        <div class="filter-actions">
-                            <button class="btn btn-primary" onclick="applyKeyEventFilter()">Show Results</button>
-                            <button class="btn btn-secondary" onclick="clearKeyEventFilter()">Clear</button>
+                        
+                        <div class="filter-actions" style="margin-top: 30px;">
+                            <button class="btn btn-primary" onclick="applyCombinedFilters()">Apply Filters</button>
+                            <button class="btn btn-secondary" onclick="clearAllFilters()">Clear All</button>
                         </div>
                     </div>
                     
