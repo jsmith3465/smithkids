@@ -17,11 +17,29 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Approvals page DOMContentLoaded');
+    
+    let checkAuthInterval = null;
+    let timeoutId = null;
+    
+    const cleanup = () => {
+        if (checkAuthInterval) {
+            clearInterval(checkAuthInterval);
+            checkAuthInterval = null;
+        }
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+    };
+    
     setTimeout(() => {
-        const checkAuth = setInterval(() => {
+        checkAuthInterval = setInterval(() => {
             if (window.authStatus) {
-                clearInterval(checkAuth);
+                cleanup();
+                console.log('authStatus found, isAuthenticated:', window.authStatus.isAuthenticated);
                 if (window.authStatus.isAuthenticated) {
+                    console.log('User is authenticated, calling checkAdminAccess');
                     checkAdminAccess();
                 } else {
                     const authCheck = document.getElementById('authCheck');
@@ -35,8 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100);
         
-        setTimeout(() => {
-            clearInterval(checkAuth);
+        timeoutId = setTimeout(() => {
+            cleanup();
             if (!window.authStatus) {
                 const authCheck = document.getElementById('authCheck');
                 if (authCheck) {
@@ -50,65 +68,83 @@ document.addEventListener('DOMContentLoaded', () => {
                     checkAdminAccess();
                 }
             }
-        }, 5000);
+        }, 10000); // Increased timeout to 10 seconds
     }, 200);
 });
 
 async function checkAdminAccess() {
-    const authCheck = document.getElementById('authCheck');
-    const mainContent = document.getElementById('mainContent');
-    const adminCheck = document.getElementById('adminCheck');
-    const adminContent = document.getElementById('adminContent');
-    
-    // Log which elements are missing for debugging
-    if (!authCheck) console.error('authCheck element not found');
-    if (!mainContent) console.error('mainContent element not found');
-    if (!adminCheck) console.error('adminCheck element not found');
-    if (!adminContent) console.error('adminContent element not found');
-    
-    if (!authCheck || !mainContent || !adminCheck || !adminContent) {
-        console.error('Required DOM elements not found. Cannot proceed.');
-        if (authCheck) {
-            authCheck.innerHTML = '<p style="color: #dc3545;">Error: Page elements not found. Please refresh the page.</p>';
-        }
-        return;
-    }
-    
-    const session = window.authStatus?.getSession();
-    if (!session) {
-        console.error('No session found');
-        window.location.href = getPagePath('login.html');
-        return;
-    }
-    
-    console.log('Session found:', { uid: session.uid, userType: session.userType, username: session.username });
-    
-    // Show mainContent first
-    authCheck.classList.add('hidden');
-    mainContent.classList.remove('hidden');
-    
-    // Check admin access
-    if (session.userType !== 'admin') {
-        console.log('User is not an admin:', session.userType);
-        adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
-        adminContent.classList.add('hidden');
-        return;
-    }
-    
-    console.log('Admin access confirmed, showing admin content');
-    
-    // Hide admin check and show admin content
-    adminCheck.classList.add('hidden');
-    adminContent.classList.remove('hidden');
-    
     try {
-        await loadPendingApprovals();
-        setupEventListeners();
+        const authCheck = document.getElementById('authCheck');
+        const mainContent = document.getElementById('mainContent');
+        const adminCheck = document.getElementById('adminCheck');
+        const adminContent = document.getElementById('adminContent');
+        
+        // Log which elements are missing for debugging
+        if (!authCheck) console.error('authCheck element not found');
+        if (!mainContent) console.error('mainContent element not found');
+        if (!adminCheck) console.error('adminCheck element not found');
+        if (!adminContent) console.error('adminContent element not found');
+        
+        if (!authCheck || !mainContent || !adminCheck || !adminContent) {
+            console.error('Required DOM elements not found. Cannot proceed.');
+            if (authCheck) {
+                authCheck.innerHTML = '<p style="color: #dc3545;">Error: Page elements not found. Please refresh the page.</p>';
+            }
+            return;
+        }
+        
+        const session = window.authStatus?.getSession();
+        if (!session) {
+            console.error('No session found');
+            authCheck.innerHTML = '<p style="color: #dc3545;">No session found. Redirecting to login...</p>';
+            setTimeout(() => {
+                window.location.href = getPagePath('login.html');
+            }, 2000);
+            return;
+        }
+        
+        console.log('Session found:', { uid: session.uid, userType: session.userType, username: session.username });
+        
+        // Show mainContent first
+        authCheck.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        
+        // Check admin access
+        if (session.userType !== 'admin') {
+            console.log('User is not an admin:', session.userType);
+            adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
+            adminCheck.classList.remove('hidden');
+            adminContent.classList.add('hidden');
+            return;
+        }
+        
+        console.log('Admin access confirmed, showing admin content');
+        
+        // Hide admin check and show admin content
+        adminCheck.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        
+        // Load approvals and setup event listeners
+        try {
+            await loadPendingApprovals();
+            setupEventListeners();
+            console.log('Approvals loaded successfully');
+        } catch (error) {
+            console.error('Error loading approvals:', error);
+            adminCheck.innerHTML = `<p style="color: #dc3545;">Error loading approvals: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
+            adminCheck.classList.remove('hidden');
+            adminContent.classList.add('hidden');
+        }
     } catch (error) {
-        console.error('Error loading approvals:', error);
-        adminCheck.innerHTML = '<p style="color: #dc3545;">Error loading approvals. Please refresh the page.</p>';
-        adminCheck.classList.remove('hidden');
-        adminContent.classList.add('hidden');
+        console.error('Error in checkAdminAccess:', error);
+        const authCheck = document.getElementById('authCheck');
+        const adminCheck = document.getElementById('adminCheck');
+        if (authCheck) {
+            authCheck.innerHTML = `<p style="color: #dc3545;">Error: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
+        }
+        if (adminCheck) {
+            adminCheck.innerHTML = `<p style="color: #dc3545;">Error: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
+        }
     }
 }
 
