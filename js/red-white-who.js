@@ -451,19 +451,6 @@ async function viewBiography(individualId) {
         
         currentIndividual = individual;
         
-        // Check if user has already read this biography (for 5 credit reward)
-        const { data: existingRead } = await supabase
-            .from('red_white_who_reads')
-            .select('read_id')
-            .eq('user_uid', currentUserUid)
-            .eq('individual_id', individualId)
-            .single();
-        
-        // Award 5 credits for reading if not already read
-        if (!existingRead) {
-            await awardReadingCredits(individualId, individual.name);
-        }
-        
         // Check quiz attempts
         const { data: quizAttempts } = await supabase
             .from('red_white_who_quiz_attempts')
