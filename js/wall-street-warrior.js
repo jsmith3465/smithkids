@@ -1233,8 +1233,39 @@ const screenerData = {
     }
 };
 
+// Find companies that meet all 8 criteria
+function findCompaniesMeetingAllCriteria() {
+    const allScreenerKeys = Object.keys(screenerData);
+    const companyCounts = {};
+    
+    // Count how many screeners each company appears in
+    allScreenerKeys.forEach(key => {
+        screenerData[key].companies.forEach(company => {
+            const symbol = company.symbol;
+            if (!companyCounts[symbol]) {
+                companyCounts[symbol] = {
+                    symbol: company.symbol,
+                    name: company.name,
+                    count: 0
+                };
+            }
+            companyCounts[symbol].count++;
+        });
+    });
+    
+    // Find companies that appear in all 8 screeners
+    const allCriteriaCompanies = Object.values(companyCounts)
+        .filter(company => company.count === 8)
+        .map(company => ({
+            symbol: company.symbol,
+            name: company.name
+        }));
+    
+    return allCriteriaCompanies;
+}
+
 // Handle screener selection
-function handleScreenerSelect() {
+async function handleScreenerSelect() {
     const select = document.getElementById('screenerSelect');
     const descriptionDiv = document.getElementById('screenerDescription');
     const screenerContent = document.getElementById('screenerContent');
@@ -1251,8 +1282,23 @@ function handleScreenerSelect() {
         return;
     }
     
-    const screener = screenerData[selectedValue];
-    if (!screener) return;
+    let companies = [];
+    let screener = null;
+    
+    if (selectedValue === 'all-8-criteria') {
+        // Special handling for "All 8 Criteria"
+        companies = findCompaniesMeetingAllCriteria();
+        screener = {
+            title: 'All 8 Buffett-Inspired Criteria',
+            whatItScreens: 'Companies that meet all 8 screening criteria simultaneously.',
+            plainMeaning: 'These companies have been identified as meeting every single one of Uncle Warren\'s key investment principles: Circle of Competence, Simple Business, Consistent Earnings, High Returns with Low Debt, Durable Competitive Advantage, Strong Cash Generation, Reasonable Intrinsic Value, and Long-Term Ownership Mindset.',
+            whyBuffett: 'Meeting all criteria simultaneously is rare and indicates exceptional quality. These are the types of businesses Buffett would consider "wonderful companies" worthy of long-term investment.'
+        };
+    } else {
+        screener = screenerData[selectedValue];
+        if (!screener) return;
+        companies = screener.companies;
+    }
     
     // Build description HTML with clickable "Uncle Warren" link
     const warrenLink = '<span class="warren-link" onclick="openWarrenModal()">Uncle Warren (Buffett)</span>';
@@ -1274,15 +1320,62 @@ function handleScreenerSelect() {
     
     descriptionDiv.style.display = 'block';
     
-    // Display companies
-    companiesList.innerHTML = screener.companies.map(company => `
+    // Display companies with loading state for prices
+    companiesList.innerHTML = companies.map(company => `
         <div class="screener-company-card" onclick="window.location.href='${getPagePath('stock-details.html')}?ticker=${company.symbol}'">
             <div class="screener-company-symbol">${company.symbol}</div>
             <div class="screener-company-name">${company.name}</div>
+            <div class="screener-company-price" data-symbol="${company.symbol}">Loading price...</div>
         </div>
     `).join('');
     
     resultsDiv.style.display = 'block';
+    
+    // Fetch and display stock prices for all companies
+    await loadScreenerStockPrices(companies.map(c => c.symbol));
+}
+
+// Load stock prices for screener companies
+async function loadScreenerStockPrices(tickers) {
+    if (!tickers || tickers.length === 0) return;
+    
+    try {
+        const prices = await getStockPrices(tickers);
+        
+        // Update each company card with price
+        tickers.forEach(ticker => {
+            const priceElement = document.querySelector(`.screener-company-price[data-symbol="${ticker}"]`);
+            if (priceElement) {
+                const priceData = prices[ticker];
+                if (priceData && priceData.current_price) {
+                    const change = priceData.change_amount || 0;
+                    const changePercent = priceData.change_percent || '0.00%';
+                    const isPositive = change >= 0;
+                    const changeColor = isPositive ? '#28a745' : '#dc3545';
+                    
+                    priceElement.innerHTML = `
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #333; margin-top: 8px;">
+                            $${priceData.current_price.toFixed(2)}
+                        </div>
+                        <div style="font-size: 0.85rem; color: ${changeColor}; margin-top: 4px;">
+                            ${isPositive ? '+' : ''}${change.toFixed(2)} (${changePercent})
+                        </div>
+                    `;
+                } else {
+                    priceElement.innerHTML = '<div style="font-size: 0.9rem; color: #999; margin-top: 8px;">Price unavailable</div>';
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading screener stock prices:', error);
+        // Update all price elements to show error
+        tickers.forEach(ticker => {
+            const priceElement = document.querySelector(`.screener-company-price[data-symbol="${ticker}"]`);
+            if (priceElement) {
+                priceElement.innerHTML = '<div style="font-size: 0.9rem; color: #999; margin-top: 8px;">Price unavailable</div>';
+            }
+        });
+    }
 }
 
 // Open Warren Buffett modal
@@ -1341,9 +1434,10 @@ async function loadQuotes() {
         }
         
         if (quotes && quotes.length > 0) {
-            allQuotes = quotes;
-            // Start with a random quote
-            currentQuoteIndex = Math.floor(Math.random() * allQuotes.length);
+            // Shuffle the quotes array for true randomization
+            allQuotes = shuffleArray([...quotes]);
+            // Start with the first quote (array is already shuffled randomly)
+            currentQuoteIndex = 0;
             displayQuote(allQuotes[currentQuoteIndex]);
         } else {
             // No quotes in database, show default message
@@ -1392,6 +1486,16 @@ function displayQuote(quote) {
         // For Buffett quotes
         quoteAuthorEl.textContent = `— ${quote.author || 'Warren Buffett'}`;
     }
+}
+
+// Shuffle array function for randomizing quotes
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }
 
 // Setup quote navigation
