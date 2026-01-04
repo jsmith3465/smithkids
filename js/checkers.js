@@ -36,6 +36,7 @@ class CheckersGame {
         this.isAdmin = false;
         this.isProcessingMove = false;
         this.mustJump = false; // Track if player must make a jump
+        this.computerDifficulty = 'moderate'; // 'easy', 'moderate', 'hard'
         
         this.init();
     }
@@ -316,8 +317,8 @@ class CheckersGame {
         this.updateDisplay();
         this.checkForJumps();
         
-        // If computer is black and goes first, make a move
-        if (this.isComputerPlayer(this.player2Id) && this.currentPlayer === 'black') {
+        // If it's the computer's turn, make a move automatically
+        if (this.isComputerTurn()) {
             setTimeout(() => this.computerMove(), 500);
         }
     }
@@ -358,6 +359,11 @@ class CheckersGame {
     
     handleSquareClick(row, col) {
         if (!this.gameActive || this.isProcessingMove) return;
+        
+        // Don't allow player interaction when it's the computer's turn
+        if (this.isComputerTurn()) {
+            return;
+        }
         
         const piece = this.board[row][col];
         const isCurrentPlayerPiece = piece && piece.color === this.currentPlayer;
@@ -528,7 +534,7 @@ class CheckersGame {
         
         this.isProcessingMove = false;
         
-        // If computer's turn, make a move
+        // If computer's turn, make a move automatically
         if (this.gameActive && this.isComputerTurn()) {
             setTimeout(() => this.computerMove(), 500);
         }
@@ -777,12 +783,19 @@ class CheckersGame {
     updateDisplay() {
         const playerName = this.currentPlayer === 'red' ? this.player1Name : this.player2Name;
         const playerColor = this.currentPlayer === 'red' ? 'Red' : 'Black';
-        this.currentPlayerDisplay.textContent = `Current Player: ${playerName} (${playerColor})`;
-        this.moveCountDisplay.textContent = `Moves: ${this.moveCount}`;
+        const isComputerTurn = this.isComputerTurn();
+        let displayText = `Current Player: ${playerName} (${playerColor})`;
+        
+        if (isComputerTurn) {
+            displayText += ' 🤖 (Computer is thinking...)';
+        }
         
         if (this.mustJump) {
-            this.currentPlayerDisplay.textContent += ' - Must Jump!';
+            displayText += ' - Must Jump!';
         }
+        
+        this.currentPlayerDisplay.textContent = displayText;
+        this.moveCountDisplay.textContent = `Moves: ${this.moveCount}`;
     }
     
     newGame() {
