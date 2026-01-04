@@ -6,6 +6,87 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Credit cost for Blackjack
+const BLACKJACK_CREDIT_COST = 1;
+
+// Check if user has enough credits
+async function checkCredits(userUid, cost) {
+    try {
+        const { data, error } = await supabase
+            .from('User_Credits')
+            .select('balance')
+            .eq('user_uid', userUid)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error checking credits:', error);
+            return { hasCredits: false, balance: 0 };
+        }
+        
+        const balance = data ? data.balance : 0;
+        return { hasCredits: balance >= cost, balance: balance };
+    } catch (error) {
+        console.error('Error checking credits:', error);
+        return { hasCredits: false, balance: 0 };
+    }
+}
+
+// Deduct credits for a game
+async function deductCredits(userUid, gameType, gameId = null) {
+    try {
+        // Get current balance
+        const { data: creditData, error: fetchError } = await supabase
+            .from('User_Credits')
+            .select('credit_id, balance')
+            .eq('user_uid', userUid)
+            .single();
+        
+        if (fetchError) {
+            if (fetchError.code === 'PGRST116') {
+                return { success: false, message: 'Insufficient credits' };
+            }
+            throw fetchError;
+        }
+        
+        if (!creditData || creditData.balance < BLACKJACK_CREDIT_COST) {
+            return { success: false, message: 'Insufficient credits' };
+        }
+        
+        const newBalance = creditData.balance - BLACKJACK_CREDIT_COST;
+        
+        // Update balance
+        const { error: updateError } = await supabase
+            .from('User_Credits')
+            .update({ balance: newBalance, updated_at: new Date().toISOString() })
+            .eq('credit_id', creditData.credit_id);
+        
+        if (updateError) throw updateError;
+        
+        // Record transaction
+        const { error: transError } = await supabase
+            .from('Credit_Transactions')
+            .insert({
+                to_user_uid: userUid,
+                amount: BLACKJACK_CREDIT_COST,
+                transaction_type: 'game_payment',
+                game_type: gameType,
+                game_id: gameId,
+                description: `Played ${gameType.replace('_', ' ')}`
+            });
+        
+        if (transError) throw transError;
+        
+        return { success: true, newBalance: newBalance };
+    } catch (error) {
+        console.error('Error deducting credits:', error);
+        return { success: false, message: 'Error processing payment' };
+    }
+}
+
+function showCreditWarning(balance) {
+    return `You have ${balance} credit(s) remaining. You need ${BLACKJACK_CREDIT_COST} credit to play. Please contact an admin to add more credits.`;
+}
+
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
     const currentPath = window.location.pathname;
@@ -138,7 +219,24 @@ class BlackjackGame {
         return hand.length === 2 && this.calculateHandValue(hand) === 21;
     }
     
-    dealCards() {
+    async dealCards() {
+        // Check and deduct credits before dealing (skip for admins)
+        const session = window.authStatus?.getSession();
+        if (session && session.userType !== 'admin') {
+            const creditCheck = await checkCredits(session.uid, BLACKJACK_CREDIT_COST);
+            if (!creditCheck.hasCredits) {
+                alert(showCreditWarning(creditCheck.balance));
+                return;
+            }
+            
+            // Deduct credit when dealing cards
+            const deductResult = await deductCredits(session.uid, 'blackjack');
+            if (!deductResult.success) {
+                alert('Unable to process payment. Please try again.');
+                return;
+            }
+        }
+        
         // Create and shuffle deck
         this.deck = this.createDeck();
         
