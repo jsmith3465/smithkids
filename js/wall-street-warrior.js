@@ -22,6 +22,8 @@ function getPagePath(pageName) {
 let currentUserUid = null;
 let isAdmin = false;
 let viewingUserUid = null; // For admin viewing other users
+let allQuotes = []; // Store all quotes
+let currentQuoteIndex = 0; // Current quote index
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
@@ -71,6 +73,8 @@ async function checkUserAccess() {
     try {
         setupTabs();
         setupEventListeners();
+        await loadQuotes();
+        setupQuoteNavigation();
         
         if (isAdmin) {
             await setupAdminUserSelector();
@@ -1315,5 +1319,100 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Load quotes from database
+async function loadQuotes() {
+    try {
+        const { data: quotes, error } = await supabase
+            .from('wall_street_warrior_quotes')
+            .select('*')
+            .order('quote_id', { ascending: true });
+        
+        if (error) {
+            console.error('Error loading quotes:', error);
+            // Fallback to showing a default message
+            displayQuote({
+                quote_text: 'Track your investments, build your watchlist, and manage your portfolio!',
+                quote_type: 'buffett',
+                author: 'Wall Street Warrior'
+            });
+            return;
+        }
+        
+        if (quotes && quotes.length > 0) {
+            allQuotes = quotes;
+            // Start with a random quote
+            currentQuoteIndex = Math.floor(Math.random() * allQuotes.length);
+            displayQuote(allQuotes[currentQuoteIndex]);
+        } else {
+            // No quotes in database, show default message
+            displayQuote({
+                quote_text: 'Track your investments, build your watchlist, and manage your portfolio!',
+                quote_type: 'buffett',
+                author: 'Wall Street Warrior'
+            });
+        }
+    } catch (error) {
+        console.error('Error loading quotes:', error);
+        displayQuote({
+            quote_text: 'Track your investments, build your watchlist, and manage your portfolio!',
+            quote_type: 'buffett',
+            author: 'Wall Street Warrior'
+        });
+    }
+}
+
+// Display a quote
+function displayQuote(quote) {
+    const quoteTextEl = document.getElementById('quoteText');
+    const quoteAuthorEl = document.getElementById('quoteAuthor');
+    
+    if (!quoteTextEl || !quoteAuthorEl) return;
+    
+    quoteTextEl.textContent = `"${quote.quote_text}"`;
+    quoteAuthorEl.innerHTML = '';
+    
+    if (quote.quote_type === 'bible') {
+        // For Bible verses, make the reference a clickable link
+        const reference = `${quote.book} ${quote.chapter}:${quote.verse}`;
+        const referenceLink = document.createElement('a');
+        referenceLink.href = `${getPagePath('bible.html')}?book=${encodeURIComponent(quote.book)}&chapter=${quote.chapter}&verse=${quote.verse}`;
+        referenceLink.textContent = reference;
+        referenceLink.style.color = '#CC5500';
+        referenceLink.style.textDecoration = 'none';
+        referenceLink.style.fontWeight = '600';
+        referenceLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+        referenceLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+        
+        quoteAuthorEl.appendChild(document.createTextNode('— '));
+        quoteAuthorEl.appendChild(referenceLink);
+        quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
+    } else {
+        // For Buffett quotes
+        quoteAuthorEl.textContent = `— ${quote.author || 'Warren Buffett'}`;
+    }
+}
+
+// Setup quote navigation
+function setupQuoteNavigation() {
+    const prevBtn = document.getElementById('quotePrevBtn');
+    const nextBtn = document.getElementById('quoteNextBtn');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (allQuotes.length === 0) return;
+            currentQuoteIndex = (currentQuoteIndex - 1 + allQuotes.length) % allQuotes.length;
+            displayQuote(allQuotes[currentQuoteIndex]);
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (allQuotes.length === 0) return;
+            currentQuoteIndex = (currentQuoteIndex + 1) % allQuotes.length;
+            displayQuote(allQuotes[currentQuoteIndex]);
+        });
+    }
 }
 

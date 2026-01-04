@@ -289,7 +289,7 @@
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <a href="index.html" class="back-link">← Back to Home</a>
+                    <h1 style="margin: 0; font-size: 2.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📈 Wall Street Warrior</h1>
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Profile menu will be inserted here -->
@@ -302,8 +302,13 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <div class="warrior-header">
-                <p>Track your investments, build your watchlist, and manage your portfolio!</p>
+            <div class="warrior-header" style="position: relative;">
+                <button id="quotePrevBtn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: #DAA520; border: none; color: white; font-size: 1.5rem; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='#CC5500'" onmouseout="this.style.background='#DAA520'">‹</button>
+                <div id="quoteDisplay" style="padding: 0 60px;">
+                    <p id="quoteText" style="margin: 0 0 10px 0; font-size: 1.1rem; line-height: 1.6;">Loading quote...</p>
+                    <p id="quoteAuthor" style="margin: 0; font-size: 0.95rem; color: #666; font-style: italic;"></p>
+                </div>
+                <button id="quoteNextBtn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #DAA520; border: none; color: white; font-size: 1.5rem; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='#CC5500'" onmouseout="this.style.background='#DAA520'">›</button>
             </div>
             
             <!-- Admin User Selector (only for admins) -->
