@@ -242,11 +242,12 @@ async function loadPendingApprovals() {
             approvalItem.id = `approval_${approval.approval_id}`;
             approvalItem.innerHTML = `
                 <div class="approval-info">
-                    <div class="approval-user">
-                        <span class="approval-type-badge ${typeInfo.badgeClass}">${typeInfo.badgeText}</span>${escapeHtml(displayName)}
+                    <div class="approval-header" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <span class="approval-date" style="color: #999; font-size: 0.9rem;">${dateStr}</span>
+                        <span class="approval-type-badge ${typeInfo.badgeClass}">${typeInfo.badgeText}</span>
+                        <span class="approval-user" style="font-weight: 600; color: #333;">${escapeHtml(displayName)}</span>
                     </div>
                     <div class="approval-details">${typeInfo.detailsHtml}</div>
-                    <div class="approval-date">${dateStr}</div>
                 </div>
                 <div class="approval-controls">
                     <div style="display: flex; align-items: center; gap: 10px;">
