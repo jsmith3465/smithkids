@@ -469,15 +469,32 @@ class CheckersGame {
         return moves;
     }
     
-    makeMove(fromRow, fromCol, toRow, toCol) {
+    makeMove(fromRow, fromCol, toRow, toCol, captureRow = undefined, captureCol = undefined) {
         if (this.isProcessingMove) return;
         
         const piece = this.board[fromRow][fromCol];
         if (!piece || piece.color !== this.currentPlayer) return;
         
-        // Check if move is valid
-        const validMove = this.possibleMoves.some(m => m.row === toRow && m.col === toCol);
-        if (!validMove) return;
+        // Check if move is valid - either from possibleMoves (player clicks) or validate directly (computer moves)
+        let validMove = null;
+        if (this.possibleMoves.length > 0) {
+            // Player clicked on a square, use stored possible moves
+            validMove = this.possibleMoves.find(m => m.row === toRow && m.col === toCol);
+        } else {
+            // Computer move or direct call - validate the move directly
+            const possibleMoves = this.getPossibleMoves(fromRow, fromCol);
+            validMove = possibleMoves.find(m => m.row === toRow && m.col === toCol);
+            // If validMove found and it has capture info, use it
+            if (validMove && validMove.captureRow !== undefined) {
+                captureRow = validMove.captureRow;
+                captureCol = validMove.captureCol;
+            }
+        }
+        
+        if (!validMove) {
+            console.log('Invalid move attempted:', { fromRow, fromCol, toRow, toCol });
+            return;
+        }
         
         this.isProcessingMove = true;
         
@@ -486,10 +503,11 @@ class CheckersGame {
         this.board[fromRow][fromCol] = null;
         
         // Check if this was a jump
-        const move = this.possibleMoves.find(m => m.row === toRow && m.col === toCol);
-        if (move && move.captureRow !== undefined) {
+        if (validMove.captureRow !== undefined || captureRow !== undefined) {
+            const capRow = captureRow !== undefined ? captureRow : validMove.captureRow;
+            const capCol = captureCol !== undefined ? captureCol : validMove.captureCol;
             // Remove captured piece
-            this.board[move.captureRow][move.captureCol] = null;
+            this.board[capRow][capCol] = null;
             
             // Check for king promotion
             if ((piece.color === 'red' && toRow === 7) || (piece.color === 'black' && toRow === 0)) {
@@ -669,7 +687,14 @@ class CheckersGame {
         // Make the move after a short delay for better UX
         setTimeout(() => {
             this.isProcessingMove = false;
-            this.makeMove(selectedMove.fromRow, selectedMove.fromCol, selectedMove.toRow, selectedMove.toCol);
+            this.makeMove(
+                selectedMove.fromRow, 
+                selectedMove.fromCol, 
+                selectedMove.toRow, 
+                selectedMove.toCol,
+                selectedMove.captureRow,
+                selectedMove.captureCol
+            );
         }, 300);
     }
     

@@ -513,9 +513,21 @@ class ChessGame {
         const piece = this.board[fromRow][fromCol];
         if (!piece || piece.color !== this.currentPlayer) return;
         
-        // Check if move is valid
-        const validMove = this.possibleMoves.some(m => m.row === toRow && m.col === toCol);
-        if (!validMove) return;
+        // Check if move is valid - either from possibleMoves (player clicks) or validate directly (computer moves)
+        let validMove = false;
+        if (this.possibleMoves.length > 0) {
+            // Player clicked on a square, use stored possible moves
+            validMove = this.possibleMoves.some(m => m.row === toRow && m.col === toCol);
+        } else {
+            // Computer move or direct call - validate the move directly
+            const possibleMoves = this.getPossibleMoves(fromRow, fromCol);
+            validMove = possibleMoves.some(m => m.row === toRow && m.col === toCol);
+        }
+        
+        if (!validMove) {
+            console.log('Invalid move attempted:', { fromRow, fromCol, toRow, toCol });
+            return;
+        }
         
         this.isProcessingMove = true;
         
