@@ -288,6 +288,14 @@
                 grid-template-columns: 1fr;
             }
         }
+        .warren-buffett-principles li::before {
+            content: "→";
+            color: #DAA520;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+        }
     </style>
 </head>
 <body>
@@ -448,12 +456,12 @@
             </div>
             <div style="background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 15px 0; color: #DAA520; font-size: 1.3rem; font-weight: 700;">His Investment Principles:</h3>
-                <ul style="margin-left: 20px; margin-bottom: 0; line-height: 2; color: #333;">
-                    <li style="margin-bottom: 8px;"><strong style="color: #CC5500;">Understanding</strong> the businesses you invest in</li>
-                    <li style="margin-bottom: 8px;">Looking for companies with <strong style="color: #CC5500;">strong competitive advantages</strong></li>
-                    <li style="margin-bottom: 8px;">Buying when prices are <strong style="color: #CC5500;">below the company's true value</strong></li>
-                    <li style="margin-bottom: 8px;">Holding investments for the <strong style="color: #CC5500;">long term</strong></li>
-                    <li style="margin-bottom: 0;">Avoiding debt and focusing on <strong style="color: #CC5500;">cash generation</strong></li>
+                <ul class="warren-buffett-principles" style="margin-left: 0; margin-bottom: 0; line-height: 2; color: #333; list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 8px; padding-left: 25px; position: relative;">Understanding the businesses you invest in</li>
+                    <li style="margin-bottom: 8px; padding-left: 25px; position: relative;">Looking for companies with strong competitive advantages</li>
+                    <li style="margin-bottom: 8px; padding-left: 25px; position: relative;">Buying when prices are below the company's true value</li>
+                    <li style="margin-bottom: 8px; padding-left: 25px; position: relative;">Holding investments for the long term</li>
+                    <li style="margin-bottom: 0; padding-left: 25px; position: relative;">Avoiding debt and focusing on cash generation</li>
                 </ul>
             </div>
             <div style="line-height: 1.8; color: #333; font-size: 1.05rem; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-radius: 10px; border: 2px solid #DAA520;">
