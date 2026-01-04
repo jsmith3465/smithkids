@@ -1484,7 +1484,29 @@ function displayQuote(quote) {
         quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
     } else {
         // For Buffett quotes
-        quoteAuthorEl.textContent = `— ${quote.author || 'Warren Buffett'}`;
+        const author = quote.author || 'Warren Buffett';
+        quoteAuthorEl.innerHTML = '';
+        quoteAuthorEl.appendChild(document.createTextNode('— '));
+        
+        // Check if author is Warren Buffett and make it clickable
+        if (author.toLowerCase().includes('warren buffett') || author.toLowerCase().includes('buffett')) {
+            const buffettLink = document.createElement('a');
+            buffettLink.href = '#';
+            buffettLink.textContent = author;
+            buffettLink.style.color = '#CC5500';
+            buffettLink.style.textDecoration = 'none';
+            buffettLink.style.fontWeight = '600';
+            buffettLink.style.cursor = 'pointer';
+            buffettLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+            buffettLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+            buffettLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openWarrenModal();
+            });
+            quoteAuthorEl.appendChild(buffettLink);
+        } else {
+            quoteAuthorEl.appendChild(document.createTextNode(author));
+        }
     }
 }
 
