@@ -1832,7 +1832,14 @@ async function transferCredits() {
             .select('UID, First_Name, Last_Name, Username')
             .in('UID', [fromUserId, toUserId]);
         
-        if (usersError) throw usersError;
+        if (usersError) {
+            console.error('Error fetching user names:', usersError);
+            throw usersError;
+        }
+        
+        if (!users || users.length === 0) {
+            throw new Error('Could not find user information for the selected users.');
+        }
         
         users.forEach(user => {
             if (user.UID === fromUserId) {
@@ -1846,6 +1853,10 @@ async function transferCredits() {
                     : user.Username;
             }
         });
+        
+        if (!fromUserName || !toUserName) {
+            throw new Error('Could not determine user names for the transfer.');
+        }
         
         // Check if FROM user has enough total credits (available + savings)
         const { data: fromCredit, error: fromError } = await supabase
@@ -1862,9 +1873,37 @@ async function transferCredits() {
         const fromSavingsBalance = fromCredit?.savings_balance || 0;
         const fromTotalBalance = fromAvailableBalance + fromSavingsBalance;
         
+        console.log('Transfer check:', {
+            fromUserId,
+            toUserId,
+            amount,
+            fromAvailableBalance,
+            fromSavingsBalance,
+            fromTotalBalance,
+            fromCredit
+        });
+        
         if (fromTotalBalance < amount) {
             showError(`Insufficient credits. User has ${fromTotalBalance.toLocaleString()} total credits (${fromAvailableBalance.toLocaleString()} available + ${fromSavingsBalance.toLocaleString()} savings).`);
             return;
+        }
+        
+        // Ensure we have a credit record for FROM user
+        if (!fromCredit) {
+            // Create a credit record if it doesn't exist (shouldn't happen if balance check passed)
+            const { data: newFromCredit, error: createFromError } = await supabase
+                .from('User_Credits')
+                .insert({ user_uid: fromUserId, balance: 0, savings_balance: 0 })
+                .select()
+                .single();
+            
+            if (createFromError) {
+                console.error('Error creating FROM user credit record:', createFromError);
+                throw createFromError;
+            }
+            
+            // Use the newly created record
+            fromCredit = newFromCredit;
         }
         
         const transferBtn = document.getElementById('transferCreditsBtn');
@@ -1900,7 +1939,10 @@ async function transferCredits() {
                 })
                 .eq('credit_id', fromCredit.credit_id);
             
-            if (updateFromError) throw updateFromError;
+            if (updateFromError) {
+                console.error('Error updating FROM user balance:', updateFromError);
+                throw updateFromError;
+            }
         } else {
             // This shouldn't happen if balance check passed, but handle it
             showError('Source user credit record not found.');
@@ -1929,14 +1971,20 @@ async function transferCredits() {
                 .update({ balance: newToBalance, updated_at: new Date().toISOString() })
                 .eq('credit_id', toCredit.credit_id);
             
-            if (updateToError) throw updateToError;
+            if (updateToError) {
+                console.error('Error updating TO user balance:', updateToError);
+                throw updateToError;
+            }
         } else {
             // Create new credit record for TO user
             const { error: insertToError } = await supabase
                 .from('User_Credits')
                 .insert({ user_uid: toUserId, balance: amount });
             
-            if (insertToError) throw insertToError;
+            if (insertToError) {
+                console.error('Error creating TO user credit record:', insertToError);
+                throw insertToError;
+            }
         }
         
         // Create transaction(s) for FROM user (debit)
@@ -1952,7 +2000,10 @@ async function transferCredits() {
                     description: `Transferred ${amountFromAvailable.toLocaleString()} credits from Available Balance to ${toUserName} (authorized by ${adminName})`
                 });
             
-            if (transFromAvailableError) throw transFromAvailableError;
+            if (transFromAvailableError) {
+                console.error('Error creating FROM user available transaction:', transFromAvailableError);
+                throw transFromAvailableError;
+            }
         }
         
         // Record savings credits deduction if any
@@ -1967,7 +2018,10 @@ async function transferCredits() {
                     description: `Transferred ${amountFromSavings.toLocaleString()} credits from Savings Account to ${toUserName} (authorized by ${adminName})`
                 });
             
-            if (transFromSavingsError) throw transFromSavingsError;
+            if (transFromSavingsError) {
+                console.error('Error creating FROM user savings transaction:', transFromSavingsError);
+                throw transFromSavingsError;
+            }
         }
         
         // Create transaction for TO user (credit)
@@ -1978,10 +2032,13 @@ async function transferCredits() {
                 to_user_uid: toUserId,
                 amount: amount,
                 transaction_type: 'credit_transfer_in',
-                description: `Received ${amount} credits from ${fromUserName} (authorized by ${adminName})`
+                description: `Received ${amount.toLocaleString()} credits from ${fromUserName} (authorized by ${adminName})`
             });
         
-        if (transToError) throw transToError;
+        if (transToError) {
+            console.error('Error creating TO user transaction:', transToError);
+            throw transToError;
+        }
         
         // Build success message with details
         let successMsg = `Successfully transferred ${amount.toLocaleString()} credits from ${fromUserName} to ${toUserName}.`;
@@ -2014,7 +2071,9 @@ async function transferCredits() {
         
     } catch (error) {
         console.error('Error transferring credits:', error);
-        showError('An error occurred while transferring credits. Please try again.');
+        // Show more detailed error message
+        const errorMessage = error.message || error.toString() || 'Unknown error';
+        showError(`Error transferring credits: ${errorMessage}. Please check the browser console for more details.`);
     } finally {
         const transferBtn = document.getElementById('transferCreditsBtn');
         if (transferBtn) {
