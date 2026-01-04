@@ -423,29 +423,41 @@
     
     <!-- Warren Buffett Bio Modal -->
     <div id="warrenModal" class="modal" style="display: none;" onclick="if(event.target === this) window.closeWarrenModal()">
-        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">About Uncle Warren</h2>
-                <button id="closeWarrenModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">×</button>
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
+            <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #DAA520; border-radius: 15px 15px 0 0; padding: 25px; margin: -30px -30px 25px -30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 2rem; font-weight: 900;">About Uncle Warren</h2>
+                    <button id="closeWarrenModal" style="background: #DAA520; border: none; font-size: 1.8rem; cursor: pointer; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; font-weight: 700; line-height: 1;" onmouseover="this.style.background='#CC5500'" onmouseout="this.style.background='#DAA520'">×</button>
+                </div>
             </div>
-            <div style="line-height: 1.8; color: #333;">
-                <p style="margin-bottom: 15px;">
-                    <strong>Warren Buffett</strong> is one of the most successful investors in history. Born in 1930, he began investing as a teenager and built his company, Berkshire Hathaway, into one of the world's largest corporations.
-                </p>
-                <p style="margin-bottom: 15px;">
-                    Known as the "Oracle of Omaha," Buffett is famous for his long-term investment philosophy. He focuses on buying great businesses at fair prices and holding them for decades, rather than trading frequently.
-                </p>
-                <p style="margin-bottom: 15px;">
-                    His investment principles emphasize:
-                </p>
-                <ul style="margin-left: 20px; margin-bottom: 15px;">
-                    <li>Understanding the businesses you invest in</li>
-                    <li>Looking for companies with strong competitive advantages</li>
-                    <li>Buying when prices are below the company's true value</li>
-                    <li>Holding investments for the long term</li>
-                    <li>Avoiding debt and focusing on cash generation</li>
+            <div style="display: flex; gap: 25px; margin-bottom: 25px; align-items: flex-start;">
+                <div style="flex-shrink: 0;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Warren_Buffett_at_the_University_of_North_Carolina_at_Chapel_Hill.jpg" 
+                         alt="Warren Buffett" 
+                         style="width: 200px; height: 200px; border-radius: 15px; border: 3px solid #DAA520; object-fit: cover; box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);"
+                         onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/7/7e/Warren_Buffett_Kansas_City_2019.jpg'; this.style.objectFit='cover';">
+                </div>
+                <div style="flex: 1; line-height: 1.8; color: #333;">
+                    <p style="margin-bottom: 15px; font-size: 1.05rem;">
+                        <strong style="color: #DAA520; font-size: 1.2rem;">Warren Buffett</strong> is one of the most successful investors in history. Born in 1930, he began investing as a teenager and built his company, Berkshire Hathaway, into one of the world's largest corporations.
+                    </p>
+                    <p style="margin-bottom: 15px; font-size: 1.05rem;">
+                        Known as the <em style="color: #CC5500; font-weight: 600;">"Oracle of Omaha,"</em> Buffett is famous for his long-term investment philosophy. He focuses on buying great businesses at fair prices and holding them for decades, rather than trading frequently.
+                    </p>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 15px 0; color: #DAA520; font-size: 1.3rem; font-weight: 700;">His Investment Principles:</h3>
+                <ul style="margin-left: 20px; margin-bottom: 0; line-height: 2; color: #333;">
+                    <li style="margin-bottom: 8px;"><strong style="color: #CC5500;">Understanding</strong> the businesses you invest in</li>
+                    <li style="margin-bottom: 8px;">Looking for companies with <strong style="color: #CC5500;">strong competitive advantages</strong></li>
+                    <li style="margin-bottom: 8px;">Buying when prices are <strong style="color: #CC5500;">below the company's true value</strong></li>
+                    <li style="margin-bottom: 8px;">Holding investments for the <strong style="color: #CC5500;">long term</strong></li>
+                    <li style="margin-bottom: 0;">Avoiding debt and focusing on <strong style="color: #CC5500;">cash generation</strong></li>
                 </ul>
-                <p style="margin-bottom: 0;">
+            </div>
+            <div style="line-height: 1.8; color: #333; font-size: 1.05rem; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-radius: 10px; border: 2px solid #DAA520;">
+                <p style="margin: 0;">
                     Buffett's approach has made him one of the wealthiest people in the world, and he's known for his simple lifestyle and commitment to giving away most of his fortune to charity.
                 </p>
             </div>
