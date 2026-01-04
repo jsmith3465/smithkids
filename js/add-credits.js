@@ -1218,11 +1218,30 @@ function setupAdminEventListeners() {
     const transferFromUser = document.getElementById('transferFromUser');
     if (transferFromUser) {
         transferFromUser.addEventListener('change', async (e) => {
-            const userId = e.target.value;
+            const userId = parseInt(e.target.value);
             if (userId) {
                 await loadUserBalanceForTransfer(userId, 'from');
+                // Hide transfer complete message when user changes
+                const completeMsg = document.getElementById('transferCompleteMessage');
+                if (completeMsg) completeMsg.style.display = 'none';
             } else {
                 document.getElementById('transferFromBalance').style.display = 'none';
+            }
+        });
+    }
+
+    // Transfer to user selection - show balance
+    const transferToUser = document.getElementById('transferToUser');
+    if (transferToUser) {
+        transferToUser.addEventListener('change', async (e) => {
+            const userId = parseInt(e.target.value);
+            if (userId) {
+                await loadUserBalanceForTransfer(userId, 'to');
+                // Hide transfer complete message when user changes
+                const completeMsg = document.getElementById('transferCompleteMessage');
+                if (completeMsg) completeMsg.style.display = 'none';
+            } else {
+                document.getElementById('transferToBalance').style.display = 'none';
             }
         });
     }
@@ -1783,6 +1802,18 @@ async function loadUserBalanceForTransfer(userId, type) {
                 totalAmount.textContent = totalBalance.toLocaleString();
                 balanceDiv.style.display = 'block';
             }
+        } else if (type === 'to') {
+            const balanceDiv = document.getElementById('transferToBalance');
+            const availableAmount = document.getElementById('transferToAvailableAmount');
+            const savingsAmount = document.getElementById('transferToSavingsAmount');
+            const totalAmount = document.getElementById('transferToTotalAmount');
+            
+            if (balanceDiv && availableAmount && savingsAmount && totalAmount) {
+                availableAmount.textContent = availableBalance.toLocaleString();
+                savingsAmount.textContent = savingsBalance.toLocaleString();
+                totalAmount.textContent = totalBalance.toLocaleString();
+                balanceDiv.style.display = 'block';
+            }
         }
     } catch (error) {
         console.error('Error loading user balance for transfer:', error);
@@ -2040,27 +2071,15 @@ async function transferCredits() {
             throw transToError;
         }
         
-        // Build success message with details
-        let successMsg = `Successfully transferred ${amount.toLocaleString()} credits from ${fromUserName} to ${toUserName}.`;
-        if (amountFromAvailable > 0 && amountFromSavings > 0) {
-            successMsg += ` (${amountFromAvailable.toLocaleString()} from Available, ${amountFromSavings.toLocaleString()} from Savings)`;
-        } else if (amountFromSavings > 0) {
-            successMsg += ` (${amountFromSavings.toLocaleString()} from Savings)`;
+        // Show transfer complete message
+        const completeMsg = document.getElementById('transferCompleteMessage');
+        if (completeMsg) {
+            completeMsg.style.display = 'block';
         }
         
-        showSuccess(successMsg);
-        
-        // Refresh balance display if FROM user is still selected
-        const selectedFromUserId = document.getElementById('transferFromUser').value;
-        if (selectedFromUserId) {
-            await loadUserBalanceForTransfer(parseInt(selectedFromUserId), 'from');
-        }
-        
-        // Reset form
-        document.getElementById('transferFromUser').value = '';
-        document.getElementById('transferToUser').value = '';
-        document.getElementById('transferAmount').value = '10';
-        document.getElementById('transferFromBalance').style.display = 'none';
+        // Refresh balance displays for both users (keep them selected)
+        await loadUserBalanceForTransfer(fromUserId, 'from');
+        await loadUserBalanceForTransfer(toUserId, 'to');
         
         // Refresh balances if needed
         await loadAllCredits();
