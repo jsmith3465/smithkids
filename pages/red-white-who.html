@@ -249,12 +249,28 @@
         }
         
         .biography-header {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 3px solid #e0e0e0;
+        }
+        
+        .biography-name-dates {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .biography-name-dates h2 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: #333;
+        }
+        
+        .biography-content-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 30px;
+            margin-bottom: 30px;
         }
         
         .biography-header-left {
@@ -269,12 +285,18 @@
         }
         
         .biography-header img {
-            width: 200px;
-            height: 250px;
+            width: 300px;
+            height: 375px;
             object-fit: cover;
             border-radius: 10px;
             border: 3px solid #DAA520;
             margin-bottom: 20px;
+        }
+        
+        .quiz-button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
         
         .take-quiz-btn {
@@ -286,10 +308,9 @@
             font-weight: 600;
             border-radius: 10px;
             cursor: pointer;
-            width: 100%;
-            max-width: 200px;
             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
         
         .take-quiz-btn:hover:not(:disabled) {
@@ -303,10 +324,11 @@
             opacity: 0.6;
         }
         
-        .biography-header-right h2 {
-            margin: 0 0 20px 0;
-            font-size: 2.5rem;
-            color: #333;
+        .quiz-attempts-text {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: right;
         }
         
         .key-facts-section {
@@ -315,8 +337,10 @@
         
         .key-facts-section h3 {
             margin: 0 0 15px 0;
-            color: #1976D2;
+            color: #333;
             font-size: 1.5rem;
+            font-weight: bold;
+            text-align: left;
         }
         
         .key-facts-list {
@@ -326,7 +350,7 @@
         }
         
         .key-facts-list li {
-            padding: 8px 0 8px 25px;
+            padding: 6px 0 6px 25px;
             position: relative;
             line-height: 1.6;
             color: #333;
@@ -590,17 +614,24 @@
                 <!-- Biography Page View -->
                 <div id="biographyView" class="biography-page">
                     <div class="biography-header">
-                        <div class="biography-header-left">
-                            <img id="biographyMainPhoto" src="" alt="">
-                            <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
-                        </div>
-                        <div class="biography-header-right">
+                        <div class="biography-name-dates">
                             <h2 id="biographyNameWithDates"></h2>
-                            <div class="key-facts-section">
-                                <h3>Key Facts</h3>
-                                <ul id="keyFactsList" class="key-facts-list">
-                                    <!-- Key facts will be loaded here -->
-                                </ul>
+                        </div>
+                        <div class="biography-content-top">
+                            <div class="biography-header-left">
+                                <img id="biographyMainPhoto" src="" alt="">
+                            </div>
+                            <div class="biography-header-right">
+                                <div class="quiz-button-container">
+                                    <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
+                                    <div class="quiz-attempts-text" id="quizAttemptsText"></div>
+                                </div>
+                                <div class="key-facts-section">
+                                    <h3>Key Facts</h3>
+                                    <ul id="keyFactsList" class="key-facts-list">
+                                        <!-- Key facts will be loaded here -->
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
