@@ -71,20 +71,83 @@ function getTimeBasedGreeting() {
     }
 }
 
+// Load quotes from database (Bible verses and Warren Buffett quotes)
+let databaseQuotes = [];
+let allQuotesLoaded = false;
+
+async function loadQuotesFromDatabase() {
+    if (allQuotesLoaded) return databaseQuotes;
+    
+    try {
+        const { data: quotes, error } = await supabase
+            .from('wall_street_warrior_quotes')
+            .select('*')
+            .order('quote_id', { ascending: true });
+        
+        if (error) {
+            console.error('Error loading quotes from database:', error);
+            return null;
+        }
+        
+        if (quotes && quotes.length > 0) {
+            databaseQuotes = quotes;
+            allQuotesLoaded = true;
+            return quotes;
+        }
+    } catch (error) {
+        console.error('Error loading quotes:', error);
+    }
+    
+    return null;
+}
+
 // Get a random quote or Bible verse with 3:2 ratio (Bible verses : motivational quotes)
 // For every 5 messages: 3 Bible verses, 2 motivational quotes
 // Randomly selects each time the page is visited
-function getRandomQuote() {
+async function getRandomQuote() {
+    // Try to load quotes from database first
+    const dbQuotes = await loadQuotesFromDatabase();
+    
     // Randomly select type with 60% chance for Bible verses (3/5) and 40% for quotes (2/5)
     const random = Math.random();
     let selectedItem;
     
     if (random < 0.6) {
         // 60% chance: Select a random Bible verse
+        if (dbQuotes) {
+            // Filter for Bible quotes from database
+            const bibleQuotes = dbQuotes.filter(q => q.quote_type === 'bible');
+            if (bibleQuotes.length > 0) {
+                const randomIndex = Math.floor(Math.random() * bibleQuotes.length);
+                const quote = bibleQuotes[randomIndex];
+                return {
+                    text: quote.quote_text,
+                    book: quote.book,
+                    chapter: quote.chapter,
+                    verse: quote.verse,
+                    type: 'bible'
+                };
+            }
+        }
+        // Fallback to hardcoded Bible verses
         const randomIndex = Math.floor(Math.random() * bibleVerses.length);
         selectedItem = bibleVerses[randomIndex];
     } else {
-        // 40% chance: Select a random motivational quote
+        // 40% chance: Select a random quote (Warren Buffett or motivational)
+        if (dbQuotes) {
+            // Filter for Buffett quotes from database
+            const buffettQuotes = dbQuotes.filter(q => q.quote_type === 'buffett');
+            if (buffettQuotes.length > 0) {
+                const randomIndex = Math.floor(Math.random() * buffettQuotes.length);
+                const quote = buffettQuotes[randomIndex];
+                return {
+                    text: quote.quote_text,
+                    author: quote.author || 'Warren Buffett',
+                    type: 'buffett'
+                };
+            }
+        }
+        // Fallback to hardcoded motivational quotes
         const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
         selectedItem = motivationalQuotes[randomIndex];
     }
@@ -251,7 +314,7 @@ async function initializeLanding() {
     }
     
     // Set quote or Bible verse - with retry logic
-    const setQuote = () => {
+    const setQuote = async () => {
         const quoteTextEl = document.getElementById('quoteText');
         const quoteAuthorEl = document.getElementById('quoteAuthor');
         
@@ -264,7 +327,7 @@ async function initializeLanding() {
         }
         
         try {
-            const quote = getRandomQuote();
+            const quote = await getRandomQuote();
             console.log('Got quote:', quote);
             
             if (quote && quote.text) {
@@ -295,7 +358,30 @@ async function initializeLanding() {
                     quoteAuthorEl.appendChild(referenceLink);
                     quoteAuthorEl.appendChild(document.createTextNode(' (NIV)'));
                 } else {
-                    quoteAuthorEl.textContent = `— ${quote.author || 'Unknown'}`;
+                    // For regular quotes, check if author is Warren Buffett
+                    const author = quote.author || 'Unknown';
+                    quoteAuthorEl.innerHTML = '';
+                    quoteAuthorEl.appendChild(document.createTextNode('— '));
+                    
+                    if (author.toLowerCase().includes('warren buffett') || author.toLowerCase().includes('buffett')) {
+                        // Make Warren Buffett clickable
+                        const buffettLink = document.createElement('a');
+                        buffettLink.href = '#';
+                        buffettLink.textContent = 'Warren Buffett';
+                        buffettLink.style.color = '#CC5500';
+                        buffettLink.style.textDecoration = 'none';
+                        buffettLink.style.fontWeight = '600';
+                        buffettLink.style.cursor = 'pointer';
+                        buffettLink.onmouseover = function() { this.style.textDecoration = 'underline'; };
+                        buffettLink.onmouseout = function() { this.style.textDecoration = 'none'; };
+                        buffettLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            window.openWarrenModal();
+                        });
+                        quoteAuthorEl.appendChild(buffettLink);
+                    } else {
+                        quoteAuthorEl.appendChild(document.createTextNode(author));
+                    }
                 }
                 console.log('Successfully set quote');
                 return true;
@@ -314,12 +400,15 @@ async function initializeLanding() {
     };
     
     // Try to set quote immediately
-    if (!setQuote()) {
+    const quoteSet = await setQuote();
+    if (!quoteSet) {
         // Retry after delays
-        setTimeout(() => {
-            if (!setQuote()) {
-                setTimeout(() => {
-                    if (!setQuote()) {
+        setTimeout(async () => {
+            const quoteSet2 = await setQuote();
+            if (!quoteSet2) {
+                setTimeout(async () => {
+                    const quoteSet3 = await setQuote();
+                    if (!quoteSet3) {
                         // Final fallback
                         const quoteTextEl = document.getElementById('quoteText');
                         const quoteAuthorEl = document.getElementById('quoteAuthor');
@@ -340,6 +429,27 @@ async function initializeLanding() {
     
     // Initialize approval notifications
     await initializeApprovalNotifications();
+    
+    // Setup Warren Buffett modal functions
+    window.openWarrenModal = function() {
+        const modal = document.getElementById('warrenModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    };
+    
+    window.closeWarrenModal = function() {
+        const modal = document.getElementById('warrenModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    // Setup close button for Warren modal
+    const closeWarrenBtn = document.getElementById('closeWarrenModal');
+    if (closeWarrenBtn) {
+        closeWarrenBtn.addEventListener('click', window.closeWarrenModal);
+    }
     
     // Check for feature announcements (non-blocking - don't wait for it)
     import('./feature-announcements.js').then(({ checkFeatureAnnouncements }) => {
