@@ -2969,10 +2969,10 @@ class BibleTrivia {
             return shuffled;
         };
         
-        // Select questions: 5 easy, 3 moderate, 2 hard
-        const selectedEasy = shuffle(easyQuestions).slice(0, 5);
-        const selectedModerate = shuffle(moderateQuestions).slice(0, 3);
-        const selectedHard = shuffle(hardQuestions).slice(0, 2);
+        // Select questions: 3 easy, 4 moderate, 3 hard
+        const selectedEasy = shuffle(easyQuestions).slice(0, 3);
+        const selectedModerate = shuffle(moderateQuestions).slice(0, 4);
+        const selectedHard = shuffle(hardQuestions).slice(0, 3);
         
         // Combine and shuffle the final selection
         const combined = [...selectedEasy, ...selectedModerate, ...selectedHard];
