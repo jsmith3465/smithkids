@@ -260,9 +260,22 @@
         }
         
         .biography-name-dates h2 {
-            margin: 0;
+            margin: 0 0 15px 0;
             font-size: 2.5rem;
             color: #333;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .biography-name-dates h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(to right, #dc2626 0%, #dc2626 33%, #ffffff 33%, #ffffff 66%, #1e40af 66%, #1e40af 100%);
         }
         
         .biography-content-top {
