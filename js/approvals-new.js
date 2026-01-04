@@ -153,7 +153,7 @@ async function loadPendingApprovals() {
         const userIds = [...new Set(approvals.map(a => a.user_uid))];
         const { data: users, error: usersError } = await supabase
             .from('Users')
-            .select('UID, First_Name, Last_Name, Username, Email')
+            .select('UID, First_Name, Last_Name, Username')
             .in('UID', userIds);
         
         if (usersError) {
