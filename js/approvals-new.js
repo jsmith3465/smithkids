@@ -469,9 +469,9 @@ window.approveItem = async function(approvalId, approvalType, sourceId) {
             await loadPendingApprovals();
         }
         
-        // Update profile menu
+        // Update profile menu immediately
         if (window.createProfileMenu) {
-            setTimeout(() => window.createProfileMenu(), 500);
+            await window.createProfileMenu();
         }
         
         showSuccess(`${getApprovalTypeLabel(approvalType)} approved! User received ${creditsAmount} credits.`);
@@ -524,9 +524,9 @@ window.denyItem = async function(approvalId, approvalType, sourceId) {
             await loadPendingApprovals();
         }
         
-        // Update profile menu
+        // Update profile menu immediately
         if (window.createProfileMenu) {
-            setTimeout(() => window.createProfileMenu(), 500);
+            await window.createProfileMenu();
         }
         
     } catch (error) {
@@ -827,9 +827,9 @@ async function approveAllItems() {
         // Reload approvals
         await loadPendingApprovals();
         
-        // Update profile menu
+        // Update profile menu immediately
         if (window.createProfileMenu) {
-            setTimeout(() => window.createProfileMenu(), 500);
+            await window.createProfileMenu();
         }
         
     } catch (error) {
@@ -894,9 +894,9 @@ async function denyAllItems() {
         // Reload approvals
         await loadPendingApprovals();
         
-        // Update profile menu
+        // Update profile menu immediately
         if (window.createProfileMenu) {
-            setTimeout(() => window.createProfileMenu(), 500);
+            await window.createProfileMenu();
         }
         
     } catch (error) {

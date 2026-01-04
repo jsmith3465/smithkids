@@ -559,6 +559,9 @@ async function getUserPendingApprovalsCount(userUid) {
     }
 }
 
+// Make createProfileMenu available globally
+window.createProfileMenu = createProfileMenu;
+
 // Initialize profile menu when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     // Wait for auth to be ready
