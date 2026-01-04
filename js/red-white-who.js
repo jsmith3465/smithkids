@@ -112,14 +112,18 @@ function setupYearRanges() {
 }
 
 function setupKeyEventTiles() {
-    // Populate key events dropdown
+    // Populate key events dropdown with key_events_general values
     const keyEventsDropdown = document.getElementById('keyEventsDropdown');
     if (keyEventsDropdown && allKeyEvents.length > 0) {
-        keyEventsDropdown.innerHTML = '<option value="">All Key Events</option>' + 
-            allKeyEvents.map(event => {
-                const escapedEvent = escapeHtml(event);
-                return `<option value="${escapedEvent}">${escapedEvent}</option>`;
-            }).join('');
+        // Extract short titles from the full descriptions (everything before the colon)
+        const options = allKeyEvents.map(event => {
+            const title = event.split(':')[0]; // Get title before colon
+            const escapedEvent = escapeHtml(event);
+            const escapedTitle = escapeHtml(title);
+            return `<option value="${escapedEvent}">${escapedTitle}</option>`;
+        }).join('');
+        
+        keyEventsDropdown.innerHTML = '<option value="">All Key Events</option>' + options;
     }
 }
 
@@ -210,32 +214,13 @@ async function loadAllIndividuals() {
 }
 
 async function loadKeyEvents() {
-    // Extract unique key events from all individuals
-    // key_events is now stored as plain text (HTML was removed)
+    // Extract unique key_events_general from all individuals for the dropdown filter
     const eventsSet = new Set();
     allIndividuals.forEach(individual => {
-        if (individual.key_events && typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-            // Check if it's still HTML (for backward compatibility)
-            if (individual.key_events.includes('<li>') || individual.key_events.includes('<ul>')) {
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = individual.key_events;
-                    const listItems = tempDiv.querySelectorAll('li');
-                    listItems.forEach(li => {
-                        const eventText = li.textContent.trim();
-                        if (eventText) {
-                            eventsSet.add(eventText);
-                        }
-                    });
-                } catch (e) {
-                    console.warn('Error parsing key_events HTML:', e, individual);
-                }
-            } else {
-                // Plain text - add directly
-                const eventText = individual.key_events.trim();
-                if (eventText) {
-                    eventsSet.add(eventText);
-                }
+        if (individual.key_events_general && typeof individual.key_events_general === 'string' && individual.key_events_general.trim() !== '') {
+            const eventText = individual.key_events_general.trim();
+            if (eventText) {
+                eventsSet.add(eventText);
             }
         }
     });
@@ -273,9 +258,10 @@ function handleKeyEventsChange() {
     
     if (!selectedValue || selectedValue === '') {
         // Clear key event filter
-        selectedKeyEvent = null;
+        selectedKeyEventsGeneral = null;
     } else {
-        selectedKeyEvent = selectedValue;
+        // Use key_events_general for filtering
+        selectedKeyEventsGeneral = selectedValue;
     }
     
     // Apply filters immediately
@@ -466,33 +452,7 @@ function applyCombinedFilters() {
         });
     }
     
-    // Apply Key Events filter
-    if (selectedKeyEvent) {
-        filtered = filtered.filter(individual => {
-            if (!individual.key_events || typeof individual.key_events !== 'string' || individual.key_events.trim() === '') {
-                return false;
-            }
-            
-            // Check if it's still HTML (for backward compatibility)
-            if (individual.key_events.includes('<li>') || individual.key_events.includes('<ul>')) {
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = individual.key_events;
-                    const listItems = Array.from(tempDiv.querySelectorAll('li'));
-                    return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
-                } catch (e) {
-                    console.warn('Error parsing key_events HTML:', e);
-                    // Fallback to plain text comparison
-                    return individual.key_events.includes(selectedKeyEvent);
-                }
-            } else {
-                // Plain text - check if the selected key event is contained in the text
-                return individual.key_events.includes(selectedKeyEvent);
-            }
-        });
-    }
-    
-    // Apply Historical Period filter
+    // Apply Key Events filter (using key_events_general)
     if (selectedKeyEventsGeneral) {
         filtered = filtered.filter(individual => {
             return individual.key_events_general === selectedKeyEventsGeneral;
@@ -505,7 +465,7 @@ function applyCombinedFilters() {
 
 function clearAllFilters() {
     selectedPeriodRange = null;
-    selectedKeyEvent = null;
+    selectedKeyEvent = null; // Keep for backward compatibility
     selectedKeyEventsGeneral = null;
     currentFilterType = 'all';
     
