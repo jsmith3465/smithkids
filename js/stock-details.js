@@ -128,6 +128,19 @@ async function loadStockDetails(ticker) {
         try {
             overviewData = await getStockOverview(ticker);
             console.log('Overview data received:', overviewData);
+            
+            // If year founded is not available from Alpha Vantage, try to get it from Yahoo Finance
+            if (!overviewData.yearFounded) {
+                try {
+                    const yahooYearFounded = await getYahooFinanceYearFounded(ticker);
+                    if (yahooYearFounded) {
+                        overviewData.yearFounded = yahooYearFounded;
+                        console.log('Year founded from Yahoo Finance:', yahooYearFounded);
+                    }
+                } catch (yahooError) {
+                    console.warn('Could not fetch year founded from Yahoo Finance:', yahooError);
+                }
+            }
         } catch (overviewError) {
             console.warn('Overview data not available, continuing with quote data only:', overviewError);
         }
@@ -196,6 +209,7 @@ async function getStockOverview(ticker) {
         const overview = {
             name: data.Name || null,
             description: data.Description || null,
+            yearFounded: data.YearFounded || data.Founded || null, // Try multiple possible field names
             sector: data.Sector || null,
             industry: data.Industry || null,
             marketCap: data.MarketCapitalization || null,
@@ -364,12 +378,41 @@ async function getYahooFinanceQuote(ticker) {
     }
 }
 
+// Get year founded from Yahoo Finance
+async function getYahooFinanceYearFounded(ticker) {
+    try {
+        // Yahoo Finance profile endpoint sometimes includes founding year
+        const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) {
+            const assetProfile = data.quoteSummary.result[0].assetProfile;
+            if (assetProfile && assetProfile.yearFounded) {
+                return assetProfile.yearFounded;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.warn('Error fetching year founded from Yahoo Finance:', error);
+        return null;
+    }
+}
+
 // Update stock header
 function updateStockHeader(stockData) {
     const symbolEl = document.getElementById('stockSymbol');
     const nameEl = document.getElementById('stockName');
     const priceEl = document.getElementById('stockPrice');
     const changeEl = document.getElementById('stockChange');
+    const descriptionEl = document.getElementById('companyDescription');
+    const yearFoundedEl = document.getElementById('companyYearFounded');
     
     console.log('Updating stock header with data:', stockData);
     
@@ -395,6 +438,37 @@ function updateStockHeader(stockData) {
             changeEl.textContent = 'Loading...';
             changeEl.className = 'stock-change';
         }
+    }
+    
+    // Update company description and year founded
+    const companyInfoEl = document.getElementById('companyInfo');
+    let hasCompanyInfo = false;
+    
+    // Update year founded
+    if (yearFoundedEl) {
+        if (stockData.yearFounded) {
+            yearFoundedEl.textContent = `Founded: ${stockData.yearFounded}`;
+            yearFoundedEl.style.display = 'block';
+            hasCompanyInfo = true;
+        } else {
+            yearFoundedEl.style.display = 'none';
+        }
+    }
+    
+    // Update company description
+    if (descriptionEl) {
+        if (stockData.description) {
+            descriptionEl.textContent = stockData.description;
+            descriptionEl.style.display = 'block';
+            hasCompanyInfo = true;
+        } else {
+            descriptionEl.style.display = 'none';
+        }
+    }
+    
+    // Show company info section if we have any company info
+    if (companyInfoEl) {
+        companyInfoEl.style.display = hasCompanyInfo ? 'block' : 'none';
     }
 }
 
