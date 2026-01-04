@@ -527,10 +527,11 @@ async function awardReadingCredits(individualId, individualName) {
 }
 
 function displayBiography(individual, canTakeQuiz, attemptCount) {
-    // Set name with dates in format "Name - Birth Year - Death Year"
+    // Set name with dates in format "Name (Birth Year-Death Year)" with name bold
     const birthYear = individual.birth_year || 'Unknown';
     const deathYear = individual.death_year || 'Present';
-    document.getElementById('biographyNameWithDates').textContent = `${individual.name} - ${birthYear} - ${deathYear}`;
+    const nameElement = document.getElementById('biographyNameWithDates');
+    nameElement.innerHTML = `<strong>${escapeHtml(individual.name)}</strong> (${escapeHtml(birthYear)}-${escapeHtml(deathYear)})`;
     
     // Set main photo
     const mainPhoto = document.getElementById('biographyMainPhoto');
