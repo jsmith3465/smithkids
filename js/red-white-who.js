@@ -188,7 +188,15 @@ async function loadAllIndividuals() {
         
         if (error) {
             console.error('Supabase error loading individuals:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
             console.error('Error details:', JSON.stringify(error, null, 2));
+            
+            // Check if it's a column type error
+            if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+                throw new Error('Database schema mismatch. Please run the transformation SQL scripts (transform_key_facts_to_html.sql and transform_key_events_to_html.sql) in Supabase.');
+            }
+            
             throw error;
         }
         
@@ -198,6 +206,17 @@ async function loadAllIndividuals() {
         } else {
             allIndividuals = data;
             console.log(`Loaded ${allIndividuals.length} individuals`);
+            
+            // Log sample data structure for debugging
+            if (allIndividuals.length > 0) {
+                console.log('Sample individual structure:', {
+                    name: allIndividuals[0].name,
+                    key_events_type: typeof allIndividuals[0].key_events,
+                    key_facts_type: typeof allIndividuals[0].key_facts,
+                    key_events_preview: allIndividuals[0].key_events ? allIndividuals[0].key_events.substring(0, 50) : null,
+                    key_facts_preview: allIndividuals[0].key_facts ? allIndividuals[0].key_facts.substring(0, 50) : null
+                });
+            }
         }
         
         displayIndividuals(allIndividuals);
@@ -214,6 +233,7 @@ async function loadAllIndividuals() {
                 `<div style="text-align: center; padding: 40px; color: #dc3545;">
                     <p>Error loading biographies. Please refresh the page.</p>
                     <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Error: ${escapeHtml(errorMessage)}</p>
+                    <p style="font-size: 0.8em; color: #999; margin-top: 10px;">Check the browser console for more details.</p>
                 </div>`;
         }
     }
@@ -221,32 +241,22 @@ async function loadAllIndividuals() {
 
 async function loadKeyEvents() {
     // Extract unique key events from all individuals
-    // key_events can be stored as HTML (new format) or TEXT[] array (old format)
+    // key_events is now stored as HTML TEXT
     const eventsSet = new Set();
     allIndividuals.forEach(individual => {
-        if (individual.key_events) {
-            // Check if it's an array (old format)
-            if (Array.isArray(individual.key_events)) {
-                individual.key_events.forEach(event => {
-                    if (event && event.trim()) {
-                        eventsSet.add(event.trim());
+        if (individual.key_events && typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = individual.key_events;
+                const listItems = tempDiv.querySelectorAll('li');
+                listItems.forEach(li => {
+                    const eventText = li.textContent.trim();
+                    if (eventText) {
+                        eventsSet.add(eventText);
                     }
                 });
-            } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-                // It's HTML (new format), parse it
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = individual.key_events;
-                    const listItems = tempDiv.querySelectorAll('li');
-                    listItems.forEach(li => {
-                        const eventText = li.textContent.trim();
-                        if (eventText) {
-                            eventsSet.add(eventText);
-                        }
-                    });
-                } catch (e) {
-                    console.warn('Error parsing key_events HTML:', e);
-                }
+            } catch (e) {
+                console.warn('Error parsing key_events HTML:', e, individual);
             }
         }
     });
@@ -268,24 +278,18 @@ function displayIndividuals(individuals) {
         const deathYear = individual.death_year || 'Present';
         const years = `${birthYear} - ${deathYear}`;
         
-        // key_events can be stored as HTML (new format) or TEXT[] array (old format)
+        // key_events is now stored as HTML TEXT
         let keyEvents = 'No key events listed';
-        if (individual.key_events) {
-            if (Array.isArray(individual.key_events)) {
-                // Old format: TEXT[] array
-                keyEvents = individual.key_events.slice(0, 2).join(', ') || 'No key events listed';
-            } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-                // New format: HTML
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = individual.key_events;
-                    const listItems = Array.from(tempDiv.querySelectorAll('li')).slice(0, 2);
-                    if (listItems.length > 0) {
-                        keyEvents = listItems.map(li => li.textContent.trim()).join(', ');
-                    }
-                } catch (e) {
-                    console.warn('Error parsing key_events HTML:', e);
+        if (individual.key_events && typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = individual.key_events;
+                const listItems = Array.from(tempDiv.querySelectorAll('li')).slice(0, 2);
+                if (listItems.length > 0) {
+                    keyEvents = listItems.map(li => li.textContent.trim()).join(', ');
                 }
+            } catch (e) {
+                console.warn('Error parsing key_events HTML:', e);
             }
         }
         
@@ -411,28 +415,20 @@ function applyKeyEventFilter() {
     }
     
     const filtered = allIndividuals.filter(individual => {
-        // key_events can be stored as HTML (new format) or TEXT[] array (old format)
-        if (!individual.key_events) {
+        // key_events is now stored as HTML TEXT
+        if (!individual.key_events || typeof individual.key_events !== 'string' || individual.key_events.trim() === '') {
             return false;
         }
         
-        if (Array.isArray(individual.key_events)) {
-            // Old format: TEXT[] array
-            return individual.key_events.includes(selectedKeyEvent);
-        } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-            // New format: HTML
-            try {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = individual.key_events;
-                const listItems = Array.from(tempDiv.querySelectorAll('li'));
-                return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
-            } catch (e) {
-                console.warn('Error parsing key_events HTML:', e);
-                return false;
-            }
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = individual.key_events;
+            const listItems = Array.from(tempDiv.querySelectorAll('li'));
+            return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
+        } catch (e) {
+            console.warn('Error parsing key_events HTML:', e);
+            return false;
         }
-        
-        return false;
     });
     
     displayIndividuals(filtered);
@@ -557,23 +553,10 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
         this.src = 'https://via.placeholder.com/200x250?text=No+Photo';
     };
     
-    // Set key facts (can be stored as HTML or JSONB)
+    // Set key facts (now stored as HTML TEXT)
     const keyFactsGrid = document.getElementById('keyFactsGrid');
-    if (individual.key_facts) {
-        if (typeof individual.key_facts === 'string' && individual.key_facts.trim() !== '') {
-            // New format: HTML stored as TEXT
-            keyFactsGrid.innerHTML = individual.key_facts;
-        } else if (typeof individual.key_facts === 'object' && individual.key_facts !== null) {
-            // Old format: JSONB object
-            keyFactsGrid.innerHTML = Object.entries(individual.key_facts).map(([key, value]) => `
-                <div class="key-fact-item">
-                    <strong>${escapeHtml(key)}</strong>
-                    <span>${escapeHtml(String(value))}</span>
-                </div>
-            `).join('');
-        } else {
-            keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
-        }
+    if (individual.key_facts && typeof individual.key_facts === 'string' && individual.key_facts.trim() !== '') {
+        keyFactsGrid.innerHTML = individual.key_facts;
     } else {
         keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
     }
