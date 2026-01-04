@@ -51,13 +51,7 @@ function parseKeyFacts(keyFactsStr) {
     }
 }
 
-function buildPhotoGallery(galleryImages) {
-    if (!galleryImages || galleryImages.length === 0) return '[]';
-    
-    // Create array of photo objects with url
-    const photos = galleryImages.map(url => ({ url: url, caption: '' }));
-    return escapeSql(JSON.stringify(photos));
-}
+// No longer needed - we'll use individual fields
 
 data.forEach((row, index) => {
     const name = row['Name'] || '';
@@ -84,10 +78,16 @@ data.forEach((row, index) => {
     const { birthYear, deathYear } = parseYears(yearsLived);
     const keyEventsArray = keyEvent ? [keyEvent] : [];
     const keyFactsJson = parseKeyFacts(keyFacts);
-    const photoGallery = buildPhotoGallery(galleryImages);
+    
+    // Get individual gallery images (up to 10)
+    const galleryFields = [];
+    for (let i = 1; i <= 10; i++) {
+        const imageUrl = galleryImages[i - 1] || null;
+        galleryFields.push(escapeSql(imageUrl));
+    }
     
     sqlOutput += `-- Individual: ${name}\n`;
-    sqlOutput += `INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)\n`;
+    sqlOutput += `INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)\n`;
     sqlOutput += `VALUES (\n`;
     sqlOutput += `  ${escapeSql(name)},\n`;
     sqlOutput += `  ${birthYear || 'NULL'},\n`;
@@ -98,9 +98,27 @@ data.forEach((row, index) => {
     sqlOutput += `  ${keyFactsJson}::JSONB,\n`;
     sqlOutput += `  ${escapeSql(biographicalSummary)},\n`;
     sqlOutput += `  ${escapeSql(mainPhotoUrl || null)},\n`;
-    sqlOutput += `  ${photoGallery}::JSONB\n`;
+    sqlOutput += `  ${galleryFields.join(',\n  ')}\n`;
     sqlOutput += `)\n`;
-    sqlOutput += `ON CONFLICT DO NOTHING;\n\n`;
+    sqlOutput += `ON CONFLICT (name) DO UPDATE SET\n`;
+    sqlOutput += `  main_photo_url = EXCLUDED.main_photo_url,\n`;
+    sqlOutput += `  photo_gallery_1 = EXCLUDED.photo_gallery_1,\n`;
+    sqlOutput += `  photo_gallery_2 = EXCLUDED.photo_gallery_2,\n`;
+    sqlOutput += `  photo_gallery_3 = EXCLUDED.photo_gallery_3,\n`;
+    sqlOutput += `  photo_gallery_4 = EXCLUDED.photo_gallery_4,\n`;
+    sqlOutput += `  photo_gallery_5 = EXCLUDED.photo_gallery_5,\n`;
+    sqlOutput += `  photo_gallery_6 = EXCLUDED.photo_gallery_6,\n`;
+    sqlOutput += `  photo_gallery_7 = EXCLUDED.photo_gallery_7,\n`;
+    sqlOutput += `  photo_gallery_8 = EXCLUDED.photo_gallery_8,\n`;
+    sqlOutput += `  photo_gallery_9 = EXCLUDED.photo_gallery_9,\n`;
+    sqlOutput += `  photo_gallery_10 = EXCLUDED.photo_gallery_10,\n`;
+    sqlOutput += `  biographical_summary = EXCLUDED.biographical_summary,\n`;
+    sqlOutput += `  key_events = EXCLUDED.key_events,\n`;
+    sqlOutput += `  key_facts = EXCLUDED.key_facts,\n`;
+    sqlOutput += `  birth_year = EXCLUDED.birth_year,\n`;
+    sqlOutput += `  death_year = EXCLUDED.death_year,\n`;
+    sqlOutput += `  updated_at = NOW()\n`;
+    sqlOutput += `RETURNING individual_id;\n\n`;
     
     // Questions - look for Q1-Q10 and Q1_Answered-Q10_Answered
     for (let i = 1; i <= 10; i++) {

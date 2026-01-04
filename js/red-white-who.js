@@ -469,18 +469,42 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
         keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
     }
     
-    // Set biographical summary
-    document.getElementById('biographicalSummary').textContent = individual.biographical_summary || 'No summary available.';
+    // Set biographical summary with paragraph formatting
+    const summaryElement = document.getElementById('biographicalSummary');
+    if (individual.biographical_summary) {
+        // Convert double line breaks to paragraphs for better readability
+        const summaryText = individual.biographical_summary;
+        // Split by double line breaks or single line breaks, then wrap in <p> tags
+        const paragraphs = summaryText
+            .split(/\n\s*\n/) // Split on double line breaks
+            .map(para => para.trim())
+            .filter(para => para.length > 0)
+            .map(para => `<p style="margin-bottom: 15px; line-height: 1.8; color: #333;">${escapeHtml(para)}</p>`)
+            .join('');
+        
+        summaryElement.innerHTML = paragraphs || '<p style="color: #666;">No summary available.</p>';
+    } else {
+        summaryElement.innerHTML = '<p style="color: #666;">No summary available.</p>';
+    }
     
-    // Set photo gallery
+    // Set photo gallery - now using 10 separate fields instead of JSONB array
     const photoGalleryGrid = document.getElementById('photoGalleryGrid');
-    if (individual.photo_gallery && Array.isArray(individual.photo_gallery) && individual.photo_gallery.length > 0) {
-        photoGalleryGrid.innerHTML = individual.photo_gallery.map(photo => `
+    const galleryPhotos = [];
+    
+    // Collect all non-null photo URLs from photo_gallery_1 through photo_gallery_10
+    for (let i = 1; i <= 10; i++) {
+        const photoUrl = individual[`photo_gallery_${i}`];
+        if (photoUrl && photoUrl.trim()) {
+            galleryPhotos.push(photoUrl.trim());
+        }
+    }
+    
+    if (galleryPhotos.length > 0) {
+        photoGalleryGrid.innerHTML = galleryPhotos.map(photoUrl => `
             <div class="photo-gallery-item">
-                <img src="${photo.url || 'https://via.placeholder.com/250x200?text=No+Photo'}" 
-                     alt="${escapeHtml(photo.caption || '')}"
+                <img src="${escapeHtml(photoUrl)}" 
+                     alt="Gallery photo"
                      onerror="this.src='https://via.placeholder.com/250x200?text=No+Photo'">
-                <div class="caption">${escapeHtml(photo.caption || '')}</div>
             </div>
         `).join('');
     } else {

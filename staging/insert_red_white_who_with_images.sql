@@ -9,7 +9,7 @@
 --
 
 -- Individual: George Washington
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'George Washington',
   1732,
@@ -38,11 +38,29 @@ Washington died on December 14, 1799. He was 67 years old. People across the cou
 
 Today, we honor Washington in many ways. Our nation''s capital is named after him. His face is on the one-dollar bill and the quarter. But his greatest legacy is the example he set: a leader who fought for freedom and then gave up power peacefully. That is why George Washington will always be remembered as one of America''s greatest heroes.',
   'https://upload.wikimedia.org/wikipedia/commons/b/b6/Gilbert_Stuart_Williamstown_Portrait_of_George_Washington.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1e/Washington_Crossing_the_Delaware_by_Emanuel_Leutze%2C_MMA-NYC%2C_1851.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9a/Washington_at_Valley_Forge.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/8e/Surrender_of_Lord_Cornwallis.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/3b/George_Washington%27s_Inauguration_at_Independence_Hall_in_Philadelphia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d1/Mount_Vernon.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f6/Scene_at_the_Signing_of_the_Constitution_of_the_United_States.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/95/George_Washington_at_Constitutional_Convention_of_1787.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/54/Washington_as_Farmer.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d7/Washington_Resigning_His_Commission.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a8/Washington_Monument_Dusk_Jan_2006.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/1/1e/Washington_Crossing_the_Delaware_by_Emanuel_Leutze%2C_MMA-NYC%2C_1851.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9a/Washington_at_Valley_Forge.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/8e/Surrender_of_Lord_Cornwallis.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/3b/George_Washington%27s_Inauguration_at_Independence_Hall_in_Philadelphia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d1/Mount_Vernon.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f6/Scene_at_the_Signing_of_the_Constitution_of_the_United_States.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/95/George_Washington_at_Constitutional_Convention_of_1787.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/54/Washington_as_Farmer.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d7/Washington_Resigning_His_Commission.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a8/Washington_Monument_Dusk_Jan_2006.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -102,7 +120,7 @@ FROM red_white_who_individuals WHERE name = 'George Washington'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Benjamin Franklin
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Benjamin Franklin',
   1706,
@@ -135,11 +153,29 @@ Benjamin Franklin died on April 17, 1790, at age 84. About 20,000 people came to
 
 Today, Franklin''s face is on the hundred-dollar bill. But his real legacy is the example he set: never stop learning, always help your community, and believe that ordinary people can do extraordinary things.',
   'https://upload.wikimedia.org/wikipedia/commons/2/25/Benjamin_Franklin_by_Joseph_Duplessis_1778.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/3/39/Benjamin_Franklin%27s_electricity_experiment.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/5a/Declaration_independence.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/72/Franklin-Benjamin-LOC.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/84/BenFranklinDuplessis.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d3/Benjamin_Franklin_-_Join_or_Die.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/4/4e/Franklin_returns_from_England_1775.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e7/Poor_Richard%27s_Almanack_1739.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6f/US-Colonial-Pennsylvania-April_10%2C_1775.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a3/Scene_at_the_Signing_of_the_Constitution.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Franklin_Court_Philadelphia.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/3/39/Benjamin_Franklin%27s_electricity_experiment.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/5a/Declaration_independence.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/72/Franklin-Benjamin-LOC.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/84/BenFranklinDuplessis.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d3/Benjamin_Franklin_-_Join_or_Die.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/4/4e/Franklin_returns_from_England_1775.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e7/Poor_Richard%27s_Almanack_1739.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6f/US-Colonial-Pennsylvania-April_10%2C_1775.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a3/Scene_at_the_Signing_of_the_Constitution.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Franklin_Court_Philadelphia.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -199,7 +235,7 @@ FROM red_white_who_individuals WHERE name = 'Benjamin Franklin'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Abraham Lincoln
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Abraham Lincoln',
   1809,
@@ -234,11 +270,29 @@ But Lincoln never got to see his vision completed. On April 14, 1865, just five 
 
 The nation was devastated. Lincoln had saved the Union and freed millions of enslaved people, and now he was gone. Today, his face is on the penny and the five-dollar bill. The Lincoln Memorial in Washington, D.C., honors his memory. But his greatest monument is a united, free America, the country he gave his life to preserve.',
   'https://upload.wikimedia.org/wikipedia/commons/a/ab/Abraham_Lincoln_O-77_matte_collodion_print.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/5/55/Abraham_Lincoln_Birthplace_NHP.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/0/07/Abraham_Lincoln_-_Alexander_Gardner.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1f/LincolnDouglas.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a7/Abraham_Lincoln_inauguration_1861.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/4/42/Emancipation_Proclamation.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a4/Battle_of_Gettysburg.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9e/Gettysburg_Address_Dedicatory_Ceremony.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/4/44/Lincoln_second_inauguration_1865.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/60/Lincoln_Memorial_Washington.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/bb/Mount_Rushmore_National_Memorial.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/5/55/Abraham_Lincoln_Birthplace_NHP.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/0/07/Abraham_Lincoln_-_Alexander_Gardner.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1f/LincolnDouglas.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a7/Abraham_Lincoln_inauguration_1861.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/4/42/Emancipation_Proclamation.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a4/Battle_of_Gettysburg.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9e/Gettysburg_Address_Dedicatory_Ceremony.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/4/44/Lincoln_second_inauguration_1865.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/60/Lincoln_Memorial_Washington.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/bb/Mount_Rushmore_National_Memorial.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -298,7 +352,7 @@ FROM red_white_who_individuals WHERE name = 'Abraham Lincoln'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Thomas Jefferson
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Thomas Jefferson',
   1743,
@@ -333,11 +387,29 @@ Jefferson''s legacy is complicated. While he wrote that "all men are created equ
 
 Despite these contradictions, Jefferson''s words in the Declaration of Independence have inspired freedom movements around the world. His belief in education, democracy, and human rights helped shape the country we live in today. His life reminds us that ideas have power, and that the right words at the right time can change history.',
   'https://upload.wikimedia.org/wikipedia/commons/b/b1/Official_Presidential_portrait_of_Thomas_Jefferson_%28by_Rembrandt_Peale%2C_1800%29%28cropped%29.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/8/8f/Declaration_of_Independence_%281819%29%2C_by_John_Trumbull.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1b/Declaration_independence_document.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d1/Monticello_2010-10-29.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/54/Louisiana_Purchase.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/ed/Lewis_and_Clark_Expedition_map_2.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/ac/Thomas_Jefferson_by_Rembrandt_Peale_1805.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f6/University_of_Virginia_Rotunda_2006.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1e/ThomasJeffersonMemorial.JPG","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/4/4f/Thomas_Jefferson_Building_LC.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/5f/Virginia_Statute_for_Religious_Freedom.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/8/8f/Declaration_of_Independence_%281819%29%2C_by_John_Trumbull.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1b/Declaration_independence_document.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d1/Monticello_2010-10-29.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/54/Louisiana_Purchase.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/ed/Lewis_and_Clark_Expedition_map_2.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/ac/Thomas_Jefferson_by_Rembrandt_Peale_1805.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f6/University_of_Virginia_Rotunda_2006.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1e/ThomasJeffersonMemorial.JPG',
+  'https://upload.wikimedia.org/wikipedia/commons/4/4f/Thomas_Jefferson_Building_LC.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/5f/Virginia_Statute_for_Religious_Freedom.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -397,7 +469,7 @@ FROM red_white_who_individuals WHERE name = 'Thomas Jefferson'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Harriet Tubman
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Harriet Tubman',
   1822,
@@ -428,11 +500,29 @@ Harriet Tubman died on March 10, 1913, surrounded by friends and family. She was
 
 Today, Harriet Tubman is celebrated as an American hero. Her face was chosen to appear on the twenty-dollar bill. Schools, parks, and monuments are named after her. But her greatest legacy is the example she set: one brave person, willing to risk everything, can make a tremendous difference. She showed that the desire for freedom cannot be stopped by chains, laws, or fear.',
   'https://upload.wikimedia.org/wikipedia/commons/0/04/Harriet_Tubman%2C_by_Squyer%2C_NPG%2C_c1885.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/5/51/Harriet_Tubman_Underground_Railroad.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Harriet_Tubman_with_family_and_neighbors.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e4/The_Underground_Railroad_Routes.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f4/Harriet_Tubman_1895.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d9/Harriet_Tubman_Memorial_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/5e/Harriet_Tubman_Home_Auburn_NY.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1d/Harriet_Tubman_Civil_War.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c2/HarrietTubman.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b6/Harriet_Tubman_Underground_Railroad_Byway.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6f/Harriet_Tubman_grave.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/5/51/Harriet_Tubman_Underground_Railroad.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Harriet_Tubman_with_family_and_neighbors.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e4/The_Underground_Railroad_Routes.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f4/Harriet_Tubman_1895.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d9/Harriet_Tubman_Memorial_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/5e/Harriet_Tubman_Home_Auburn_NY.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1d/Harriet_Tubman_Civil_War.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c2/HarrietTubman.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b6/Harriet_Tubman_Underground_Railroad_Byway.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6f/Harriet_Tubman_grave.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -492,7 +582,7 @@ FROM red_white_who_individuals WHERE name = 'Harriet Tubman'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Frederick Douglass
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Frederick Douglass',
   1818,
@@ -527,11 +617,29 @@ Frederick Douglass died on February 20, 1895, after attending a women''s rights 
 
 Douglass showed what enslaved people could accomplish when given the chance. He went from being someone''s property to meeting with presidents and changing the world. His words continue to inspire: "If there is no struggle, there is no progress." Frederick Douglass proved that one voice, raised in truth, can shake the world.',
   'https://upload.wikimedia.org/wikipedia/commons/f/fd/Frederick_Douglass_portrait.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/5/5a/Young_Frederick_Douglass.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Narrative_Life_Frederick_Douglass.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Frederick_Douglass_by_Samuel_J_Miller_1847-52.png","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a7/The_North_Star_masthead.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/2e/Frederick_Douglass_c1860s.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/87/Frederick_Douglass_National_Historic_Site.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/38/Frederick_Douglass_1879.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e3/Frederick_Douglass_statue_Rochester_NY.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1c/Frederick_Douglass_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/bb/Frederick_Douglass_Memorial_Bridge.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/5/5a/Young_Frederick_Douglass.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Narrative_Life_Frederick_Douglass.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Frederick_Douglass_by_Samuel_J_Miller_1847-52.png',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a7/The_North_Star_masthead.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/2e/Frederick_Douglass_c1860s.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/87/Frederick_Douglass_National_Historic_Site.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/38/Frederick_Douglass_1879.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e3/Frederick_Douglass_statue_Rochester_NY.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1c/Frederick_Douglass_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/bb/Frederick_Douglass_Memorial_Bridge.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -591,7 +699,7 @@ FROM red_white_who_individuals WHERE name = 'Frederick Douglass'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Theodore Roosevelt
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Theodore Roosevelt',
   1858,
@@ -626,11 +734,29 @@ In 1912, Roosevelt ran for president again. During a campaign speech in Milwauke
 
 Theodore Roosevelt died in his sleep on January 6, 1919, at age sixty. His legacy lives on in our national parks, in the idea that government should help ordinary people, and in the example he set of living life to the fullest.',
   'https://upload.wikimedia.org/wikipedia/commons/1/1f/President_Roosevelt_-_Pach_Bros.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Theodore_Roosevelt_as_a_Rough_Rider.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/77/Rough_Riders_1898.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/5e/Panama_Canal_construction.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/82/Mount_Rushmore_Theodore_Roosevelt.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/98/Theodore_Roosevelt_National_Park.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Theodore_Roosevelt_African_Safari.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d7/Theodore_Roosevelt_Nobel_Peace_Prize.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f5/USS_Great_White_Fleet.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/29/Teddy_bear_early_1900s.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e6/Theodore_Roosevelt_Birthplace.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Theodore_Roosevelt_as_a_Rough_Rider.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/77/Rough_Riders_1898.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/5e/Panama_Canal_construction.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/82/Mount_Rushmore_Theodore_Roosevelt.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/98/Theodore_Roosevelt_National_Park.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Theodore_Roosevelt_African_Safari.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d7/Theodore_Roosevelt_Nobel_Peace_Prize.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f5/USS_Great_White_Fleet.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/29/Teddy_bear_early_1900s.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e6/Theodore_Roosevelt_Birthplace.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -690,7 +816,7 @@ FROM red_white_who_individuals WHERE name = 'Theodore Roosevelt'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Martin Luther King Jr.
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Martin Luther King Jr.',
   1929,
@@ -727,11 +853,29 @@ Today, Martin Luther King Jr. Day is a national holiday celebrated on the third 
 
 But King''s greatest legacy is the change he brought to America. Because of his courage and leadership, segregation laws were struck down. Because of his dream, America moved closer to being a country where everyone truly is treated equally. His words still challenge us to build a better, more just world: "Injustice anywhere is a threat to justice everywhere.',
   'https://upload.wikimedia.org/wikipedia/commons/0/05/Martin_Luther_King%2C_Jr..jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/f/ff/Martin_Luther_King%2C_Jr._birth_home.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/16/Montgomery_Bus_Boycott.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/March_on_Washington_Aug_28_1963.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b6/Martin_Luther_King_Jr_I_Have_a_Dream.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/0/06/Selma_to_Montgomery_marches.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e7/Martin_Luther_King_Jr_NYWTS.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/71/Martin_Luther_King_Jr_Nobel_Prize.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/dd/Martin_Luther_King_Jr_Memorial.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/55/Ebenezer_Baptist_Church_Atlanta.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/14/National_Civil_Rights_Museum.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/f/ff/Martin_Luther_King%2C_Jr._birth_home.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/16/Montgomery_Bus_Boycott.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/March_on_Washington_Aug_28_1963.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b6/Martin_Luther_King_Jr_I_Have_a_Dream.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/0/06/Selma_to_Montgomery_marches.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e7/Martin_Luther_King_Jr_NYWTS.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/71/Martin_Luther_King_Jr_Nobel_Prize.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/dd/Martin_Luther_King_Jr_Memorial.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/55/Ebenezer_Baptist_Church_Atlanta.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/14/National_Civil_Rights_Museum.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -791,7 +935,7 @@ FROM red_white_who_individuals WHERE name = 'Martin Luther King Jr.'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Rosa Parks
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Rosa Parks',
   1913,
@@ -830,11 +974,29 @@ Rosa Parks died on October 24, 2005, at age ninety-two. Her body lay in honor in
 
 Rosa Parks showed that ordinary people can make extraordinary change. She was not a famous leader when she refused to give up her seat. She was just a hardworking woman who decided she had had enough injustice. Her courage inspired a movement that changed America forever.',
   'https://upload.wikimedia.org/wikipedia/commons/c/c4/Rosaparks.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/8/88/Montgomery_bus_where_Rosa_Parks_sat.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/38/Rosa_Parks_Booking.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Montgomery_bus_boycott_crowd.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1e/Rosa_Parks_with_Martin_Luther_King_Jr.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/ab/Rosa_Parks_Congressional_Gold_Medal.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f3/Rosa_Parks_Museum_Montgomery.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e4/Rosa_Parks_statue_National_Statuary_Hall.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/2e/Rosa_Parks_in_1955.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/bc/Rosa_Parks_Library_and_Museum.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/50/Rosa_Parks_stamp_2013.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/8/88/Montgomery_bus_where_Rosa_Parks_sat.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/38/Rosa_Parks_Booking.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Montgomery_bus_boycott_crowd.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1e/Rosa_Parks_with_Martin_Luther_King_Jr.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/ab/Rosa_Parks_Congressional_Gold_Medal.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f3/Rosa_Parks_Museum_Montgomery.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e4/Rosa_Parks_statue_National_Statuary_Hall.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/2e/Rosa_Parks_in_1955.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/bc/Rosa_Parks_Library_and_Museum.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/50/Rosa_Parks_stamp_2013.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -894,7 +1056,7 @@ FROM red_white_who_individuals WHERE name = 'Rosa Parks'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Sacagawea
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Sacagawea',
   1788,
@@ -931,11 +1093,29 @@ Today, Sacagawea is remembered as a symbol of courage and determination. Her ima
 
 Sacagawea''s story reminds us that great achievements often depend on people whose contributions might be overlooked. Without this teenage mother and her baby, one of history''s greatest explorations might have failed.',
   'https://upload.wikimedia.org/wikipedia/commons/3/35/Sacagawea_statue_Bismarck_ND.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/4/42/Lewis_and_Clark_Expedition_map.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/ed/Sacagawea_with_Lewis_and_Clark.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f5/Lewis_and_Clark_at_Great_Falls.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Sacagawea_dollar_coin.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/de/Lewis_and_Clark_Corps_of_Discovery.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9e/Shoshone_people.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/7d/Fort_Mandan_reconstruction.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c7/Columbia_River_Gorge.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/2f/Sacagawea_memorial_cemetery.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/8f/Lewis_and_Clark_National_Historic_Trail.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/4/42/Lewis_and_Clark_Expedition_map.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/ed/Sacagawea_with_Lewis_and_Clark.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f5/Lewis_and_Clark_at_Great_Falls.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Sacagawea_dollar_coin.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/de/Lewis_and_Clark_Corps_of_Discovery.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9e/Shoshone_people.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/7d/Fort_Mandan_reconstruction.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c7/Columbia_River_Gorge.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/2f/Sacagawea_memorial_cemetery.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/8f/Lewis_and_Clark_National_Historic_Trail.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -995,7 +1175,7 @@ FROM red_white_who_individuals WHERE name = 'Sacagawea'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Thomas Edison
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Thomas Edison',
   1847,
@@ -1034,11 +1214,29 @@ Edison died on October 18, 1931, at age eighty-four. On the night of his funeral
 
 Thomas Edison showed that invention requires not just brilliant ideas but hard work, persistence, and the willingness to fail many times before succeeding. His "invention factory" approach to research is still used today. And every time you turn on a light, watch a movie, or listen to recorded music, you are enjoying something Thomas Edison helped create.',
   'https://upload.wikimedia.org/wikipedia/commons/9/9d/Thomas_Edison2.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/8/87/Edison_and_phonograph_edit1.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/0/03/Lightbulb_Edison.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e5/Edison_Menlo_Park_Laboratory.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/ac/Thomas_Edison_Kinetoscope.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/3b/Edison_telegraph_operator.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Edison_patents.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/78/Edison_laboratory_West_Orange.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/54/Edison_electric_power_station.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1a/Edison_National_Historic_Site.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Thomas_Edison_statue.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/8/87/Edison_and_phonograph_edit1.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/0/03/Lightbulb_Edison.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e5/Edison_Menlo_Park_Laboratory.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/ac/Thomas_Edison_Kinetoscope.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/3b/Edison_telegraph_operator.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Edison_patents.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/78/Edison_laboratory_West_Orange.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/54/Edison_electric_power_station.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1a/Edison_National_Historic_Site.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Thomas_Edison_statue.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1098,7 +1296,7 @@ FROM red_white_who_individuals WHERE name = 'Thomas Edison'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Alexander Graham Bell
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Alexander Graham Bell',
   1847,
@@ -1133,11 +1331,29 @@ The telephone Bell invented has evolved into something he could never have imagi
 
 Alexander Graham Bell showed that inventions often come from trying to solve human problems. His desire to help deaf people communicate led him to create something that connected the whole world.',
   'https://upload.wikimedia.org/wikipedia/commons/1/10/Alexander_Graham_Bell.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/2/27/Early_telephone.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f5/Alexander_Graham_Bell_patent_drawing.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/50/Bell_Telephone_Laboratories.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/74/Bell_speaking_into_telephone.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/92/Alexander_Graham_Bell_photophone.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d9/Bell_with_Helen_Keller.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/ae/Bell_tetrahedral_kite.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Bell_Silver_Dart_aircraft.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e4/Bell_Museum_Baddeck.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/37/Bell_monument_Brantford.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/2/27/Early_telephone.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f5/Alexander_Graham_Bell_patent_drawing.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/50/Bell_Telephone_Laboratories.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/74/Bell_speaking_into_telephone.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/92/Alexander_Graham_Bell_photophone.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d9/Bell_with_Helen_Keller.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/ae/Bell_tetrahedral_kite.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Bell_Silver_Dart_aircraft.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e4/Bell_Museum_Baddeck.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/37/Bell_monument_Brantford.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1197,7 +1413,7 @@ FROM red_white_who_individuals WHERE name = 'Alexander Graham Bell'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Wright Brothers (Orville & Wilbur)
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Wright Brothers (Orville & Wilbur)',
   1867,
@@ -1236,11 +1452,29 @@ The Wright Brothers succeeded where others failed because they approached flight
 
 Today, part of their original Flyer is in the Smithsonian''s National Air and Space Museum. The bicycle mechanics from Dayton, Ohio, gave humanity the gift of flight.',
   'https://upload.wikimedia.org/wikipedia/commons/d/d2/Wilbur_and_Orville_Wright.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/4/40/First_flight2.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/8c/Wright_Flyer.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/69/Wright_Brothers_bicycle_shop.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a1/Kill_Devil_Hills_monument.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b0/Wright_Brothers_wind_tunnel.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/30/Wright_Flyer_1903.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/fa/Orville_Wright_flying.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/91/Wright_Brothers_National_Memorial.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c5/Wright_Flyer_Smithsonian.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/59/Wright_Cycle_Company.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/4/40/First_flight2.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/8c/Wright_Flyer.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/69/Wright_Brothers_bicycle_shop.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a1/Kill_Devil_Hills_monument.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b0/Wright_Brothers_wind_tunnel.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/30/Wright_Flyer_1903.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/fa/Orville_Wright_flying.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/91/Wright_Brothers_National_Memorial.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c5/Wright_Flyer_Smithsonian.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/59/Wright_Cycle_Company.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1300,7 +1534,7 @@ FROM red_white_who_individuals WHERE name = 'Wright Brothers (Orville & Wilbur)'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Neil Armstrong
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Neil Armstrong',
   1930,
@@ -1337,11 +1571,29 @@ Neil Armstrong died on August 25, 2012, at age eighty-two. His family asked that
 
 Armstrong''s moonwalk proved that humans can achieve the seemingly impossible. It took courage, teamwork, and dedication, and one small step that changed how we see ourselves and our place in the universe.',
   'https://upload.wikimedia.org/wikipedia/commons/0/0d/Neil_Armstrong_pose.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/9/98/Aldrin_Apollo_11.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/3f/Apollo_11_bootprint.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a8/Apollo_11_first_step.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/27/Apollo_11_Launch.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e7/Apollo_11_Lunar_Module.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/1/1c/Apollo_11_Command_Module.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6f/Apollo_11_crew.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/ff/Apollo_11_plaque.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/4/41/Neil_Armstrong_family_farm.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/bd/Armstrong_Air_and_Space_Museum.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/9/98/Aldrin_Apollo_11.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/3f/Apollo_11_bootprint.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a8/Apollo_11_first_step.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/27/Apollo_11_Launch.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e7/Apollo_11_Lunar_Module.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1c/Apollo_11_Command_Module.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6f/Apollo_11_crew.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/ff/Apollo_11_plaque.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/4/41/Neil_Armstrong_family_farm.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/bd/Armstrong_Air_and_Space_Museum.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1401,7 +1653,7 @@ FROM red_white_who_individuals WHERE name = 'Neil Armstrong'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Jackie Robinson
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Jackie Robinson',
   1919,
@@ -1442,11 +1694,29 @@ Jackie Robinson died on October 24, 1972, at age fifty-three. In 1997, Major Lea
 
 Jackie Robinson showed that courage is not about fighting back. Sometimes it is about having the strength not to. His dignity in the face of hatred helped change hearts and minds.',
   'https://upload.wikimedia.org/wikipedia/commons/5/5c/Jackie_Robinson_1950.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f8/Jackie_Robinson_Brooklyn_Dodgers.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a3/Ebbets_Field.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c5/Jackie_Robinson_stealing_home.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6b/Jackie_Robinson_UCLA.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d4/Jackie_Robinson_42.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/2a/Jackie_Robinson_World_Series.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e8/Jackie_Robinson_statue_Dodger_Stadium.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/aa/Jackie_Robinson_Hall_of_Fame.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9a/Jackie_Robinson_Congressional_Gold_Medal.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/76/Jackie_Robinson_Museum.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/f/f8/Jackie_Robinson_Brooklyn_Dodgers.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a3/Ebbets_Field.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c5/Jackie_Robinson_stealing_home.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6b/Jackie_Robinson_UCLA.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d4/Jackie_Robinson_42.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/2a/Jackie_Robinson_World_Series.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e8/Jackie_Robinson_statue_Dodger_Stadium.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/aa/Jackie_Robinson_Hall_of_Fame.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9a/Jackie_Robinson_Congressional_Gold_Medal.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/76/Jackie_Robinson_Museum.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1506,7 +1776,7 @@ FROM red_white_who_individuals WHERE name = 'Jackie Robinson'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Amelia Earhart
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Amelia Earhart',
   1897,
@@ -1543,11 +1813,29 @@ In her last letter, Amelia wrote: "Women must try to do things as men have tried
 
 Amelia Earhart''s courage continues to inspire people today. She proved that limits are often just waiting to be broken.',
   'https://upload.wikimedia.org/wikipedia/commons/e/ee/Amelia_Earhart_standing_under_nose_of_her_Lockheed_Model_10-E_Electra.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/3/38/Amelia_Earhart_Lockheed_Electra.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a9/Amelia_Earhart_transatlantic_flight.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/fc/Amelia_Earhart_with_plane.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Amelia_Earhart_Purdue.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b0/Amelia_Earhart_1932.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c9/Amelia_Earhart_Hawaii_flight.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/57/Amelia_Earhart_flight_route.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Amelia_Earhart_birthplace.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/27/Amelia_Earhart_Memorial.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e1/Amelia_Earhart_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/3/38/Amelia_Earhart_Lockheed_Electra.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amelia_Earhart_transatlantic_flight.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/fc/Amelia_Earhart_with_plane.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Amelia_Earhart_Purdue.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b0/Amelia_Earhart_1932.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c9/Amelia_Earhart_Hawaii_flight.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/57/Amelia_Earhart_flight_route.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Amelia_Earhart_birthplace.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/27/Amelia_Earhart_Memorial.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e1/Amelia_Earhart_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1607,7 +1895,7 @@ FROM red_white_who_individuals WHERE name = 'Amelia Earhart'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Ulysses S. Grant
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Ulysses S. Grant',
   1822,
@@ -1642,11 +1930,29 @@ Grant wrote through terrible pain, racing against death to finish his book. He c
 
 Ulysses S. Grant saved the Union and fought for civil rights. When his country needed him most, he answered the call.',
   'https://upload.wikimedia.org/wikipedia/commons/5/5c/Ulysses_S._Grant_1870-1880.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a4/Battle_of_Shiloh.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d7/Siege_of_Vicksburg.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/2/29/Battle_of_Chattanooga.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/0/07/Grant_and_Lee_Appomattox.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/68/Grant_as_General_in_Chief.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/3f/Grant_inauguration_1869.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Ulysses_Grant_Cabinet.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a2/Grant_Tomb_NYC.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/95/Grant_Memorial_Washington_DC.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Ulysses_Grant_birthplace.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a4/Battle_of_Shiloh.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d7/Siege_of_Vicksburg.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/2/29/Battle_of_Chattanooga.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/0/07/Grant_and_Lee_Appomattox.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/68/Grant_as_General_in_Chief.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/3f/Grant_inauguration_1869.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Ulysses_Grant_Cabinet.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a2/Grant_Tomb_NYC.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/95/Grant_Memorial_Washington_DC.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Ulysses_Grant_birthplace.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1706,7 +2012,7 @@ FROM red_white_who_individuals WHERE name = 'Ulysses S. Grant'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Susan B. Anthony
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Susan B. Anthony',
   1820,
@@ -1741,11 +2047,29 @@ In 1920, fourteen years after Susan''s death, the Nineteenth Amendment gave Amer
 
 Today, Susan B. Anthony''s image appears on the one-dollar coin. Her greatest monument is the right that American women now take for granted: the right to vote.',
   'https://upload.wikimedia.org/wikipedia/commons/c/c9/Susan_B_Anthony_c1855.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Susan_B_Anthony_voting.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f6/Womens_suffrage_parade.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e4/Susan_B_Anthony_house_Rochester.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/36/Susan_B_Anthony_dollar.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/da/Susan_Anthony_Elizabeth_Stanton.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b7/Declaration_of_Sentiments.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/82/National_Woman_Suffrage_Association.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/50/19th_Amendment_certificate.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a8/Susan_B_Anthony_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Susan_B_Anthony_Museum.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Susan_B_Anthony_voting.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f6/Womens_suffrage_parade.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e4/Susan_B_Anthony_house_Rochester.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/36/Susan_B_Anthony_dollar.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/da/Susan_Anthony_Elizabeth_Stanton.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b7/Declaration_of_Sentiments.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/82/National_Woman_Suffrage_Association.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/50/19th_Amendment_certificate.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a8/Susan_B_Anthony_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Susan_B_Anthony_Museum.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1805,7 +2129,7 @@ FROM red_white_who_individuals WHERE name = 'Susan B. Anthony'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Clara Barton
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Clara Barton',
   1821,
@@ -1840,11 +2164,29 @@ Clara Barton died on April 12, 1912, at age ninety.
 
 Today, the American Red Cross continues Clara''s mission, responding to disasters and helping people in need. Every time the Red Cross helps someone in crisis, it continues the work Clara Barton began.',
   'https://upload.wikimedia.org/wikipedia/commons/e/ee/Clara_Barton_1865.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Clara_Barton_Civil_War.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Clara_Barton_battlefield.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/American_Red_Cross_founding.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/7/7e/Red_Cross_ambulance.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/3e/Clara_Barton_later_years.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f8/Clara_Barton_Missing_Soldiers_Office.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c6/Clara_Barton_National_Historic_Site.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a2/American_Red_Cross_headquarters.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9e/Clara_Barton_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/5/52/Clara_Barton_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Clara_Barton_Civil_War.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Clara_Barton_battlefield.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/American_Red_Cross_founding.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/7e/Red_Cross_ambulance.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/3e/Clara_Barton_later_years.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f8/Clara_Barton_Missing_Soldiers_Office.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c6/Clara_Barton_National_Historic_Site.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a2/American_Red_Cross_headquarters.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9e/Clara_Barton_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/52/Clara_Barton_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -1904,7 +2246,7 @@ FROM red_white_who_individuals WHERE name = 'Clara Barton'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: John Adams
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'John Adams',
   1735,
@@ -1937,11 +2279,29 @@ John Adams died on July 4, 1826, exactly fifty years after the Declaration of In
 
 Adams''s contributions to American freedom were immense. He fought for independence when it was dangerous and served his country faithfully.',
   'https://upload.wikimedia.org/wikipedia/commons/f/ff/Gilbert_Stuart%2C_John_Adams%2C_c._1800-1815%2C_NGA_42933.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d4/Boston_Massacre_Engraving.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6a/Continental_Congress_voting_independence.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a1/John_Adams_diplomat_France.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/John_Adams_inauguration_1797.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b8/White_House_1800.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f3/Adams_National_Historical_Park.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/da/John_Adams_and_Thomas_Jefferson.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c7/Old_House_Quincy_Massachusetts.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a9/John_Adams_Library.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/ea/John_Adams_tomb.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/d/d4/Boston_Massacre_Engraving.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6a/Continental_Congress_voting_independence.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a1/John_Adams_diplomat_France.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/John_Adams_inauguration_1797.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b8/White_House_1800.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f3/Adams_National_Historical_Park.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/da/John_Adams_and_Thomas_Jefferson.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c7/Old_House_Quincy_Massachusetts.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a9/John_Adams_Library.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/ea/John_Adams_tomb.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2001,7 +2361,7 @@ FROM red_white_who_individuals WHERE name = 'John Adams'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Alexander Hamilton
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Alexander Hamilton',
   NULL,
@@ -2028,11 +2388,29 @@ Hamilton''s life ended in tragedy. After years of political rivalry with Aaron B
 
 Hamilton''s face appears on the ten-dollar bill. The Broadway musical "Hamilton" has made him famous to a new generation. He showed that in America, where you come from matters less than what you can contribute.',
   'https://upload.wikimedia.org/wikipedia/commons/0/05/Alexander_Hamilton_portrait_by_John_Trumbull_1806.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/3/38/Alexander_Hamilton_Revolutionary_War.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9d/Federalist_Papers.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/6/6f/Hamilton_Constitutional_Convention.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a4/First_Bank_of_the_United_States.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/bb/Hamilton_Treasury_Secretary.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Ten_dollar_bill_Hamilton.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f0/Hamilton_Burr_duel.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Hamilton_Grange.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Alexander_Hamilton_statue_Treasury.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e8/Trinity_Church_Hamilton_grave.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/3/38/Alexander_Hamilton_Revolutionary_War.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9d/Federalist_Papers.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/6/6f/Hamilton_Constitutional_Convention.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a4/First_Bank_of_the_United_States.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/bb/Hamilton_Treasury_Secretary.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Ten_dollar_bill_Hamilton.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f0/Hamilton_Burr_duel.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Hamilton_Grange.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Alexander_Hamilton_statue_Treasury.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e8/Trinity_Church_Hamilton_grave.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2092,7 +2470,7 @@ FROM red_white_who_individuals WHERE name = 'Alexander Hamilton'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Franklin D. Roosevelt
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Franklin D. Roosevelt',
   1882,
@@ -2121,11 +2499,29 @@ Roosevelt won a fourth term in 1944. On April 12, 1945, he died of a stroke at a
 
 Roosevelt left an America transformed. Social Security, regulated markets, and global leadership became permanent features of American life.',
   'https://upload.wikimedia.org/wikipedia/commons/4/42/FDR_1944_Color_Portrait.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/FDR_inauguration_1933.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/3/30/FDR_Fireside_Chat.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f9/New_Deal_programs.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/8/89/Civilian_Conservation_Corps.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d4/Pearl_Harbor_attack.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/FDR_Churchill_Stalin_Yalta.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a1/FDR_Memorial_Washington_DC.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9e/Springwood_Estate_Hyde_Park.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b0/FDR_Library_and_Museum.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/ca/Roosevelt_dime.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/FDR_inauguration_1933.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/3/30/FDR_Fireside_Chat.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f9/New_Deal_programs.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/89/Civilian_Conservation_Corps.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d4/Pearl_Harbor_attack.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/FDR_Churchill_Stalin_Yalta.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a1/FDR_Memorial_Washington_DC.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/9e/Springwood_Estate_Hyde_Park.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b0/FDR_Library_and_Museum.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/ca/Roosevelt_dime.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2185,7 +2581,7 @@ FROM red_white_who_individuals WHERE name = 'Franklin D. Roosevelt'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: John F. Kennedy
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'John F. Kennedy',
   1917,
@@ -2212,11 +2608,29 @@ On November 22, 1963, while riding in a motorcade through Dallas, Texas, Kennedy
 
 Kennedy''s legacy includes his call to service and his navigation of the Cuban Missile Crisis. His tragic death ensured he remains one of America''s most iconic presidents.',
   'https://upload.wikimedia.org/wikipedia/commons/c/c3/John_F._Kennedy%2C_White_House_color_photo_portrait.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/f/fc/JFK_inauguration.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Kennedy_PT109.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d1/Kennedy_Peace_Corps.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/9/98/Kennedy_Space_Speech.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e0/Cuban_Missile_Crisis.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b8/Berlin_Wall_Kennedy.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a1/Kennedy_Civil_Rights.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/JFK_Library_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d4/Kennedy_half_dollar.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f0/JFK_Memorial_Arlington.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/f/fc/JFK_inauguration.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Kennedy_PT109.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d1/Kennedy_Peace_Corps.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/9/98/Kennedy_Space_Speech.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e0/Cuban_Missile_Crisis.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b8/Berlin_Wall_Kennedy.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a1/Kennedy_Civil_Rights.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/JFK_Library_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d4/Kennedy_half_dollar.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f0/JFK_Memorial_Arlington.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2276,7 +2690,7 @@ FROM red_white_who_individuals WHERE name = 'John F. Kennedy'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Ronald Reagan
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Ronald Reagan',
   1911,
@@ -2303,11 +2717,29 @@ Reagan left office in 1989 with high approval ratings. He died on June 5, 2004, 
 
 Reagan''s legacy includes a more conservative political climate and the end of the Cold War. He described America as "a shining city on a hill.',
   'https://upload.wikimedia.org/wikipedia/commons/1/16/Official_Portrait_of_President_Reagan_1981.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/9/9b/Reagan_Hollywood_actor.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c5/Reagan_Governor_California.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Reagan_inauguration_1981.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e5/Reagan_assassination_attempt.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f4/Reagan_Berlin_Wall_speech.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Reagan_Gorbachev_summit.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b2/Fall_of_Berlin_Wall.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Reagan_Library_Simi_Valley.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a9/Air_Force_One_Reagan_Library.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e3/Reagan_National_Airport.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/9/9b/Reagan_Hollywood_actor.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c5/Reagan_Governor_California.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Reagan_inauguration_1981.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e5/Reagan_assassination_attempt.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f4/Reagan_Berlin_Wall_speech.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Reagan_Gorbachev_summit.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b2/Fall_of_Berlin_Wall.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Reagan_Library_Simi_Valley.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a9/Air_Force_One_Reagan_Library.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e3/Reagan_National_Airport.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2367,7 +2799,7 @@ FROM red_white_who_individuals WHERE name = 'Ronald Reagan'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Helen Keller
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Helen Keller',
   1880,
@@ -2392,11 +2824,29 @@ Helen wrote her autobiography, "The Story of My Life," which has been translated
 
 Helen Keller died on June 1, 1968. She showed that no obstacle is too great to overcome. She wrote, "Although the world is full of suffering, it is also full of the overcoming of it.',
   'https://upload.wikimedia.org/wikipedia/commons/3/3e/Helen_Keller_circa_1920.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d9/Helen_Keller_childhood_home.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/ec/Anne_Sullivan_and_Helen_Keller.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Helen_Keller_water_pump.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Helen_Keller_Radcliffe_College.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c9/Helen_Keller_with_Mark_Twain.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d2/Helen_Keller_activism.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f8/Helen_Keller_with_Eisenhower.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a8/Helen_Keller_statue_Capitol.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Helen_Keller_birthplace.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e5/Helen_Keller_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/d/d9/Helen_Keller_childhood_home.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/ec/Anne_Sullivan_and_Helen_Keller.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Helen_Keller_water_pump.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Helen_Keller_Radcliffe_College.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c9/Helen_Keller_with_Mark_Twain.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d2/Helen_Keller_activism.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f8/Helen_Keller_with_Eisenhower.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a8/Helen_Keller_statue_Capitol.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Helen_Keller_birthplace.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e5/Helen_Keller_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2456,7 +2906,7 @@ FROM red_white_who_individuals WHERE name = 'Helen Keller'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: George Washington Carver
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'George Washington Carver',
   1864,
@@ -2483,11 +2933,29 @@ Carver became one of the most famous scientists in America. He met three preside
 
 George Washington Carver died on January 5, 1943. His birthplace became a national monument, the first dedicated to an African American.',
   'https://upload.wikimedia.org/wikipedia/commons/4/43/George_Washington_Carver_portrait.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Tuskegee_Institute.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Carver_in_laboratory.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Peanut_products_display.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Sweet_potato_research.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Carver_with_students.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Crop_rotation_demonstration.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Carver_Museum_Tuskegee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/George_Washington_Carver_National_Monument.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Carver_birthplace_Missouri.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/George_Washington_Carver_half_dollar.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Tuskegee_Institute.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Carver_in_laboratory.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Peanut_products_display.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Sweet_potato_research.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Carver_with_students.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Crop_rotation_demonstration.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Carver_Museum_Tuskegee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/George_Washington_Carver_National_Monument.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Carver_birthplace_Missouri.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/George_Washington_Carver_half_dollar.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2547,7 +3015,7 @@ FROM red_white_who_individuals WHERE name = 'George Washington Carver'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Sojourner Truth
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Sojourner Truth',
   1797,
@@ -2570,11 +3038,29 @@ During the Civil War, Truth recruited Black soldiers for the Union Army. In 1864
 
 Sojourner Truth died on November 26, 1883. She showed that one powerful voice can change the world.',
   'https://upload.wikimedia.org/wikipedia/commons/f/f8/Sojourner_truth_c1870.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Sojourner_Truth_Aint_I_a_Woman.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d9/Sojourner_Truth_with_Lincoln.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Womens_Rights_Convention_Akron.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Sojourner_Truth_abolition_speech.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Narrative_of_Sojourner_Truth.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Sojourner_Truth_Civil_War.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Sojourner_Truth_Northampton.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Sojourner_Truth_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Sojourner_Truth_statue_Capitol.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Sojourner_Truth_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Sojourner_Truth_Aint_I_a_Woman.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d9/Sojourner_Truth_with_Lincoln.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Womens_Rights_Convention_Akron.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Sojourner_Truth_abolition_speech.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Narrative_of_Sojourner_Truth.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Sojourner_Truth_Civil_War.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Sojourner_Truth_Northampton.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Sojourner_Truth_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Sojourner_Truth_statue_Capitol.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Sojourner_Truth_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2634,7 +3120,7 @@ FROM red_white_who_individuals WHERE name = 'Sojourner Truth'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Booker T. Washington
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Booker T. Washington',
   1856,
@@ -2661,11 +3147,29 @@ Not everyone agreed with Washington''s approach. W.E.B. Du Bois argued that Blac
 
 Washington died on November 14, 1915. Tuskegee, now Tuskegee University, continues today.',
   'https://upload.wikimedia.org/wikipedia/commons/e/ec/Booker_T_Washington_retouched_flattened-crop.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Tuskegee_Institute_founding.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Washington_teaching_at_Tuskegee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Up_From_Slavery_book.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Atlanta_Compromise_speech.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Washington_with_Theodore_Roosevelt.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Tuskegee_students_vocational_training.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Booker_T_Washington_National_Monument.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Washington_birthplace_Virginia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Booker_Washington_half_dollar.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Tuskegee_University_chapel.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Tuskegee_Institute_founding.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Washington_teaching_at_Tuskegee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Up_From_Slavery_book.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Atlanta_Compromise_speech.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Washington_with_Theodore_Roosevelt.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Tuskegee_students_vocational_training.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Booker_T_Washington_National_Monument.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Washington_birthplace_Virginia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Booker_Washington_half_dollar.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Tuskegee_University_chapel.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2725,7 +3229,7 @@ FROM red_white_who_individuals WHERE name = 'Booker T. Washington'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Dwight D. Eisenhower
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Dwight D. Eisenhower',
   1890,
@@ -2752,11 +3256,29 @@ In his farewell address, Eisenhower warned about the "military-industrial comple
 
 Eisenhower died on March 28, 1969. He is remembered as both a military hero and a steady president.',
   'https://upload.wikimedia.org/wikipedia/commons/6/63/Dwight_D._Eisenhower%2C_official_photo_portrait%2C_May_29%2C_1959.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Eisenhower_West_Point.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Eisenhower_D-Day_planning.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/D-Day_Normandy_invasion.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Eisenhower_with_troops.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Eisenhower_inauguration_1953.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Interstate_Highway_System.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Eisenhower_Little_Rock_desegregation.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Eisenhower_Library_Abilene.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Eisenhower_birthplace_Texas.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Eisenhower_dollar_coin.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Eisenhower_West_Point.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Eisenhower_D-Day_planning.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/D-Day_Normandy_invasion.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Eisenhower_with_troops.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Eisenhower_inauguration_1953.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Interstate_Highway_System.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Eisenhower_Little_Rock_desegregation.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Eisenhower_Library_Abilene.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Eisenhower_birthplace_Texas.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Eisenhower_dollar_coin.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2816,7 +3338,7 @@ FROM red_white_who_individuals WHERE name = 'Dwight D. Eisenhower'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Daniel Boone
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Daniel Boone',
   1734,
@@ -2841,11 +3363,29 @@ Boone spent his life on the frontier. He eventually settled in Missouri, where h
 
 The Wilderness Road Boone blazed brought over 200,000 settlers into Kentucky.',
   'https://upload.wikimedia.org/wikipedia/commons/f/f3/Daniel_Boone_painting.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Wilderness_Road_trail.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Cumberland_Gap.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Fort_Boonesborough.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Boone_Kentucky_settlement.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Daniel_Boone_hunting.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Transylvania_Company.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Daniel_Boone_Missouri.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Boone_homestead_Pennsylvania.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Daniel_Boone_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Daniel_Boone_National_Forest.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Wilderness_Road_trail.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Cumberland_Gap.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Fort_Boonesborough.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Boone_Kentucky_settlement.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Daniel_Boone_hunting.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Transylvania_Company.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Daniel_Boone_Missouri.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Boone_homestead_Pennsylvania.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Daniel_Boone_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Daniel_Boone_National_Forest.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2905,7 +3445,7 @@ FROM red_white_who_individuals WHERE name = 'Daniel Boone'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Davy Crockett
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Davy Crockett',
   1786,
@@ -2928,11 +3468,29 @@ The siege lasted thirteen days. On March 6, 1836, Mexican forces stormed the wal
 
 "Remember the Alamo!" became the rallying cry that inspired Texans to win independence. Davy Crockett became an American legend.',
   'https://upload.wikimedia.org/wikipedia/commons/8/8b/David_Crockett.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Davy_Crockett_birthplace.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Crockett_frontier_hunter.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Crockett_Tennessee_Congressman.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Alamo_mission.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Battle_of_the_Alamo.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Davy_Crockett_autobiography.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Crockett_coonskin_cap.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Alamo_Cenotaph.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Davy_Crockett_statue_Tennessee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Crockett_National_Forest.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Davy_Crockett_birthplace.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Crockett_frontier_hunter.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Crockett_Tennessee_Congressman.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Alamo_mission.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Battle_of_the_Alamo.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Davy_Crockett_autobiography.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Crockett_coonskin_cap.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Alamo_Cenotaph.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Davy_Crockett_statue_Tennessee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Crockett_National_Forest.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -2992,7 +3550,7 @@ FROM red_white_who_individuals WHERE name = 'Davy Crockett'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Henry Ford
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Henry Ford',
   1863,
@@ -3017,11 +3575,29 @@ The assembly line cut the time to build a Model T from twelve hours to ninety-th
 
 Ford died on April 7, 1947. His methods spread to other industries. The assembly line became the standard for modern manufacturing.',
   'https://upload.wikimedia.org/wikipedia/commons/1/18/Henry_ford_1919.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Ford_Model_T.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Ford_assembly_line.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Highland_Park_Ford_Plant.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Ford_Quadricycle.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Five_dollar_day_wage.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/River_Rouge_Plant.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Henry_Ford_Museum.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Greenfield_Village.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Ford_Motor_Company_logo.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Ford_Fair_Lane_estate.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Ford_Model_T.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Ford_assembly_line.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Highland_Park_Ford_Plant.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Ford_Quadricycle.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Five_dollar_day_wage.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/River_Rouge_Plant.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Henry_Ford_Museum.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Greenfield_Village.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Ford_Motor_Company_logo.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Ford_Fair_Lane_estate.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3081,7 +3657,7 @@ FROM red_white_who_individuals WHERE name = 'Henry Ford'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Eleanor Roosevelt
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Eleanor Roosevelt',
   1884,
@@ -3106,11 +3682,29 @@ After Franklin''s death in 1945, Eleanor served as a delegate to the United Nati
 
 Eleanor Roosevelt died on November 7, 1962. President Truman called her "First Lady of the World.',
   'https://upload.wikimedia.org/wikipedia/commons/8/80/Eleanor_Roosevelt_portrait_1933.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Eleanor_Roosevelt_childhood.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Eleanor_Franklin_Roosevelt_wedding.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Eleanor_Roosevelt_First_Lady.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Eleanor_Roosevelt_press_conference.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/United_Nations_General_Assembly.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Universal_Declaration_Human_Rights.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Eleanor_Roosevelt_Val-Kill.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Eleanor_Roosevelt_graveside.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Eleanor_Roosevelt_stamp.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Eleanor_Roosevelt_Memorial.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Eleanor_Roosevelt_childhood.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Eleanor_Franklin_Roosevelt_wedding.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Eleanor_Roosevelt_First_Lady.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Eleanor_Roosevelt_press_conference.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/United_Nations_General_Assembly.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Universal_Declaration_Human_Rights.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Eleanor_Roosevelt_Val-Kill.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Eleanor_Roosevelt_graveside.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Eleanor_Roosevelt_stamp.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Eleanor_Roosevelt_Memorial.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3170,7 +3764,7 @@ FROM red_white_who_individuals WHERE name = 'Eleanor Roosevelt'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Paul Revere
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Paul Revere',
   1735,
@@ -3195,11 +3789,29 @@ After the war, Revere opened one of America''s first copper mills. He died on Ma
 
 Henry Wadsworth Longfellow''s 1861 poem "Paul Revere''s Ride" made him an American legend.',
   'https://upload.wikimedia.org/wikipedia/commons/0/0e/John_Singleton_Copley_-_Paul_Revere.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Paul_Revere_midnight_ride.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Old_North_Church_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Boston_Massacre_engraving_Revere.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Revere_silversmith_shop.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Sons_of_Liberty_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Lexington_and_Concord_battles.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Revere_House_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Paul_Revere_statue_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Revere_silver_pieces.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Granary_Burying_Ground.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Paul_Revere_midnight_ride.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Old_North_Church_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Boston_Massacre_engraving_Revere.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Revere_silversmith_shop.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Sons_of_Liberty_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Lexington_and_Concord_battles.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Revere_House_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Paul_Revere_statue_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Revere_silver_pieces.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Granary_Burying_Ground.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3259,7 +3871,7 @@ FROM red_white_who_individuals WHERE name = 'Paul Revere'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: James Madison
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'James Madison',
   1751,
@@ -3270,11 +3882,29 @@ VALUES (
   '{"notes":"Born in Virginia; Princeton graduate; Chief architect of Constitution; Primary author of Bill of Rights; Co-authored Federalist Papers; Fourth President (1809-1817); Led nation through War of 1812"}'::JSONB,
   'James Madison is called the Father of the Constitution for his central role in creating America''s framework of government. He also wrote the Bill of Rights. Madison was born on March 16, 1751, in Virginia. He was a sickly child who found refuge in books. He attended Princeton, completing a four-year course in two years. Madison became convinced the Articles of Confederation were too weak. At the Constitutional Convention in 1787, he arrived with a detailed plan. Madison shaped the Constitution''s key features: separation of powers, checks and balances, and federalism. With Hamilton and Jay, Madison wrote the Federalist Papers defending the Constitution. Madison served in Congress, where he wrote the Bill of Rights, the first ten amendments protecting individual liberties. Madison served as Jefferson''s Secretary of State, then was elected fourth President. The War of 1812 dominated his presidency. British forces burned Washington, D.C., in 1814. Madison retired to Montpelier, his Virginia home. He was the last surviving signer of the Constitution when he died on June 28, 1836.',
   'https://upload.wikimedia.org/wikipedia/commons/1/1d/James_Madison.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Constitutional_Convention_1787.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/US_Constitution_document.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Federalist_Papers_Madison.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Bill_of_Rights.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Madison_inauguration_1809.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/War_of_1812.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/White_House_burning_1814.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Montpelier_Virginia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/James_Madison_Library_of_Congress.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Madison_grave_Montpelier.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Constitutional_Convention_1787.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/US_Constitution_document.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Federalist_Papers_Madison.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Bill_of_Rights.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Madison_inauguration_1809.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/War_of_1812.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/White_House_burning_1814.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Montpelier_Virginia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/James_Madison_Library_of_Congress.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Madison_grave_Montpelier.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3334,7 +3964,7 @@ FROM red_white_who_individuals WHERE name = 'James Madison'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Patrick Henry
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Patrick Henry',
   1736,
@@ -3345,11 +3975,29 @@ VALUES (
   '{"notes":"Born in Virginia; Self-taught lawyer; Powerful speaker against British policies; Famous Give me liberty speech (1775); Governor of Virginia; Demanded Bill of Rights"}'::JSONB,
   'Patrick Henry was one of the Revolution''s most powerful voices. His stirring speeches helped inspire Americans to fight for independence. Henry was born on May 29, 1736, in Virginia. He failed at farming and storekeeping before teaching himself law. He became a brilliant lawyer and speaker. Henry first gained fame in 1765 arguing against the Stamp Act. He challenged British authority so boldly that some called it treason. Henry replied, "If this be treason, make the most of it!" His most famous speech came on March 23, 1775. With war approaching, Henry urged Virginia to arm itself. He ended with words that echoed through history: "Is life so dear, or peace so sweet, as to be purchased at the price of chains and slavery? Forbid it, Almighty God! I know not what course others may take; but as for me, give me liberty or give me death!" Henry served as Virginia''s first governor after independence. Later, he opposed the Constitution, fearing it gave too much power to the federal government. He demanded a Bill of Rights to protect individual liberties. Patrick Henry died on June 6, 1799.',
   'https://upload.wikimedia.org/wikipedia/commons/d/d4/Patrick_Henry_Rothermel.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Patrick_Henry_Give_Me_Liberty_speech.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/St_Johns_Church_Richmond.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Virginia_Convention_1775.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Patrick_Henry_Governor_Virginia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/House_of_Burgesses_Virginia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Stamp_Act_protests.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Red_Hill_Patrick_Henry_estate.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Patrick_Henry_birthplace.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Patrick_Henry_statue_Capitol.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Patrick_Henry_College.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Patrick_Henry_Give_Me_Liberty_speech.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/St_Johns_Church_Richmond.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Virginia_Convention_1775.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Patrick_Henry_Governor_Virginia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/House_of_Burgesses_Virginia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Stamp_Act_protests.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Red_Hill_Patrick_Henry_estate.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Patrick_Henry_birthplace.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Patrick_Henry_statue_Capitol.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Patrick_Henry_College.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3409,7 +4057,7 @@ FROM red_white_who_individuals WHERE name = 'Patrick Henry'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: John Hancock
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'John Hancock',
   1737,
@@ -3420,11 +4068,29 @@ VALUES (
   '{"notes":"Born in Massachusetts; Wealthy merchant; President of Continental Congress; First and largest signature on Declaration; Governor of Massachusetts; Phrase John Hancock means signature"}'::JSONB,
   'John Hancock was a wealthy patriot whose large, bold signature on the Declaration of Independence made him famous. His name became a synonym for signature itself. Hancock was born on January 23, 1737, in Massachusetts. Raised by a wealthy uncle, he inherited a fortune and became one of America''s richest men. He used his wealth to support the patriot cause. British officials targeted Hancock for tax evasion, trying to seize his ship. This made him more committed to independence. He became president of the Continental Congress in 1775. On August 2, 1776, Hancock was the first to sign the Declaration of Independence. His signature was so large and bold that it dominates the document. Legend says he wanted King George to read it without glasses. Hancock served as governor of Massachusetts and helped ensure the state ratified the Constitution. John Hancock died on October 8, 1793. Today, John Hancock is a common phrase meaning signature.',
   'https://upload.wikimedia.org/wikipedia/commons/8/8b/John_Hancock_1770_by_Copley.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/John_Hancock_signature.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Declaration_Independence_signatures.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Continental_Congress_Philadelphia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Hancock_merchant_ship.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Boston_Tea_Party.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/John_Hancock_Governor_Massachusetts.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Hancock_mansion_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/John_Hancock_Tower_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Hancock_grave_Granary.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/John_Hancock_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/John_Hancock_signature.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Declaration_Independence_signatures.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Continental_Congress_Philadelphia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Hancock_merchant_ship.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Boston_Tea_Party.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/John_Hancock_Governor_Massachusetts.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Hancock_mansion_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/John_Hancock_Tower_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Hancock_grave_Granary.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/John_Hancock_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3484,7 +4150,7 @@ FROM red_white_who_individuals WHERE name = 'John Hancock'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Samuel Adams
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Samuel Adams',
   1722,
@@ -3495,11 +4161,29 @@ VALUES (
   '{"notes":"Born in Boston; Organized resistance to British taxes; Founded Sons of Liberty; Planned Boston Tea Party; Signed Declaration of Independence; Called Father of the American Revolution"}'::JSONB,
   'Samuel Adams was a master organizer who helped spark the American Revolution. He organized protests, created revolutionary networks, and kept pressure on until independence was won. Adams was born on September 27, 1722, in Boston. He failed at business but excelled at politics. Adams organized opposition to British taxes, helping create the Sons of Liberty. He orchestrated the Boston Tea Party in 1773, when patriots dumped British tea into the harbor. Adams used every British action to stir up opposition. He created committees of correspondence that spread revolutionary ideas throughout the colonies. When British troops killed five colonists in the Boston Massacre, Adams made sure the story spread everywhere. In the Continental Congress, Adams pushed relentlessly for independence. He signed the Declaration and worked to support the war effort. After the Revolution, Adams served as governor of Massachusetts. Samuel Adams died on October 2, 1803. Thomas Jefferson called him truly the Man of the Revolution.',
   'https://upload.wikimedia.org/wikipedia/commons/7/7e/Samuel_Adams_by_John_Singleton_Copley.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Sons_of_Liberty_meeting.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Boston_Tea_Party_1773.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Boston_Massacre_pamphlet.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Committees_of_Correspondence.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Continental_Congress_delegate.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Samuel_Adams_Governor.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Faneuil_Hall_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Samuel_Adams_house.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Samuel_Adams_statue_Boston.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Adams_grave_Granary.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Sons_of_Liberty_meeting.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Boston_Tea_Party_1773.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Boston_Massacre_pamphlet.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Committees_of_Correspondence.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Continental_Congress_delegate.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Samuel_Adams_Governor.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Faneuil_Hall_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Samuel_Adams_house.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Samuel_Adams_statue_Boston.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Adams_grave_Granary.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3559,7 +4243,7 @@ FROM red_white_who_individuals WHERE name = 'Samuel Adams'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Robert E. Lee
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Robert E. Lee',
   1807,
@@ -3570,11 +4254,29 @@ VALUES (
   '{"notes":"Born in Virginia; Graduated second at West Point; Declined command of Union Army; Led Confederate Army of Northern Virginia; Surrendered at Appomattox"}'::JSONB,
   'Robert E. Lee was the most famous Confederate general. He was considered one of the finest military minds in history, yet he chose to fight against the United States. Lee was born on January 19, 1807, in Virginia. His father was Light Horse Harry Lee, a Revolutionary War hero. Robert graduated second in his class at West Point. When Southern states seceded, Lee faced an agonizing choice. He opposed secession but felt he could not fight against his home state of Virginia. President Lincoln offered Lee command of the Union Army. Lee declined and joined Virginia''s forces. Lee was a brilliant general who often defeated larger Union armies. But his army lost crucial battles at Gettysburg and was worn down by the Union''s greater resources. On April 9, 1865, Lee surrendered to Grant at Appomattox Court House. After the war, Lee became president of Washington College. He died on October 12, 1870.',
   'https://upload.wikimedia.org/wikipedia/commons/4/4f/Robert_Edward_Lee.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Robert_E_Lee_West_Point.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Arlington_House_Lee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Confederate_Army_Northern_Virginia.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Battle_of_Antietam.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Battle_of_Gettysburg_Lee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Lee_surrender_Appomattox.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Washington_and_Lee_University.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Lee_Chapel_Lexington.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Stratford_Hall_Lee_birthplace.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Lee_Monument_Richmond.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Robert_E_Lee_West_Point.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Arlington_House_Lee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Confederate_Army_Northern_Virginia.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Battle_of_Antietam.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Battle_of_Gettysburg_Lee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Lee_surrender_Appomattox.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Washington_and_Lee_University.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Lee_Chapel_Lexington.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stratford_Hall_Lee_birthplace.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Lee_Monument_Richmond.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3634,7 +4336,7 @@ FROM red_white_who_individuals WHERE name = 'Robert E. Lee'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Andrew Jackson
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Andrew Jackson',
   1767,
@@ -3645,11 +4347,29 @@ VALUES (
   '{"notes":"Born in the Carolinas; Fought in Revolutionary War as boy; Hero of Battle of New Orleans; Seventh President (1829-1837); Expanded voting rights; Controversial Indian Removal Act"}'::JSONB,
   'Andrew Jackson was a war hero and president who expanded democracy while making deeply controversial decisions about Native Americans. Jackson was born on March 15, 1767, in the Carolina backcountry. During the Revolutionary War, thirteen-year-old Andrew served as a courier and was captured by the British. Jackson became a lawyer and politician in Tennessee. He earned fame as a military hero at the Battle of New Orleans in January 1815. Jackson was elected president in 1828. He believed in expanding democracy for white men and supported eliminating property requirements for voting. However, Jackson''s Indian Removal Act of 1830 forced Native American tribes to leave their homelands. Thousands died on the Trail of Tears. This remains one of the darkest chapters in American history. Jackson died on June 8, 1845. His legacy is complicated: he expanded democracy for some while causing tremendous suffering for others.',
   'https://upload.wikimedia.org/wikipedia/commons/4/43/Andrew_jackson_head.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Battle_of_New_Orleans.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Jackson_War_of_1812.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Jackson_inauguration_1829.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Indian_Removal_Act.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Trail_of_Tears.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Bank_War_Jackson.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Hermitage_Tennessee.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Andrew_Jackson_tomb.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Twenty_dollar_bill_Jackson.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Jackson_equestrian_statue.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Battle_of_New_Orleans.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Jackson_War_of_1812.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Jackson_inauguration_1829.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Indian_Removal_Act.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Trail_of_Tears.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Bank_War_Jackson.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Hermitage_Tennessee.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Andrew_Jackson_tomb.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Twenty_dollar_bill_Jackson.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Jackson_equestrian_statue.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3709,7 +4429,7 @@ FROM red_white_who_individuals WHERE name = 'Andrew Jackson'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: John Muir
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'John Muir',
   1838,
@@ -3720,11 +4440,29 @@ VALUES (
   '{"notes":"Born in Scotland; Explored Yosemite; Founded Sierra Club (1892); Convinced Roosevelt to protect wilderness; Father of National Parks"}'::JSONB,
   'John Muir was a naturalist who fell in love with America''s wild places and dedicated his life to protecting them. He is called the Father of the National Parks. Muir was born on April 21, 1838, in Scotland. His family immigrated to Wisconsin when he was eleven. After a factory accident nearly blinded him, Muir decided to devote his life to studying nature. In 1868, he arrived in California and saw Yosemite Valley. He was overwhelmed by its beauty. Muir wrote articles and books describing wilderness wonders. In 1892, Muir founded the Sierra Club. He convinced President Theodore Roosevelt to expand protection of forests and parks. The two camped together in Yosemite in 1903. Thanks largely to Muir''s efforts, Yosemite, Sequoia, and other wilderness areas became national parks. John Muir died on December 24, 1914. His legacy lives on in the protected wilderness he loved.',
   'https://upload.wikimedia.org/wikipedia/commons/5/5b/John_Muir_1907.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Yosemite_Valley_Muir.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/John_Muir_Sierra_Nevada.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Sierra_Club_founding.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Muir_with_Theodore_Roosevelt.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Yosemite_National_Park.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Muir_Glacier_Alaska.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/John_Muir_Trail.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Muir_Woods_National_Monument.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/John_Muir_house_Martinez.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/John_Muir_National_Historic_Site.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Yosemite_Valley_Muir.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/John_Muir_Sierra_Nevada.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Sierra_Club_founding.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Muir_with_Theodore_Roosevelt.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Yosemite_National_Park.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Muir_Glacier_Alaska.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/John_Muir_Trail.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Muir_Woods_National_Monument.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/John_Muir_house_Martinez.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/John_Muir_National_Historic_Site.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3784,7 +4522,7 @@ FROM red_white_who_individuals WHERE name = 'John Muir'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Mark Twain
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Mark Twain',
   1835,
@@ -3795,11 +4533,29 @@ VALUES (
   '{"notes":"Born in Missouri as Samuel Clemens; Worked as riverboat pilot; Wrote Tom Sawyer and Huckleberry Finn; America''s greatest humorist; Called the Lincoln of American literature"}'::JSONB,
   'Mark Twain, whose real name was Samuel Clemens, was America''s greatest humorist and one of its finest writers. His books about Tom Sawyer and Huckleberry Finn captured American childhood and challenged the nation''s conscience. Samuel Clemens was born on November 30, 1835, in Florida, Missouri. His family moved to Hannibal, a town on the Mississippi River. The river and town would inspire his greatest works. As a young man, Clemens worked as a riverboat pilot on the Mississippi. His pen name Mark Twain came from a river term meaning two fathoms deep. The Adventures of Tom Sawyer (1876) drew on his Hannibal childhood. Adventures of Huckleberry Finn (1884) is considered one of the greatest American novels. Twain was also a sharp social critic. He attacked hypocrisy, greed, and injustice with wit. Mark Twain died on April 21, 1910. William Faulkner called him the father of American literature.',
   'https://upload.wikimedia.org/wikipedia/commons/0/0c/Mark_Twain_by_AF_Bradley.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Mark_Twain_boyhood_home.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Mississippi_River_steamboat.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Adventures_of_Tom_Sawyer.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Huckleberry_Finn_first_edition.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Mark_Twain_lecture_tour.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Twain_in_white_suit.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Mark_Twain_house_Hartford.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Twain_writing_desk.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Mark_Twain_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Mark_Twain_Museum_Hannibal.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Mark_Twain_boyhood_home.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Mississippi_River_steamboat.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Adventures_of_Tom_Sawyer.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Huckleberry_Finn_first_edition.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Mark_Twain_lecture_tour.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Twain_in_white_suit.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Mark_Twain_house_Hartford.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Twain_writing_desk.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Mark_Twain_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Mark_Twain_Museum_Hannibal.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3859,7 +4615,7 @@ FROM red_white_who_individuals WHERE name = 'Mark Twain'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Thurgood Marshall
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Thurgood Marshall',
   1908,
@@ -3870,11 +4626,29 @@ VALUES (
   '{"notes":"Born in Baltimore; Chief counsel for NAACP; Won Brown v. Board of Education (1954); First Black Supreme Court Justice (1967-1991)"}'::JSONB,
   'Thurgood Marshall fought for civil rights in courtrooms across America and became the first African American Supreme Court Justice. Marshall was born on July 2, 1908, in Baltimore, Maryland. He was denied admission to the University of Maryland Law School because he was Black. Instead, he attended Howard University Law School. Marshall became chief counsel for the NAACP Legal Defense Fund. He traveled throughout the South, often at great personal risk, representing Black Americans who faced injustice. Marshall argued thirty-two cases before the Supreme Court and won twenty-nine. His greatest victory came in Brown v. Board of Education (1954), when the Court ruled that segregated schools were unconstitutional. In 1967, President Johnson appointed Marshall to the Supreme Court, making him the first African American justice. He served for twenty-four years. Marshall retired in 1991 and died on January 24, 1993.',
   'https://upload.wikimedia.org/wikipedia/commons/e/e4/Thurgood-marshall-2.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Marshall_NAACP_lawyer.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Brown_v_Board_of_Education.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Little_Rock_Nine.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Thurgood_Marshall_Supreme_Court.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Marshall_with_LBJ.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Supreme_Court_Justice_Marshall.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Thurgood_Marshall_statue.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Marshall_birthplace_Baltimore.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Thurgood_Marshall_stamp.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Marshall_Federal_Judiciary_Building.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Marshall_NAACP_lawyer.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Brown_v_Board_of_Education.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Little_Rock_Nine.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Thurgood_Marshall_Supreme_Court.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Marshall_with_LBJ.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Supreme_Court_Justice_Marshall.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Thurgood_Marshall_statue.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Marshall_birthplace_Baltimore.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Thurgood_Marshall_stamp.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Marshall_Federal_Judiciary_Building.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -3934,7 +4708,7 @@ FROM red_white_who_individuals WHERE name = 'Thurgood Marshall'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: John Lewis
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'John Lewis',
   1940,
@@ -3945,11 +4719,29 @@ VALUES (
   '{"notes":"Born in Alabama; Led Student Nonviolent Coordinating Committee; Youngest speaker at March on Washington; Beaten on Bloody Sunday; U.S. Congressman for 33 years"}'::JSONB,
   'John Lewis was a civil rights hero who was beaten and arrested fighting for equal rights, then spent more than three decades in Congress continuing that fight. Lewis was born on February 21, 1940, in rural Alabama. He was inspired by Martin Luther King Jr. and became committed to nonviolent protest. Lewis helped organize sit-ins at segregated lunch counters and was one of the original Freedom Riders. At age twenty-three, Lewis was the youngest speaker at the 1963 March on Washington. On March 7, 1965, Lewis led marchers across the Edmund Pettus Bridge in Selma, Alabama. State troopers attacked them with clubs and tear gas. Lewis''s skull was fractured. Television coverage of Bloody Sunday shocked the nation. Lewis was elected to Congress in 1986 and served for thirty-three years. He was called the conscience of Congress. Lewis continued fighting for justice until his death on July 17, 2020. He urged Americans to get into good trouble by standing up against injustice.',
   'https://upload.wikimedia.org/wikipedia/commons/5/58/John_Lewis_official_portrait_crop.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Young_John_Lewis_civil_rights.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Selma_to_Montgomery_march.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Edmund_Pettus_Bridge_march.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Lewis_Freedom_Riders.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/March_on_Washington_Lewis.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/John_Lewis_Congressman.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Lewis_with_Obama.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/John_Lewis_good_trouble.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Lewis_lying_in_state_Capitol.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Edmund_Pettus_Bridge_memorial.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Young_John_Lewis_civil_rights.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Selma_to_Montgomery_march.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Edmund_Pettus_Bridge_march.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Lewis_Freedom_Riders.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/March_on_Washington_Lewis.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/John_Lewis_Congressman.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Lewis_with_Obama.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/John_Lewis_good_trouble.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Lewis_lying_in_state_Capitol.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Edmund_Pettus_Bridge_memorial.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -4009,7 +4801,7 @@ FROM red_white_who_individuals WHERE name = 'John Lewis'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Walt Disney
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Walt Disney',
   1901,
@@ -4020,11 +4812,29 @@ VALUES (
   '{"notes":"Born in Chicago; Created Mickey Mouse (1928); First full-length animated film (Snow White, 1937); Built Disneyland (1955); Won 22 Academy Awards"}'::JSONB,
   'Walt Disney was a pioneer of entertainment who created Mickey Mouse, built Disneyland, and changed how the world experiences stories and fun. Disney was born on December 5, 1901, in Chicago. He developed a love of drawing as a child. In 1928, he created Mickey Mouse. The cartoon Steamboat Willie was one of the first with synchronized sound. Snow White and the Seven Dwarfs (1937) was the first full-length animated feature film. Disney followed with classics like Pinocchio, Fantasia, and Bambi. Disney won twenty-two Academy Awards, more than any other person. In 1955, he opened Disneyland in California, a new kind of amusement park. Disney was planning Walt Disney World in Florida when he died on December 15, 1966. His company grew into one of the world''s largest entertainment companies. Disney showed that imagination and persistence could create magic.',
   'https://upload.wikimedia.org/wikipedia/commons/d/df/Walt_Disney_1946.JPG',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Mickey_Mouse_Steamboat_Willie.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Snow_White_poster.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Disneyland_opening_day.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Sleeping_Beauty_Castle.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Disney_Studios_Burbank.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Walt_Disney_World_Castle.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Disney_with_cartoon_characters.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Walt_Disney_Concert_Hall.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Disney_family_museum.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Partners_statue_Disney.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Mickey_Mouse_Steamboat_Willie.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Snow_White_poster.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Disneyland_opening_day.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Sleeping_Beauty_Castle.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Disney_Studios_Burbank.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Walt_Disney_World_Castle.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Disney_with_cartoon_characters.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Walt_Disney_Concert_Hall.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Disney_family_museum.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Partners_statue_Disney.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -4084,7 +4894,7 @@ FROM red_white_who_individuals WHERE name = 'Walt Disney'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Cesar Chavez
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Cesar Chavez',
   1927,
@@ -4095,11 +4905,29 @@ VALUES (
   '{"notes":"Born in Arizona; Family became migrant farmworkers; Founded United Farm Workers; Led grape boycott; Used nonviolent protest; Awarded Presidential Medal of Freedom"}'::JSONB,
   'Cesar Chavez was a labor leader who fought for the rights of farmworkers. Using nonviolent protest, he improved conditions for some of America''s most vulnerable workers. Chavez was born on March 31, 1927, near Yuma, Arizona. During the Depression, his family lost their farm and became migrant workers. Young Cesar experienced the harsh conditions farmworkers faced. Chavez left school after eighth grade to work in the fields. In 1962, he founded the National Farm Workers Association, which became the United Farm Workers. His most famous campaign was the grape boycott, which lasted five years. Millions of Americans stopped buying grapes to support farmworkers. Like Martin Luther King Jr., Chavez believed in nonviolent protest. He led marches and went on hunger strikes to draw attention to the workers'' cause. Chavez continued fighting for farmworkers until his death on April 23, 1993. In 1994, he was posthumously awarded the Presidential Medal of Freedom. His motto was Si se puede (Yes, it can be done).',
   'https://upload.wikimedia.org/wikipedia/commons/f/f8/Cesar_Chavez_crop2.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Young_Cesar_Chavez.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/United_Farm_Workers_flag.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Delano_grape_strike.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Chavez_march_Sacramento.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Chavez_with_Robert_Kennedy.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Cesar_Chavez_fasting.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/UFW_boycott_grapes.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Cesar_Chavez_National_Monument.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Chavez_Memorial.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Cesar_Chavez_stamp.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Young_Cesar_Chavez.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/United_Farm_Workers_flag.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Delano_grape_strike.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Chavez_march_Sacramento.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Chavez_with_Robert_Kennedy.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Cesar_Chavez_fasting.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/UFW_boycott_grapes.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Cesar_Chavez_National_Monument.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Chavez_Memorial.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Cesar_Chavez_stamp.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -4159,7 +4987,7 @@ FROM red_white_who_individuals WHERE name = 'Cesar Chavez'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Sitting Bull
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Sitting Bull',
   1831,
@@ -4170,11 +4998,29 @@ VALUES (
   '{"notes":"Born in South Dakota; Lakota Sioux holy man and chief; Victory at Battle of Little Bighorn (1876); Fled to Canada; Killed at Standing Rock Reservation"}'::JSONB,
   'Sitting Bull was a Lakota Sioux leader who united Native American tribes to defend their lands. His forces defeated General Custer at the Battle of Little Bighorn. Sitting Bull was born around 1831 in what is now South Dakota. He grew up learning the ways of his people and became known for his bravery and visions. As white settlers pushed west, they violated treaties and took Native American lands. Sitting Bull became a leader who refused to surrender to reservation life. In June 1876, at the Battle of Little Bighorn, Native American forces led by Sitting Bull and Crazy Horse wiped out Colonel George Custer and over 200 soldiers. It was the greatest Native American victory against the U.S. Army. But the victory brought harsh retaliation. In 1877, Sitting Bull led his people into Canada. After four years of hardship, they returned to surrender. Sitting Bull was placed on Standing Rock Reservation. On December 15, 1890, reservation police came to arrest Sitting Bull. In the confrontation, he was killed. Sitting Bull fought to protect his people''s way of life.',
   'https://upload.wikimedia.org/wikipedia/commons/8/8a/Sitting_Bull_by_D_F_Barry_ca_1883_Dakota_Territory.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Lakota_Sioux_camp.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Battle_of_Little_Bighorn.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Custer_Last_Stand.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Sitting_Bull_Buffalo_Bill.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Wild_West_Show_poster.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Standing_Rock_Reservation.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Sitting_Bull_portrait.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Little_Bighorn_Battlefield.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Sitting_Bull_grave.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Sitting_Bull_monument.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Lakota_Sioux_camp.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Battle_of_Little_Bighorn.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Custer_Last_Stand.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Sitting_Bull_Buffalo_Bill.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Wild_West_Show_poster.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Standing_Rock_Reservation.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Sitting_Bull_portrait.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Little_Bighorn_Battlefield.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Sitting_Bull_grave.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Sitting_Bull_monument.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -4234,7 +5080,7 @@ FROM red_white_who_individuals WHERE name = 'Sitting Bull'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Audie Murphy
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Audie Murphy',
   1925,
@@ -4245,11 +5091,29 @@ VALUES (
   '{"notes":"Born in Texas; Joined Army at 17; Most decorated U.S. combat soldier; Received Medal of Honor; Became movie star"}'::JSONB,
   'Audie Murphy was the most decorated American combat soldier of World War II. Despite being small and young, he performed acts of incredible bravery that made him a national hero. Murphy was born on June 20, 1925, in rural Texas. His family was desperately poor. Murphy tried to enlist after Pearl Harbor but was rejected for being too small and young. He was finally accepted by the Army in 1942, just seventeen years old and weighing only 112 pounds. Murphy fought across Europe, seeing combat in North Africa, Sicily, Italy, France, and Germany. He was wounded three times. His most famous action came on January 26, 1945, near Holtzwihr, France. When German forces attacked, Murphy climbed onto a burning tank destroyer and used its machine gun against the enemy. For an hour, he held off the German attack alone. He received the Medal of Honor. Murphy received every combat award the Army offered, earning thirty-three awards and medals. After the war, Murphy became a movie star. He was honest about struggling with what we now call PTSD. Murphy died in a plane crash on May 28, 1971. He is buried at Arlington National Cemetery.',
   'https://upload.wikimedia.org/wikipedia/commons/6/68/Audie_Murphy.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Murphy_World_War_II.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Audie_Murphy_Medal_of_Honor.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/Murphy_tank_destroyer.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Audie_Murphy_decorations.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Murphy_Hollywood_actor.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/To_Hell_and_Back_movie.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Audie_Murphy_Texas_Ranger.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Arlington_Cemetery_Murphy.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Audie_Murphy_Memorial.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Murphy_VA_Hospital.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Murphy_World_War_II.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Audie_Murphy_Medal_of_Honor.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/Murphy_tank_destroyer.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Audie_Murphy_decorations.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Murphy_Hollywood_actor.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/To_Hell_and_Back_movie.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Audie_Murphy_Texas_Ranger.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Arlington_Cemetery_Murphy.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Audie_Murphy_Memorial.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Murphy_VA_Hospital.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,
@@ -4309,7 +5173,7 @@ FROM red_white_who_individuals WHERE name = 'Audie Murphy'
 ON CONFLICT (individual_id, question_text) DO NOTHING;
 
 -- Individual: Pocahontas
-INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery)
+INSERT INTO red_white_who_individuals (name, birth_year, death_year, birth_date, death_date, key_events, key_facts, biographical_summary, main_photo_url, photo_gallery_1, photo_gallery_2, photo_gallery_3, photo_gallery_4, photo_gallery_5, photo_gallery_6, photo_gallery_7, photo_gallery_8, photo_gallery_9, photo_gallery_10)
 VALUES (
   'Pocahontas',
   1596,
@@ -4320,11 +5184,29 @@ VALUES (
   '{"notes":"Born in Virginia; Daughter of Chief Powhatan; Helped Jamestown settlers survive; Married colonist John Rolfe; Traveled to England"}'::JSONB,
   'Pocahontas was a Powhatan woman who became famous for helping English settlers at Jamestown survive. Her story represents both cooperation and tragedy between Native Americans and colonists. Pocahontas was born around 1596 in Virginia. Her father was Chief Powhatan. Her real name was Amonute; Pocahontas was a nickname meaning playful one. According to Captain John Smith, Pocahontas saved his life in 1607 when her father was about to execute him. Historians debate whether this really happened. What is certain is that Pocahontas helped the struggling Jamestown colony by bringing food and delivering messages. In 1613, Pocahontas was captured by the English. During her captivity, she converted to Christianity and was baptized as Rebecca. In 1614, Pocahontas married tobacco planter John Rolfe. Their marriage brought peace between the colonists and Powhatan''s people. In 1616, she traveled to England with her husband. She was presented to King James I and became a celebrity. Pocahontas never returned to Virginia. In 1617, as her ship prepared to sail home, she became ill and died at about twenty-one years old. Pocahontas remains a symbol of the complex relationship between Native Americans and European settlers.',
   'https://upload.wikimedia.org/wikipedia/commons/3/3e/Pocahontas_portrait.jpg',
-  '[{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a0/Powhatan_village.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d5/Jamestown_settlement.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b9/John_Smith_and_Pocahontas.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c8/Pocahontas_saves_John_Smith.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/e/e9/Pocahontas_and_John_Rolfe.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/a/a5/Pocahontas_in_England.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/d/d8/Pocahontas_baptism.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/f/f2/Pocahontas_statue_Jamestown.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/c/c0/Historic_Jamestowne.jpg","caption":""},{"url":"https://upload.wikimedia.org/wikipedia/commons/b/b5/Pocahontas_grave_England.jpg","caption":""}]'::JSONB
+  'https://upload.wikimedia.org/wikipedia/commons/a/a0/Powhatan_village.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d5/Jamestown_settlement.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b9/John_Smith_and_Pocahontas.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c8/Pocahontas_saves_John_Smith.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/e9/Pocahontas_and_John_Rolfe.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/a/a5/Pocahontas_in_England.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d8/Pocahontas_baptism.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f2/Pocahontas_statue_Jamestown.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/c/c0/Historic_Jamestowne.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/b/b5/Pocahontas_grave_England.jpg'
 )
 ON CONFLICT (name) DO UPDATE SET
   main_photo_url = EXCLUDED.main_photo_url,
-  photo_gallery = EXCLUDED.photo_gallery,
+  photo_gallery_1 = EXCLUDED.photo_gallery_1,
+  photo_gallery_2 = EXCLUDED.photo_gallery_2,
+  photo_gallery_3 = EXCLUDED.photo_gallery_3,
+  photo_gallery_4 = EXCLUDED.photo_gallery_4,
+  photo_gallery_5 = EXCLUDED.photo_gallery_5,
+  photo_gallery_6 = EXCLUDED.photo_gallery_6,
+  photo_gallery_7 = EXCLUDED.photo_gallery_7,
+  photo_gallery_8 = EXCLUDED.photo_gallery_8,
+  photo_gallery_9 = EXCLUDED.photo_gallery_9,
+  photo_gallery_10 = EXCLUDED.photo_gallery_10,
   biographical_summary = EXCLUDED.biographical_summary,
   key_events = EXCLUDED.key_events,
   key_facts = EXCLUDED.key_facts,

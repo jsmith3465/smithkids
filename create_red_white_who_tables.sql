@@ -12,7 +12,16 @@ CREATE TABLE IF NOT EXISTS red_white_who_individuals (
     key_facts JSONB, -- JSON object with key facts
     biographical_summary TEXT NOT NULL, -- 500-1000 word summary
     main_photo_url TEXT, -- URL or path to main photo
-    photo_gallery JSONB, -- Array of photo objects with url and caption
+    photo_gallery_1 TEXT, -- Gallery image 1 URL
+    photo_gallery_2 TEXT, -- Gallery image 2 URL
+    photo_gallery_3 TEXT, -- Gallery image 3 URL
+    photo_gallery_4 TEXT, -- Gallery image 4 URL
+    photo_gallery_5 TEXT, -- Gallery image 5 URL
+    photo_gallery_6 TEXT, -- Gallery image 6 URL
+    photo_gallery_7 TEXT, -- Gallery image 7 URL
+    photo_gallery_8 TEXT, -- Gallery image 8 URL
+    photo_gallery_9 TEXT, -- Gallery image 9 URL
+    photo_gallery_10 TEXT, -- Gallery image 10 URL
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
