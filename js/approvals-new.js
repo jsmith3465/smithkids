@@ -119,10 +119,6 @@ function setupEventListeners() {
         denyAllBtn.addEventListener('click', denyAllItems);
     }
     
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => loadPendingApprovals());
-    }
 }
 
 async function loadPendingApprovals() {
@@ -251,10 +247,9 @@ async function loadPendingApprovals() {
                     </div>
                     <div class="approval-details">${typeInfo.detailsHtml}</div>
                     <div class="approval-date">${dateStr}</div>
-                    <div id="emailStatus_${approval.approval_id}" class="email-status" style="display: none;"></div>
                 </div>
                 <div class="approval-controls">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
                         <label style="font-weight: 600; color: #666; font-size: 0.9rem;">Credits:</label>
                         <input type="number" 
                                id="credits_${approval.approval_id}" 
@@ -266,7 +261,6 @@ async function loadPendingApprovals() {
                     </div>
                     <button class="btn btn-primary" onclick="approveItem(${approval.approval_id}, '${approval.approval_type}', ${approval.source_id})">Approve</button>
                     <button class="btn btn-secondary" style="background: #dc3545;" onclick="denyItem(${approval.approval_id}, '${approval.approval_type}', ${approval.source_id})">Deny</button>
-                    <button class="resend-email-btn" onclick="resendEmail(${approval.approval_id})" id="resendBtn_${approval.approval_id}">Resend Email</button>
                 </div>
             `;
             approvalsList.appendChild(approvalItem);
@@ -372,64 +366,6 @@ window.validateCreditsInput = function(input) {
         input.value = 1;
     } else if (value > 100) {
         input.value = 100;
-    }
-};
-
-// Resend email for approval
-window.resendEmail = async function(approvalId) {
-    const resendBtn = document.getElementById(`resendBtn_${approvalId}`);
-    const emailStatus = document.getElementById(`emailStatus_${approvalId}`);
-    
-    if (!resendBtn || !emailStatus) return;
-    
-    resendBtn.disabled = true;
-    resendBtn.textContent = 'Sending...';
-    emailStatus.style.display = 'none';
-    
-    try {
-        // Get approval details
-        const { data: approval, error: fetchError } = await supabase
-            .from('unified_approvals')
-            .select('approval_id, approval_type, source_id, user_uid, description, credits_amount, Users!unified_approvals_user_uid_fkey(First_Name, Last_Name, Username)')
-            .eq('approval_id', approvalId)
-            .single();
-        
-        if (fetchError) throw fetchError;
-        
-        const user = approval.Users;
-        const userName = (user.First_Name && user.Last_Name)
-            ? `${user.First_Name} ${user.Last_Name}`
-            : user.Username || 'Unknown';
-        
-        // Call Supabase Edge Function to resend email
-        const { data, error } = await supabase.functions.invoke('send-approval-notification', {
-            body: {
-                approval_id: approvalId,
-                approval_type: approval.approval_type,
-                user_name: userName,
-                description: approval.description || '',
-                credits_amount: approval.credits_amount || 10
-            }
-        });
-        
-        if (error) throw error;
-        
-        emailStatus.textContent = '✓ Email sent successfully!';
-        emailStatus.style.color = '#28a745';
-        emailStatus.style.display = 'block';
-        
-        setTimeout(() => {
-            emailStatus.style.display = 'none';
-        }, 5000);
-        
-    } catch (error) {
-        console.error('Error resending email:', error);
-        emailStatus.textContent = '✗ Failed to send email';
-        emailStatus.style.color = '#dc3545';
-        emailStatus.style.display = 'block';
-    } finally {
-        resendBtn.disabled = false;
-        resendBtn.textContent = 'Resend Email';
     }
 };
 
