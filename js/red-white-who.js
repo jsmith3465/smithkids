@@ -216,22 +216,31 @@ async function loadAllIndividuals() {
 
 async function loadKeyEvents() {
     // Extract unique key events from all individuals
-    // key_events is now stored as HTML TEXT
+    // key_events is now stored as plain text (HTML was removed)
     const eventsSet = new Set();
     allIndividuals.forEach(individual => {
         if (individual.key_events && typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-            try {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = individual.key_events;
-                const listItems = tempDiv.querySelectorAll('li');
-                listItems.forEach(li => {
-                    const eventText = li.textContent.trim();
-                    if (eventText) {
-                        eventsSet.add(eventText);
-                    }
-                });
-            } catch (e) {
-                console.warn('Error parsing key_events HTML:', e, individual);
+            // Check if it's still HTML (for backward compatibility)
+            if (individual.key_events.includes('<li>') || individual.key_events.includes('<ul>')) {
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = individual.key_events;
+                    const listItems = tempDiv.querySelectorAll('li');
+                    listItems.forEach(li => {
+                        const eventText = li.textContent.trim();
+                        if (eventText) {
+                            eventsSet.add(eventText);
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Error parsing key_events HTML:', e, individual);
+                }
+            } else {
+                // Plain text - add directly
+                const eventText = individual.key_events.trim();
+                if (eventText) {
+                    eventsSet.add(eventText);
+                }
             }
         }
     });
@@ -318,18 +327,26 @@ function displayIndividuals(individuals) {
         const deathYear = individual.death_year || 'Present';
         const years = `${birthYear} - ${deathYear}`;
         
-        // key_events is now stored as HTML TEXT
+        // key_events is now stored as plain text (HTML was removed)
         let keyEvents = 'No key events listed';
         if (individual.key_events && typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
-            try {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = individual.key_events;
-                const listItems = Array.from(tempDiv.querySelectorAll('li')).slice(0, 2);
-                if (listItems.length > 0) {
-                    keyEvents = listItems.map(li => li.textContent.trim()).join(', ');
+            // Check if it's still HTML (for backward compatibility)
+            if (individual.key_events.includes('<li>') || individual.key_events.includes('<ul>')) {
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = individual.key_events;
+                    const listItems = Array.from(tempDiv.querySelectorAll('li')).slice(0, 2);
+                    if (listItems.length > 0) {
+                        keyEvents = listItems.map(li => li.textContent.trim()).join(', ');
+                    }
+                } catch (e) {
+                    console.warn('Error parsing key_events HTML:', e);
+                    // Fallback to plain text
+                    keyEvents = individual.key_events.trim();
                 }
-            } catch (e) {
-                console.warn('Error parsing key_events HTML:', e);
+            } else {
+                // Plain text - use directly
+                keyEvents = individual.key_events.trim();
             }
         }
         
@@ -422,14 +439,21 @@ function applyCombinedFilters() {
                 return false;
             }
             
-            try {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = individual.key_events;
-                const listItems = Array.from(tempDiv.querySelectorAll('li'));
-                return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
-            } catch (e) {
-                console.warn('Error parsing key_events HTML:', e);
-                return false;
+            // Check if it's still HTML (for backward compatibility)
+            if (individual.key_events.includes('<li>') || individual.key_events.includes('<ul>')) {
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = individual.key_events;
+                    const listItems = Array.from(tempDiv.querySelectorAll('li'));
+                    return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
+                } catch (e) {
+                    console.warn('Error parsing key_events HTML:', e);
+                    // Fallback to plain text comparison
+                    return individual.key_events.trim() === selectedKeyEvent;
+                }
+            } else {
+                // Plain text - direct comparison
+                return individual.key_events.trim() === selectedKeyEvent;
             }
         });
     }
