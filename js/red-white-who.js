@@ -16,9 +16,11 @@ let currentQuizAnswers = {};
 let quizSubmitted = false;
 let currentQuestionIndex = 0;
 let allKeyEvents = [];
+let allKeyEventsGeneral = [];
 let selectedYearRange = null;
 let selectedKeyEvent = null;
-let currentFilterType = 'all'; // 'all', 'years', 'keyEvents'
+let selectedKeyEventsGeneral = null;
+let currentFilterType = 'all'; // 'all', 'years', 'keyEvents', 'keyEventsGeneral'
 
 // Helper function to get correct path for pages
 function getPagePath(pageName) {
@@ -169,6 +171,7 @@ async function loadAllIndividuals() {
                 birth_date,
                 death_date,
                 key_events,
+                key_events_general,
                 key_facts,
                 biographical_summary,
                 main_photo_url,
@@ -225,6 +228,7 @@ async function loadAllIndividuals() {
         // Setup year ranges and key events after loading individuals
         setupYearRanges();
         setupKeyEventTiles();
+        loadKeyEventsGeneral();
     } catch (error) {
         console.error('Error loading individuals:', error);
         const errorMessage = error.message || 'Unknown error';
@@ -263,6 +267,78 @@ async function loadKeyEvents() {
     });
     
     allKeyEvents = Array.from(eventsSet).sort();
+}
+
+function loadKeyEventsGeneral() {
+    // Extract unique key_events_general from all individuals
+    const generalEventsSet = new Set();
+    allIndividuals.forEach(individual => {
+        if (individual.key_events_general && typeof individual.key_events_general === 'string' && individual.key_events_general.trim() !== '') {
+            generalEventsSet.add(individual.key_events_general.trim());
+        }
+    });
+    
+    allKeyEventsGeneral = Array.from(generalEventsSet).sort();
+    displayKeyEventsGeneralButtons();
+}
+
+function displayKeyEventsGeneralButtons() {
+    const container = document.getElementById('keyEventsGeneralButtons');
+    if (!container) return;
+    
+    if (allKeyEventsGeneral.length === 0) {
+        container.innerHTML = '<p style="color: #666; text-align: center;">No historical periods available.</p>';
+        return;
+    }
+    
+    // Extract short titles from the full descriptions (everything before the colon)
+    const buttons = allKeyEventsGeneral.map(generalEvent => {
+        const title = generalEvent.split(':')[0]; // Get title before colon
+        return `
+            <button class="key-events-general-btn" 
+                    onclick="filterByKeyEventsGeneral('${escapeHtml(generalEvent)}')"
+                    data-key-events-general="${escapeHtml(generalEvent)}">
+                ${escapeHtml(title)}
+            </button>
+        `;
+    }).join('');
+    
+    container.innerHTML = buttons;
+}
+
+function filterByKeyEventsGeneral(keyEventsGeneral) {
+    // Toggle active state
+    const buttons = document.querySelectorAll('.key-events-general-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-key-events-general') === keyEventsGeneral) {
+            if (btn.classList.contains('active')) {
+                // Deselect if already active
+                btn.classList.remove('active');
+                selectedKeyEventsGeneral = null;
+                currentFilterType = 'all';
+                displayIndividuals(allIndividuals);
+            } else {
+                // Select this button
+                btn.classList.add('active');
+                selectedKeyEventsGeneral = keyEventsGeneral;
+                currentFilterType = 'keyEventsGeneral';
+                
+                // Deselect other buttons
+                buttons.forEach(b => {
+                    if (b !== btn) b.classList.remove('active');
+                });
+                
+                // Filter individuals
+                const filtered = allIndividuals.filter(individual => {
+                    return individual.key_events_general === keyEventsGeneral;
+                });
+                
+                displayIndividuals(filtered);
+            }
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 function displayIndividuals(individuals) {
@@ -310,6 +386,11 @@ function displayIndividuals(individuals) {
 // Tile-based filter functions
 function showViewAll() {
     currentFilterType = 'all';
+    selectedKeyEventsGeneral = null;
+    
+    // Clear active state on key events general buttons
+    const buttons = document.querySelectorAll('.key-events-general-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
     selectedYearRange = null;
     selectedKeyEvent = null;
     
@@ -1039,6 +1120,7 @@ function escapeHtml(text) {
 
 // Make functions available globally
 window.viewBiography = viewBiography;
+window.filterByKeyEventsGeneral = filterByKeyEventsGeneral;
 window.showMarketplace = showMarketplace;
 window.showViewAll = showViewAll;
 window.showYearsFilter = showYearsFilter;

@@ -106,6 +106,49 @@
             opacity: 0.9;
         }
         
+        .key-events-general-container {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .key-events-general-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .key-events-general-btn {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(218, 165, 32, 0.2);
+        }
+        
+        .key-events-general-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(218, 165, 32, 0.4);
+            border-color: #CC5500;
+            background: linear-gradient(135deg, #ffeaa7 0%, #DAA520 100%);
+        }
+        
+        .key-events-general-btn.active {
+            background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%);
+            color: white;
+            border-color: #CC5500;
+            box-shadow: 0 4px 15px rgba(204, 85, 0, 0.5);
+        }
+        
         .filter-panel {
             background: #f8f9fa;
             border: 2px solid #e0e0e0;
@@ -583,6 +626,14 @@
                             <div class="search-tile-icon">⭐</div>
                             <div class="search-tile-title">Key Events</div>
                             <div class="search-tile-description">Filter by important events</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Events General Buttons -->
+                    <div class="key-events-general-container" id="keyEventsGeneralContainer">
+                        <h3 style="margin-bottom: 20px; color: #333; font-size: 1.5rem;">Filter by Historical Period</h3>
+                        <div class="key-events-general-buttons" id="keyEventsGeneralButtons">
+                            <!-- Buttons will be generated here -->
                         </div>
                     </div>
                     
