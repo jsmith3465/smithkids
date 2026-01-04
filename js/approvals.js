@@ -19,23 +19,55 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Approvals page DOMContentLoaded');
     
+    let checkCount = 0;
+    const maxChecks = 50; // 5 seconds (50 * 100ms)
+    
     const checkAuth = setInterval(() => {
+        checkCount++;
+        
         if (window.authStatus) {
             clearInterval(checkAuth);
+            console.log('authStatus found, isAuthenticated:', window.authStatus.isAuthenticated);
             if (window.authStatus.isAuthenticated) {
                 checkAdminAccess();
             } else {
+                // Check sessionStorage as fallback
+                const sessionData = sessionStorage.getItem('userSession');
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        if (session && session.uid) {
+                            console.log('Found session in sessionStorage, checking admin access');
+                            checkAdminAccess();
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing sessionStorage:', e);
+                    }
+                }
+                console.log('Not authenticated, redirecting to login');
                 window.location.href = getPagePath('login.html');
             }
-        }
-    }, 100);
-    
-    setTimeout(() => {
-        clearInterval(checkAuth);
-        if (!window.authStatus) {
+        } else if (checkCount >= maxChecks) {
+            clearInterval(checkAuth);
+            // Final fallback: check sessionStorage
+            const sessionData = sessionStorage.getItem('userSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    if (session && session.uid) {
+                        console.log('Timeout reached, but found session in sessionStorage');
+                        checkAdminAccess();
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error parsing sessionStorage:', e);
+                }
+            }
+            console.log('Auth check timed out, redirecting to login');
             window.location.href = getPagePath('login.html');
         }
-    }, 5000);
+    }, 100);
 });
 
 async function checkAdminAccess() {
@@ -44,35 +76,84 @@ async function checkAdminAccess() {
     const adminCheck = document.getElementById('adminCheck');
     const adminContent = document.getElementById('adminContent');
     
+    if (!authCheck || !mainContent || !adminCheck || !adminContent) {
+        console.error('Required DOM elements not found');
+        return;
+    }
+    
     try {
-        const session = window.authStatus?.getSession();
+        // Try to get session from authStatus first
+        let session = null;
+        if (window.authStatus && window.authStatus.getSession) {
+            session = window.authStatus.getSession();
+        }
+        
+        // Fallback to sessionStorage if authStatus not available
         if (!session || !session.uid) {
+            const sessionData = sessionStorage.getItem('userSession');
+            if (sessionData) {
+                try {
+                    session = JSON.parse(sessionData);
+                } catch (e) {
+                    console.error('Error parsing sessionStorage:', e);
+                }
+            }
+        }
+        
+        if (!session || !session.uid) {
+            console.log('No session found, redirecting to login');
             window.location.href = getPagePath('login.html');
             return;
         }
         
+        console.log('Session found:', { uid: session.uid, userType: session.userType });
+        
         // Only admins can access this page
         if (session.userType !== 'admin') {
-            authCheck.classList.add('hidden');
-            mainContent.classList.remove('hidden');
+            console.log('User is not an admin');
+            authCheck.style.display = 'none';
+            mainContent.style.display = 'block';
             adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
             adminCheck.style.display = 'block';
-            adminContent.classList.add('hidden');
+            adminContent.style.display = 'none';
             return;
         }
         
-        // Show content
-        authCheck.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-        adminCheck.classList.add('hidden');
-        adminContent.classList.remove('hidden');
+        console.log('Admin access confirmed, showing content');
         
-        // Setup event listeners and load approvals
+        // Hide auth check
+        authCheck.style.display = 'none';
+        
+        // Show main content
+        mainContent.style.display = 'block';
+        
+        // Hide admin check and show admin content
+        adminCheck.style.display = 'none';
+        adminContent.style.display = 'block';
+        
+        // Setup event listeners first
         setupEventListeners();
-        await loadPendingApprovals();
+        
+        // Load approvals asynchronously (don't block UI)
+        loadPendingApprovals().catch((error) => {
+            console.error('Error loading approvals:', error);
+            const approvalsList = document.getElementById('approvalsList');
+            if (approvalsList) {
+                approvalsList.innerHTML = `<div class="no-approvals" style="color: #dc3545;">Error loading approvals: ${error.message || 'Unknown error'}. Please refresh the page.</div>`;
+            }
+        });
+        
+        console.log('Approvals page loaded successfully');
     } catch (error) {
         console.error('Error checking admin access:', error);
-        authCheck.innerHTML = `<p style="color: #dc3545;">Error: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
+        console.error('Error stack:', error.stack);
+        if (authCheck) {
+            authCheck.innerHTML = `<p style="color: #dc3545;">Error: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
+            authCheck.style.display = 'block';
+        }
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
     }
 }
 
