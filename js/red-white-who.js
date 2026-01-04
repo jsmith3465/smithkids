@@ -494,21 +494,24 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
     // Collect all non-null photo URLs from photo_gallery_1 through photo_gallery_10
     for (let i = 1; i <= 10; i++) {
         const photoUrl = individual[`photo_gallery_${i}`];
-        if (photoUrl && photoUrl.trim()) {
+        if (photoUrl && photoUrl.trim() && photoUrl.trim() !== 'NULL') {
             galleryPhotos.push(photoUrl.trim());
         }
     }
     
+    // Display all gallery photos (up to 10)
     if (galleryPhotos.length > 0) {
-        photoGalleryGrid.innerHTML = galleryPhotos.map(photoUrl => `
+        photoGalleryGrid.innerHTML = galleryPhotos.map((photoUrl, index) => `
             <div class="photo-gallery-item">
                 <img src="${escapeHtml(photoUrl)}" 
-                     alt="Gallery photo"
-                     onerror="this.src='https://via.placeholder.com/250x200?text=No+Photo'">
+                     alt="Gallery photo ${index + 1} for ${escapeHtml(individual.name)}"
+                     onerror="this.src='https://via.placeholder.com/250x200?text=No+Photo'"
+                     style="cursor: pointer;"
+                     onclick="window.open('${escapeHtml(photoUrl)}', '_blank')">
             </div>
         `).join('');
     } else {
-        photoGalleryGrid.innerHTML = '<div style="color: #666; grid-column: 1 / -1;">No additional photos available.</div>';
+        photoGalleryGrid.innerHTML = '<div style="color: #666; grid-column: 1 / -1; text-align: center; padding: 20px;">No additional photos available.</div>';
     }
     
     // Set quiz button
