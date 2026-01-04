@@ -311,7 +311,7 @@ class CheckersGame {
         this.gameActive = true;
         this.gameStartTime = Date.now();
         this.mustJump = false;
-        this.gameMessage.style.display = 'none';
+        this.gameMessage.style.visibility = 'hidden';
         
         this.renderBoard();
         this.updateDisplay();
@@ -759,7 +759,7 @@ class CheckersGame {
         
         this.gameMessage.textContent = message;
         this.gameMessage.className = `game-message ${messageClass}`;
-        this.gameMessage.style.display = 'block';
+        this.gameMessage.style.visibility = 'visible';
         
         // Save game statistics
         this.saveGameStats(result, gameDuration);
@@ -830,7 +830,7 @@ class CheckersGame {
     newPlayers() {
         this.gameSection.classList.add('hidden');
         this.playerSetup.classList.remove('hidden');
-        this.gameMessage.style.display = 'none';
+        this.gameMessage.style.visibility = 'hidden';
     }
 }
 

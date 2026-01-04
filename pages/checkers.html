@@ -69,8 +69,9 @@
             justify-content: center;
             align-items: flex-start;
             gap: 20px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             margin-top: 20px;
+            position: relative;
         }
         
         .checkers-board {
@@ -81,6 +82,7 @@
             height: min(90vw, 600px);
             border: 3px solid #333;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
         }
         
         .checkers-square {
@@ -158,6 +160,7 @@
             border-radius: 10px;
             font-weight: 600;
             font-size: 1.1rem;
+            min-height: 50px;
         }
         
         .game-message.info {
@@ -188,6 +191,21 @@
             .checkers-board {
                 width: min(90vw, 400px);
                 height: min(90vw, 400px);
+            }
+            
+            .checkers-board-container {
+                flex-wrap: wrap;
+            }
+            
+            .checkers-board {
+                order: 1;
+            }
+            
+            .game-info-panel {
+                order: 2;
+                width: 100%;
+                max-width: 400px;
+                margin: 0 auto;
             }
         }
     </style>
@@ -239,7 +257,7 @@
             </div>
             
             <div id="gameSection" class="hidden">
-                <div id="gameMessage" class="game-message info" style="display: none;"></div>
+                <div id="gameMessage" class="game-message info" style="visibility: hidden;"></div>
                 <div class="checkers-board-container">
                     <div id="checkersBoard" class="checkers-board"></div>
                     <div class="game-info-panel">
