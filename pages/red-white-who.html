@@ -655,11 +655,12 @@
     <!-- Quiz Modal -->
     <div id="quizModal" class="quiz-modal">
         <div class="quiz-modal-content">
-            <h2 style="text-align: center; margin-bottom: 30px;">Quiz: <span id="quizIndividualName"></span></h2>
+            <h2 style="text-align: left; margin-bottom: 30px; font-size: 2rem; color: #333; border-bottom: 2px solid #DAA520; padding-bottom: 10px;">Quiz: <span id="quizIndividualName"></span></h2>
             <div id="quizQuestions">
                 <!-- Quiz questions will be loaded here -->
             </div>
             <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" id="nextQuestionBtn" onclick="nextQuestion()" style="display: none;">Next Question</button>
                 <button class="btn btn-primary" id="submitQuizBtn" onclick="submitQuiz()" style="display: none;">Submit Quiz</button>
                 <button class="btn btn-secondary" id="closeQuizBtn" onclick="closeQuiz()" style="display: none;">Close</button>
             </div>

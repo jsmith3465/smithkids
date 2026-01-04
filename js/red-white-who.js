@@ -14,6 +14,7 @@ let currentIndividual = null;
 let currentQuizQuestions = [];
 let currentQuizAnswers = {};
 let quizSubmitted = false;
+let currentQuestionIndex = 0;
 let allKeyEvents = [];
 let selectedYearRange = null;
 let selectedKeyEvent = null;
@@ -676,6 +677,7 @@ async function startQuiz() {
         currentQuizQuestions = shuffled.slice(0, 5);
         currentQuizAnswers = {};
         quizSubmitted = false;
+        currentQuestionIndex = 0;
         
         // Display quiz
         displayQuiz();
@@ -694,7 +696,12 @@ function displayQuiz() {
     
     quizIndividualName.textContent = currentIndividual.name;
     
-    quizQuestionsDiv.innerHTML = currentQuizQuestions.map((question, index) => {
+    // Show only the current question
+    if (currentQuestionIndex < currentQuizQuestions.length) {
+        const question = currentQuizQuestions[currentQuestionIndex];
+        const questionNumber = currentQuestionIndex + 1;
+        const totalQuestions = currentQuizQuestions.length;
+        
         // Shuffle answer options
         const answers = [
             { text: question.correct_answer, isCorrect: true },
@@ -703,24 +710,54 @@ function displayQuiz() {
             { text: question.wrong_answer_3, isCorrect: false }
         ].sort(() => 0.5 - Math.random());
         
-        return `
+        // Check if this question has already been answered
+        const existingAnswer = currentQuizAnswers[question.question_id];
+        
+        quizQuestionsDiv.innerHTML = `
             <div class="quiz-question" data-question-id="${question.question_id}">
-                <h4>Question ${index + 1}: ${escapeHtml(question.question_text)}</h4>
-                ${answers.map((answer, answerIndex) => `
-                    <button class="quiz-answer-option" 
-                            onclick="selectAnswer(${question.question_id}, ${answerIndex}, ${answer.isCorrect})"
-                            data-question-id="${question.question_id}"
-                            data-answer-index="${answerIndex}"
-                            data-is-correct="${answer.isCorrect}">
-                        ${escapeHtml(answer.text)}
-                    </button>
-                `).join('')}
+                <h4>Question ${questionNumber} of ${totalQuestions}: ${escapeHtml(question.question_text)}</h4>
+                ${answers.map((answer, answerIndex) => {
+                    const isSelected = existingAnswer && existingAnswer.answerIndex === answerIndex;
+                    return `
+                        <button class="quiz-answer-option ${isSelected ? 'selected' : ''}" 
+                                onclick="selectAnswer(${question.question_id}, ${answerIndex}, ${answer.isCorrect})"
+                                data-question-id="${question.question_id}"
+                                data-answer-index="${answerIndex}"
+                                data-is-correct="${answer.isCorrect}">
+                            ${escapeHtml(answer.text)}
+                        </button>
+                    `;
+                }).join('')}
             </div>
         `;
-    }).join('');
-    
-    document.getElementById('submitQuizBtn').style.display = 'inline-block';
-    document.getElementById('closeQuizBtn').style.display = 'none';
+        
+        // Show/hide buttons based on question position
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        const submitBtn = document.getElementById('submitQuizBtn');
+        const closeBtn = document.getElementById('closeQuizBtn');
+        
+        // Check if current question has been answered
+        const currentQuestion = currentQuizQuestions[currentQuestionIndex];
+        const hasAnswer = currentQuizAnswers[currentQuestion.question_id] !== undefined;
+        
+        if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+            // Not the last question - show Next button
+            if (nextBtn) {
+                nextBtn.style.display = 'inline-block';
+                nextBtn.disabled = !hasAnswer;
+            }
+            if (submitBtn) submitBtn.style.display = 'none';
+            if (closeBtn) closeBtn.style.display = 'none';
+        } else {
+            // Last question - show Submit button
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) {
+                submitBtn.style.display = 'inline-block';
+                submitBtn.disabled = !hasAnswer;
+            }
+            if (closeBtn) closeBtn.style.display = 'none';
+        }
+    }
 }
 
 function selectAnswer(questionId, answerIndex, isCorrect) {
@@ -742,6 +779,22 @@ function selectAnswer(questionId, answerIndex, isCorrect) {
         isCorrect,
         answerText: selectedBtn.textContent.trim()
     };
+    
+    // Enable Next Question or Submit button
+    const nextBtn = document.getElementById('nextQuestionBtn');
+    const submitBtn = document.getElementById('submitQuizBtn');
+    if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+        if (nextBtn) nextBtn.disabled = false;
+    } else {
+        if (submitBtn) submitBtn.disabled = false;
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+        currentQuestionIndex++;
+        displayQuiz();
+    }
 }
 
 async function submitQuiz() {
@@ -755,23 +808,23 @@ async function submitQuiz() {
     
     quizSubmitted = true;
     document.getElementById('submitQuizBtn').style.display = 'none';
+    document.getElementById('nextQuestionBtn').style.display = 'none';
     
     // Calculate score
     let correctCount = 0;
+    const wrongAnswers = [];
+    
     currentQuizQuestions.forEach(question => {
         const answer = currentQuizAnswers[question.question_id];
         if (answer && answer.isCorrect) {
             correctCount++;
-            // Mark correct answer
-            const questionDiv = document.querySelector(`.quiz-question[data-question-id="${question.question_id}"]`);
-            questionDiv.querySelector(`[data-is-correct="true"]`).classList.add('correct');
         } else {
-            // Mark incorrect answer and show correct one
-            const questionDiv = document.querySelector(`.quiz-question[data-question-id="${question.question_id}"]`);
-            if (answer) {
-                questionDiv.querySelector(`[data-answer-index="${answer.answerIndex}"]`).classList.add('incorrect');
-            }
-            questionDiv.querySelector(`[data-is-correct="true"]`).classList.add('correct');
+            // Store wrong answer for hint
+            wrongAnswers.push({
+                question: question.question_text,
+                correctAnswer: question.correct_answer,
+                userAnswer: answer ? answer.answerText : 'No answer'
+            });
         }
     });
     
@@ -850,8 +903,8 @@ async function submitQuiz() {
         console.error('Error saving quiz attempt:', error);
     }
     
-    // Show results (pass hasAlreadyPassed flag)
-    showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed);
+    // Show results (pass hasAlreadyPassed flag and wrong answers for hints)
+    showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed, wrongAnswers);
 }
 
 async function awardQuizCredits(individualId, individualName) {
@@ -891,10 +944,12 @@ async function awardQuizCredits(individualId, individualName) {
     }
 }
 
-function showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed = false) {
+function showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed = false, wrongAnswers = []) {
     const quizQuestionsDiv = document.getElementById('quizQuestions');
     
     let creditsMessage = '';
+    let hintMessage = '';
+    
     if (isPerfect) {
         if (hasAlreadyPassed) {
             creditsMessage = '<p style="font-size: 1.1rem; color: #666; margin-top: 10px;">You\'ve already earned credits for this quiz, but great job on passing again! 🎉</p>';
@@ -902,7 +957,22 @@ function showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed = fa
             creditsMessage = `<p style="font-size: 1.2rem; color: #155724; font-weight: 600; margin-top: 10px;">🎊 Congratulations! You earned ${creditsAwarded} credits!</p>`;
         }
     } else {
-        creditsMessage = '<p style="font-size: 1.1rem; color: #856404; margin-top: 10px;">You need a perfect score (5/5) to earn 5 credits. Try again!</p>';
+        creditsMessage = '<p style="font-size: 1.1rem; color: #856404; margin-top: 10px;">You need a perfect score (5/5) to earn 5 credits.</p>';
+        
+        // Show hint with one wrong answer if score < 5
+        if (wrongAnswers.length > 0) {
+            const hintQuestion = wrongAnswers[0];
+            hintMessage = `
+                <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+                    <p style="font-weight: 600; color: #856404; margin-bottom: 10px;">💡 Hint:</p>
+                    <p style="color: #856404; margin-bottom: 5px;"><strong>Question:</strong> ${escapeHtml(hintQuestion.question)}</p>
+                    <p style="color: #856404;"><strong>Correct Answer:</strong> ${escapeHtml(hintQuestion.correctAnswer)}</p>
+                </div>
+                <p style="font-size: 1.1rem; color: #856404; margin-top: 15px; font-weight: 600;">
+                    Please re-read the biography and try again!
+                </p>
+            `;
+        }
     }
     
     const resultsHtml = `
@@ -912,10 +982,11 @@ function showQuizResults(score, isPerfect, creditsAwarded, hasAlreadyPassed = fa
                 You got <strong>${score} out of 5</strong> questions correct.
             </p>
             ${creditsMessage}
+            ${hintMessage}
         </div>
     `;
     
-    quizQuestionsDiv.insertAdjacentHTML('beforeend', resultsHtml);
+    quizQuestionsDiv.innerHTML = resultsHtml;
     document.getElementById('closeQuizBtn').style.display = 'inline-block';
     
     if (isPerfect && creditsAwarded > 0) {
@@ -980,6 +1051,7 @@ window.applyKeyEventFilter = applyKeyEventFilter;
 window.clearKeyEventFilter = clearKeyEventFilter;
 window.startQuiz = startQuiz;
 window.selectAnswer = selectAnswer;
+window.nextQuestion = nextQuestion;
 window.submitQuiz = submitQuiz;
 window.closeQuiz = closeQuiz;
 
