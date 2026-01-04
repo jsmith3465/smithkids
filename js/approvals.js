@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (authCheck) {
                         authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
                     }
+                    setTimeout(() => {
+                        window.location.href = getPagePath('login.html');
+                    }, 2000);
                 }
             }
         }, 100);
@@ -38,6 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const authCheck = document.getElementById('authCheck');
                 if (authCheck) {
                     authCheck.innerHTML = '<p style="color: #dc3545;">Authentication check timed out. Please refresh the page.</p>';
+                }
+            } else if (window.authStatus.isAuthenticated) {
+                // If authenticated but checkAdminAccess wasn't called, call it now
+                const adminCheck = document.getElementById('adminCheck');
+                if (adminCheck && adminCheck.textContent.includes('Checking admin access')) {
+                    console.log('Auth check completed but admin check not called, calling now');
+                    checkAdminAccess();
                 }
             }
         }, 5000);
@@ -50,16 +60,28 @@ async function checkAdminAccess() {
     const adminCheck = document.getElementById('adminCheck');
     const adminContent = document.getElementById('adminContent');
     
+    // Log which elements are missing for debugging
+    if (!authCheck) console.error('authCheck element not found');
+    if (!mainContent) console.error('mainContent element not found');
+    if (!adminCheck) console.error('adminCheck element not found');
+    if (!adminContent) console.error('adminContent element not found');
+    
     if (!authCheck || !mainContent || !adminCheck || !adminContent) {
-        console.error('Required DOM elements not found');
+        console.error('Required DOM elements not found. Cannot proceed.');
+        if (authCheck) {
+            authCheck.innerHTML = '<p style="color: #dc3545;">Error: Page elements not found. Please refresh the page.</p>';
+        }
         return;
     }
     
     const session = window.authStatus?.getSession();
     if (!session) {
+        console.error('No session found');
         window.location.href = getPagePath('login.html');
         return;
     }
+    
+    console.log('Session found:', { uid: session.uid, userType: session.userType, username: session.username });
     
     // Show mainContent first
     authCheck.classList.add('hidden');
@@ -67,17 +89,27 @@ async function checkAdminAccess() {
     
     // Check admin access
     if (session.userType !== 'admin') {
+        console.log('User is not an admin:', session.userType);
         adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
         adminContent.classList.add('hidden');
         return;
     }
     
+    console.log('Admin access confirmed, showing admin content');
+    
     // Hide admin check and show admin content
     adminCheck.classList.add('hidden');
     adminContent.classList.remove('hidden');
     
-    await loadPendingApprovals();
-    setupEventListeners();
+    try {
+        await loadPendingApprovals();
+        setupEventListeners();
+    } catch (error) {
+        console.error('Error loading approvals:', error);
+        adminCheck.innerHTML = '<p style="color: #dc3545;">Error loading approvals. Please refresh the page.</p>';
+        adminCheck.classList.remove('hidden');
+        adminContent.classList.add('hidden');
+    }
 }
 
 async function loadPendingApprovals() {
