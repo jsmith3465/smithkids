@@ -157,14 +157,49 @@ function setupKeyEventTiles() {
 
 async function loadAllIndividuals() {
     try {
+        // Explicitly select all columns to avoid any issues
         const { data, error } = await supabase
             .from('red_white_who_individuals')
-            .select('*')
+            .select(`
+                individual_id,
+                name,
+                birth_year,
+                death_year,
+                birth_date,
+                death_date,
+                key_events,
+                key_facts,
+                biographical_summary,
+                main_photo_url,
+                photo_gallery_1,
+                photo_gallery_2,
+                photo_gallery_3,
+                photo_gallery_4,
+                photo_gallery_5,
+                photo_gallery_6,
+                photo_gallery_7,
+                photo_gallery_8,
+                photo_gallery_9,
+                photo_gallery_10,
+                created_at,
+                updated_at
+            `)
             .order('name');
         
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error loading individuals:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            throw error;
+        }
         
-        allIndividuals = data || [];
+        if (!data) {
+            console.warn('No data returned from Supabase');
+            allIndividuals = [];
+        } else {
+            allIndividuals = data;
+            console.log(`Loaded ${allIndividuals.length} individuals`);
+        }
+        
         displayIndividuals(allIndividuals);
         
         // Setup year ranges and key events after loading individuals
@@ -172,17 +207,47 @@ async function loadAllIndividuals() {
         setupKeyEventTiles();
     } catch (error) {
         console.error('Error loading individuals:', error);
-        document.getElementById('individualsGrid').innerHTML = 
-            '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading biographies. Please refresh the page.</div>';
+        const errorMessage = error.message || 'Unknown error';
+        const grid = document.getElementById('individualsGrid');
+        if (grid) {
+            grid.innerHTML = 
+                `<div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <p>Error loading biographies. Please refresh the page.</p>
+                    <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Error: ${escapeHtml(errorMessage)}</p>
+                </div>`;
+        }
     }
 }
 
 async function loadKeyEvents() {
     // Extract unique key events from all individuals
+    // key_events can be stored as HTML (new format) or TEXT[] array (old format)
     const eventsSet = new Set();
     allIndividuals.forEach(individual => {
-        if (individual.key_events && Array.isArray(individual.key_events)) {
-            individual.key_events.forEach(event => eventsSet.add(event));
+        if (individual.key_events) {
+            // Check if it's an array (old format)
+            if (Array.isArray(individual.key_events)) {
+                individual.key_events.forEach(event => {
+                    if (event && event.trim()) {
+                        eventsSet.add(event.trim());
+                    }
+                });
+            } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
+                // It's HTML (new format), parse it
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = individual.key_events;
+                    const listItems = tempDiv.querySelectorAll('li');
+                    listItems.forEach(li => {
+                        const eventText = li.textContent.trim();
+                        if (eventText) {
+                            eventsSet.add(eventText);
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Error parsing key_events HTML:', e);
+                }
+            }
         }
     });
     
@@ -203,9 +268,26 @@ function displayIndividuals(individuals) {
         const deathYear = individual.death_year || 'Present';
         const years = `${birthYear} - ${deathYear}`;
         
-        const keyEvents = individual.key_events && individual.key_events.length > 0
-            ? individual.key_events.slice(0, 2).join(', ')
-            : 'No key events listed';
+        // key_events can be stored as HTML (new format) or TEXT[] array (old format)
+        let keyEvents = 'No key events listed';
+        if (individual.key_events) {
+            if (Array.isArray(individual.key_events)) {
+                // Old format: TEXT[] array
+                keyEvents = individual.key_events.slice(0, 2).join(', ') || 'No key events listed';
+            } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
+                // New format: HTML
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = individual.key_events;
+                    const listItems = Array.from(tempDiv.querySelectorAll('li')).slice(0, 2);
+                    if (listItems.length > 0) {
+                        keyEvents = listItems.map(li => li.textContent.trim()).join(', ');
+                    }
+                } catch (e) {
+                    console.warn('Error parsing key_events HTML:', e);
+                }
+            }
+        }
         
         return `
             <div class="individual-card" onclick="viewBiography(${individual.individual_id})">
@@ -329,9 +411,28 @@ function applyKeyEventFilter() {
     }
     
     const filtered = allIndividuals.filter(individual => {
-        return individual.key_events && 
-               Array.isArray(individual.key_events) && 
-               individual.key_events.includes(selectedKeyEvent);
+        // key_events can be stored as HTML (new format) or TEXT[] array (old format)
+        if (!individual.key_events) {
+            return false;
+        }
+        
+        if (Array.isArray(individual.key_events)) {
+            // Old format: TEXT[] array
+            return individual.key_events.includes(selectedKeyEvent);
+        } else if (typeof individual.key_events === 'string' && individual.key_events.trim() !== '') {
+            // New format: HTML
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = individual.key_events;
+                const listItems = Array.from(tempDiv.querySelectorAll('li'));
+                return listItems.some(li => li.textContent.trim() === selectedKeyEvent);
+            } catch (e) {
+                console.warn('Error parsing key_events HTML:', e);
+                return false;
+            }
+        }
+        
+        return false;
     });
     
     displayIndividuals(filtered);
@@ -456,15 +557,23 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
         this.src = 'https://via.placeholder.com/200x250?text=No+Photo';
     };
     
-    // Set key facts
+    // Set key facts (can be stored as HTML or JSONB)
     const keyFactsGrid = document.getElementById('keyFactsGrid');
-    if (individual.key_facts && typeof individual.key_facts === 'object') {
-        keyFactsGrid.innerHTML = Object.entries(individual.key_facts).map(([key, value]) => `
-            <div class="key-fact-item">
-                <strong>${escapeHtml(key)}</strong>
-                <span>${escapeHtml(String(value))}</span>
-            </div>
-        `).join('');
+    if (individual.key_facts) {
+        if (typeof individual.key_facts === 'string' && individual.key_facts.trim() !== '') {
+            // New format: HTML stored as TEXT
+            keyFactsGrid.innerHTML = individual.key_facts;
+        } else if (typeof individual.key_facts === 'object' && individual.key_facts !== null) {
+            // Old format: JSONB object
+            keyFactsGrid.innerHTML = Object.entries(individual.key_facts).map(([key, value]) => `
+                <div class="key-fact-item">
+                    <strong>${escapeHtml(key)}</strong>
+                    <span>${escapeHtml(String(value))}</span>
+                </div>
+            `).join('');
+        } else {
+            keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
+        }
     } else {
         keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
     }
