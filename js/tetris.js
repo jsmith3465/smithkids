@@ -102,7 +102,8 @@ function showCreditWarning(balance) {
 const PIECES = [
     // I piece
     [
-        [[1,1,1,1]]
+        [[1,1,1,1]],  // Horizontal
+        [[1],[1],[1],[1]]  // Vertical
     ],
     // O piece
     [
