@@ -153,6 +153,34 @@
             box-shadow: 0 4px 15px rgba(204, 85, 0, 0.5);
         }
         
+        .filter-dropdowns-container {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        .filter-dropdown {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+        
+        .filter-dropdown:hover {
+            border-color: #CC5500;
+            box-shadow: 0 2px 8px rgba(218, 165, 32, 0.2);
+        }
+        
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: #CC5500;
+            box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.2);
+        }
+        
         .filter-panel {
             background: #f8f9fa;
             border: 2px solid #e0e0e0;
@@ -610,44 +638,29 @@
                 
                 <!-- Marketplace View -->
                 <div id="marketplaceView">
-                    <!-- Show Filter Button -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <button class="btn btn-primary" onclick="toggleFilterPanel()" id="showFilterBtn" style="font-size: 1.1rem; padding: 12px 30px;">
-                            🔍 Show Filters
-                        </button>
-                    </div>
-                    
-                    <!-- Combined Filter Panel -->
-                    <div class="filter-panel" id="combinedFilterPanel" style="display: none;">
-                        <h3 style="margin: 0 0 25px 0; color: #333; font-size: 1.8rem; text-align: center;">Filters</h3>
-                        
-                        <!-- Period Lived Filter -->
-                        <div style="margin-bottom: 40px;">
-                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">📅 Period Lived</h4>
-                            <div class="years-filter-grid" id="periodLivedGrid">
-                                <!-- Period range tiles will be generated here -->
-                            </div>
+                    <!-- Filter Dropdowns -->
+                    <div class="filter-dropdowns-container" style="margin-bottom: 30px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                        <!-- Period Lived Dropdown -->
+                        <div class="filter-dropdown-wrapper" style="flex: 1; min-width: 200px;">
+                            <label for="periodDropdown" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 1rem;">📅 Period Lived</label>
+                            <select id="periodDropdown" class="filter-dropdown" onchange="handlePeriodChange()" style="width: 100%; padding: 12px 15px; font-size: 1rem; border: 2px solid #DAA520; border-radius: 8px; background: white; color: #333; cursor: pointer; transition: all 0.3s ease;">
+                                <option value="">All Periods</option>
+                                <!-- Period options will be generated here -->
+                            </select>
                         </div>
                         
-                        <!-- Key Events Filter -->
-                        <div style="margin-bottom: 40px;">
-                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">⭐ Key Events</h4>
-                            <div class="key-events-grid" id="keyEventsGrid">
-                                <!-- Key event tiles will be generated here -->
-                            </div>
+                        <!-- Key Events Dropdown -->
+                        <div class="filter-dropdown-wrapper" style="flex: 1; min-width: 200px;">
+                            <label for="keyEventsDropdown" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 1rem;">⭐ Key Events</label>
+                            <select id="keyEventsDropdown" class="filter-dropdown" onchange="handleKeyEventsChange()" style="width: 100%; padding: 12px 15px; font-size: 1rem; border: 2px solid #DAA520; border-radius: 8px; background: white; color: #333; cursor: pointer; transition: all 0.3s ease;">
+                                <option value="">All Key Events</option>
+                                <!-- Key event options will be generated here -->
+                            </select>
                         </div>
                         
-                        <!-- Historical Period Filter -->
-                        <div style="margin-bottom: 40px;">
-                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.3rem; font-weight: 600;">🏛️ Historical Period</h4>
-                            <div class="key-events-general-buttons" id="keyEventsGeneralButtons">
-                                <!-- Buttons will be generated here -->
-                            </div>
-                        </div>
-                        
-                        <div class="filter-actions" style="margin-top: 30px;">
-                            <button class="btn btn-primary" onclick="applyCombinedFilters()">Apply Filters</button>
-                            <button class="btn btn-secondary" onclick="clearAllFilters()">Clear All</button>
+                        <!-- Clear Filters Button -->
+                        <div style="flex-shrink: 0;">
+                            <button class="btn btn-secondary" onclick="clearAllFilters()" style="padding: 12px 20px; font-size: 1rem; white-space: nowrap;">Clear Filters</button>
                         </div>
                     </div>
                     

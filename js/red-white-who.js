@@ -99,32 +99,27 @@ function setupYearRanges() {
         });
     }
     
-    const periodGrid = document.getElementById('periodLivedGrid');
-    if (periodGrid) {
-        periodGrid.innerHTML = periodRanges.map(range => {
-            const escapedLabel = escapeHtml(range.label);
-            return `
-                <div class="year-range-tile" onclick="selectPeriodRange(${range.start}, ${range.end}, ${JSON.stringify(range.label)})" 
-                     data-start="${range.start}" data-end="${range.end}">
-                    ${escapedLabel}
-                </div>
-            `;
-        }).join('');
+    // Populate period dropdown
+    const periodDropdown = document.getElementById('periodDropdown');
+    if (periodDropdown) {
+        periodDropdown.innerHTML = '<option value="">All Periods</option>' + 
+            periodRanges.map(range => {
+                const escapedLabel = escapeHtml(range.label);
+                const value = `${range.start}-${range.end}`;
+                return `<option value="${value}" data-start="${range.start}" data-end="${range.end}">${escapedLabel}</option>`;
+            }).join('');
     }
-    
-    // Also setup key events grid (existing functionality)
-    setupKeyEventTiles();
 }
 
 function setupKeyEventTiles() {
-    const keyEventsGrid = document.getElementById('keyEventsGrid');
-    if (keyEventsGrid && allKeyEvents.length > 0) {
-        keyEventsGrid.innerHTML = allKeyEvents.map(event => `
-            <div class="key-event-tile" onclick="selectKeyEvent('${escapeHtml(event)}')" 
-                 data-event="${escapeHtml(event)}">
-                ${escapeHtml(event)}
-            </div>
-        `).join('');
+    // Populate key events dropdown
+    const keyEventsDropdown = document.getElementById('keyEventsDropdown');
+    if (keyEventsDropdown && allKeyEvents.length > 0) {
+        keyEventsDropdown.innerHTML = '<option value="">All Key Events</option>' + 
+            allKeyEvents.map(event => {
+                const escapedEvent = escapeHtml(event);
+                return `<option value="${escapedEvent}">${escapedEvent}</option>`;
+            }).join('');
     }
 }
 
@@ -246,6 +241,45 @@ async function loadKeyEvents() {
     });
     
     allKeyEvents = Array.from(eventsSet).sort();
+    setupKeyEventTiles();
+}
+
+// Handle period dropdown change - filter immediately
+function handlePeriodChange() {
+    const periodDropdown = document.getElementById('periodDropdown');
+    if (!periodDropdown) return;
+    
+    const selectedValue = periodDropdown.value;
+    
+    if (!selectedValue || selectedValue === '') {
+        // Clear period filter
+        selectedPeriodRange = null;
+    } else {
+        // Parse the value (format: "start-end")
+        const [start, end] = selectedValue.split('-').map(Number);
+        selectedPeriodRange = { start, end };
+    }
+    
+    // Apply filters immediately
+    applyCombinedFilters();
+}
+
+// Handle key events dropdown change - filter immediately
+function handleKeyEventsChange() {
+    const keyEventsDropdown = document.getElementById('keyEventsDropdown');
+    if (!keyEventsDropdown) return;
+    
+    const selectedValue = keyEventsDropdown.value;
+    
+    if (!selectedValue || selectedValue === '') {
+        // Clear key event filter
+        selectedKeyEvent = null;
+    } else {
+        selectedKeyEvent = selectedValue;
+    }
+    
+    // Apply filters immediately
+    applyCombinedFilters();
 }
 
 function loadKeyEventsGeneral() {
@@ -449,11 +483,11 @@ function applyCombinedFilters() {
                 } catch (e) {
                     console.warn('Error parsing key_events HTML:', e);
                     // Fallback to plain text comparison
-                    return individual.key_events.trim() === selectedKeyEvent;
+                    return individual.key_events.includes(selectedKeyEvent);
                 }
             } else {
-                // Plain text - direct comparison
-                return individual.key_events.trim() === selectedKeyEvent;
+                // Plain text - check if the selected key event is contained in the text
+                return individual.key_events.includes(selectedKeyEvent);
             }
         });
     }
@@ -475,7 +509,14 @@ function clearAllFilters() {
     selectedKeyEventsGeneral = null;
     currentFilterType = 'all';
     
-    // Clear visual selections
+    // Clear dropdown selections
+    const periodDropdown = document.getElementById('periodDropdown');
+    const keyEventsDropdown = document.getElementById('keyEventsDropdown');
+    
+    if (periodDropdown) periodDropdown.value = '';
+    if (keyEventsDropdown) keyEventsDropdown.value = '';
+    
+    // Clear visual selections (for backward compatibility with old UI)
     document.querySelectorAll('#periodLivedGrid .year-range-tile').forEach(tile => tile.classList.remove('selected'));
     document.querySelectorAll('.key-event-tile').forEach(tile => tile.classList.remove('selected'));
     document.querySelectorAll('.key-events-general-btn').forEach(btn => btn.classList.remove('active'));
@@ -1111,6 +1152,8 @@ window.applyYearFilter = applyYearFilter;
 window.clearYearFilter = clearYearFilter;
 window.applyKeyEventFilter = applyKeyEventFilter;
 window.clearKeyEventFilter = clearKeyEventFilter;
+window.handlePeriodChange = handlePeriodChange;
+window.handleKeyEventsChange = handleKeyEventsChange;
 window.startQuiz = startQuiz;
 window.selectAnswer = selectAnswer;
 window.nextQuestion = nextQuestion;
