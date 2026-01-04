@@ -480,6 +480,7 @@ async function viewBiography(individualId) {
         // Switch views
         document.getElementById('marketplaceView').style.display = 'none';
         document.getElementById('biographyView').classList.add('active');
+        document.getElementById('exploreLivesHeader').style.display = 'none';
         
         // Scroll to top
         window.scrollTo(0, 0);
@@ -539,11 +540,10 @@ async function awardReadingCredits(individualId, individualName) {
 }
 
 function displayBiography(individual, canTakeQuiz, attemptCount) {
-    // Set name and years
-    document.getElementById('biographyName').textContent = individual.name;
+    // Set name with dates in format "Name - Birth Year - Death Year"
     const birthYear = individual.birth_year || 'Unknown';
     const deathYear = individual.death_year || 'Present';
-    document.getElementById('biographyYears').textContent = `${birthYear} - ${deathYear}`;
+    document.getElementById('biographyNameWithDates').textContent = `${individual.name} - ${birthYear} - ${deathYear}`;
     
     // Set main photo
     const mainPhoto = document.getElementById('biographyMainPhoto');
@@ -553,12 +553,52 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
         this.src = 'https://via.placeholder.com/200x250?text=No+Photo';
     };
     
-    // Set key facts (now stored as HTML TEXT)
-    const keyFactsGrid = document.getElementById('keyFactsGrid');
+    // Set key facts as bulleted list with arrows
+    const keyFactsList = document.getElementById('keyFactsList');
     if (individual.key_facts && typeof individual.key_facts === 'string' && individual.key_facts.trim() !== '') {
-        keyFactsGrid.innerHTML = individual.key_facts;
+        // Parse key facts - they might be in HTML format or plain text
+        // Try to extract text content and split into list items
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = individual.key_facts;
+        
+        // Get all text nodes and split by common delimiters
+        let facts = [];
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Try to split by various delimiters (newlines, <br>, <li>, etc.)
+        if (tempDiv.querySelectorAll('li').length > 0) {
+            // Already has list items
+            tempDiv.querySelectorAll('li').forEach(li => {
+                const fact = li.textContent.trim();
+                if (fact) facts.push(fact);
+            });
+        } else if (tempDiv.querySelectorAll('p').length > 0) {
+            // Has paragraphs
+            tempDiv.querySelectorAll('p').forEach(p => {
+                const fact = p.textContent.trim();
+                if (fact) facts.push(fact);
+            });
+        } else {
+            // Plain text - split by newlines or other delimiters
+            facts = textContent
+                .split(/\n|<br\s*\/?>|•|·/)
+                .map(fact => fact.trim())
+                .filter(fact => fact.length > 0);
+        }
+        
+        // If no facts found, try the original text
+        if (facts.length === 0 && textContent.trim()) {
+            facts = [textContent.trim()];
+        }
+        
+        // Create list items
+        if (facts.length > 0) {
+            keyFactsList.innerHTML = facts.map(fact => `<li>${escapeHtml(fact)}</li>`).join('');
+        } else {
+            keyFactsList.innerHTML = '<li style="color: #666;">No key facts available.</li>';
+        }
     } else {
-        keyFactsGrid.innerHTML = '<div style="color: #666;">No key facts available.</div>';
+        keyFactsList.innerHTML = '<li style="color: #666;">No key facts available.</li>';
     }
     
     // Set biographical summary with paragraph formatting
@@ -620,6 +660,7 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
 function showMarketplace() {
     document.getElementById('biographyView').classList.remove('active');
     document.getElementById('marketplaceView').style.display = 'block';
+    document.getElementById('exploreLivesHeader').style.display = 'block';
     currentIndividual = null;
     window.scrollTo(0, 0);
 }

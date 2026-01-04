@@ -250,27 +250,22 @@
         
         .biography-header {
             display: flex;
-            justify-content: space-between;
+            gap: 30px;
             align-items: flex-start;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 3px solid #e0e0e0;
         }
         
-        .biography-header-content {
+        .biography-header-left {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .biography-header-right {
             flex: 1;
-        }
-        
-        .biography-header h2 {
-            margin: 0 0 10px 0;
-            font-size: 2.5rem;
-            color: #333;
-        }
-        
-        .biography-header .years {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 15px;
         }
         
         .biography-header img {
@@ -279,7 +274,7 @@
             object-fit: cover;
             border-radius: 10px;
             border: 3px solid #DAA520;
-            margin-left: 30px;
+            margin-bottom: 20px;
         }
         
         .take-quiz-btn {
@@ -291,7 +286,8 @@
             font-weight: 600;
             border-radius: 10px;
             cursor: pointer;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 200px;
             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
             transition: all 0.3s ease;
         }
@@ -307,23 +303,42 @@
             opacity: 0.6;
         }
         
+        .biography-header-right h2 {
+            margin: 0 0 20px 0;
+            font-size: 2.5rem;
+            color: #333;
+        }
+        
         .key-facts-section {
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
+            margin-top: 20px;
         }
         
         .key-facts-section h3 {
             margin: 0 0 15px 0;
             color: #1976D2;
+            font-size: 1.5rem;
         }
         
-        .key-facts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        .key-facts-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .key-facts-list li {
+            padding: 8px 0 8px 25px;
+            position: relative;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .key-facts-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #DAA520;
+            font-weight: bold;
+            font-size: 1.2rem;
         }
         
         .key-fact-item {
@@ -519,7 +534,7 @@
         
         <div id="mainContent" class="hidden">
             <div class="red-white-who-container">
-                <div class="red-white-who-header">
+                <div class="red-white-who-header" id="exploreLivesHeader">
                     <p>Explore the lives of America's patriotic heroes and founding fathers</p>
                 </div>
                 
@@ -575,18 +590,18 @@
                 <!-- Biography Page View -->
                 <div id="biographyView" class="biography-page">
                     <div class="biography-header">
-                        <div class="biography-header-content">
-                            <h2 id="biographyName"></h2>
-                            <div class="years" id="biographyYears"></div>
+                        <div class="biography-header-left">
+                            <img id="biographyMainPhoto" src="" alt="">
                             <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
                         </div>
-                        <img id="biographyMainPhoto" src="" alt="">
-                    </div>
-                    
-                    <div class="key-facts-section">
-                        <h3>Key Facts</h3>
-                        <div id="keyFactsGrid" class="key-facts-grid">
-                            <!-- Key facts will be loaded here -->
+                        <div class="biography-header-right">
+                            <h2 id="biographyNameWithDates"></h2>
+                            <div class="key-facts-section">
+                                <h3>Key Facts</h3>
+                                <ul id="keyFactsList" class="key-facts-list">
+                                    <!-- Key facts will be loaded here -->
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     
