@@ -19,189 +19,60 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Approvals page DOMContentLoaded');
     
-    // Check if authStatus is already available
-    if (window.authStatus && window.authStatus.isAuthenticated) {
-        console.log('authStatus already available, calling checkAdminAccess immediately');
-        setTimeout(() => checkAdminAccess(), 100);
-        return;
-    }
-    
-    let checkAuthInterval = null;
-    let timeoutId = null;
-    
-    const cleanup = () => {
-        if (checkAuthInterval) {
-            clearInterval(checkAuthInterval);
-            checkAuthInterval = null;
+    const checkAuth = setInterval(() => {
+        if (window.authStatus) {
+            clearInterval(checkAuth);
+            if (window.authStatus.isAuthenticated) {
+                checkAdminAccess();
+            } else {
+                window.location.href = getPagePath('login.html');
+            }
         }
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-        }
-    };
+    }, 100);
     
     setTimeout(() => {
-        checkAuthInterval = setInterval(() => {
-            if (window.authStatus) {
-                cleanup();
-                console.log('authStatus found, isAuthenticated:', window.authStatus.isAuthenticated);
-                if (window.authStatus.isAuthenticated) {
-                    console.log('User is authenticated, calling checkAdminAccess');
-                    checkAdminAccess();
-                } else {
-                    const authCheck = document.getElementById('authCheck');
-                    if (authCheck) {
-                        authCheck.innerHTML = '<p>Authentication failed. Redirecting to login...</p>';
-                    }
-                    setTimeout(() => {
-                        window.location.href = getPagePath('login.html');
-                    }, 2000);
-                }
-            }
-        }, 100);
-        
-        timeoutId = setTimeout(() => {
-            cleanup();
-            if (!window.authStatus) {
-                const authCheck = document.getElementById('authCheck');
-                if (authCheck) {
-                    authCheck.innerHTML = '<p style="color: #dc3545;">Authentication check timed out. Please refresh the page.</p>';
-                }
-            } else if (window.authStatus.isAuthenticated) {
-                // If authenticated but checkAdminAccess wasn't called, call it now
-                const adminCheck = document.getElementById('adminCheck');
-                if (adminCheck && (adminCheck.textContent.includes('Checking admin access') || adminCheck.style.display !== 'none')) {
-                    console.log('Auth check completed but admin check not called, calling now');
-                    checkAdminAccess();
-                }
-            } else {
-                // Not authenticated - try to get session from sessionStorage as fallback
-                const sessionData = sessionStorage.getItem('userSession');
-                if (sessionData) {
-                    try {
-                        const session = JSON.parse(sessionData);
-                        if (session && session.uid) {
-                            console.log('Found session in sessionStorage, calling checkAdminAccess');
-                            checkAdminAccess();
-                        }
-                    } catch (e) {
-                        console.error('Error parsing sessionStorage data:', e);
-                    }
-                }
-            }
-        }, 10000); // Increased timeout to 10 seconds
-    }, 200);
+        clearInterval(checkAuth);
+        if (!window.authStatus) {
+            window.location.href = getPagePath('login.html');
+        }
+    }, 5000);
 });
 
 async function checkAdminAccess() {
-    console.log('checkAdminAccess called');
+    const authCheck = document.getElementById('authCheck');
+    const mainContent = document.getElementById('mainContent');
+    const adminCheck = document.getElementById('adminCheck');
+    const adminContent = document.getElementById('adminContent');
     
     try {
-        const authCheck = document.getElementById('authCheck');
-        const mainContent = document.getElementById('mainContent');
-        const adminCheck = document.getElementById('adminCheck');
-        const adminContent = document.getElementById('adminContent');
-        
-        // Log which elements are missing for debugging
-        if (!authCheck) console.error('authCheck element not found');
-        if (!mainContent) console.error('mainContent element not found');
-        if (!adminCheck) console.error('adminCheck element not found');
-        if (!adminContent) console.error('adminContent element not found');
-        
-        if (!authCheck || !mainContent || !adminCheck || !adminContent) {
-            console.error('Required DOM elements not found. Cannot proceed.');
-            if (authCheck) {
-                authCheck.innerHTML = '<p style="color: #dc3545;">Error: Page elements not found. Please refresh the page.</p>';
-            }
-            return;
-        }
-        
-        // Try to get session from authStatus first, then fallback to sessionStorage
-        let session = null;
-        if (window.authStatus && window.authStatus.getSession) {
-            try {
-                session = window.authStatus.getSession();
-                console.log('Session from authStatus:', session);
-            } catch (e) {
-                console.warn('Error getting session from authStatus:', e);
-            }
-        }
-        
-        // Fallback: get session directly from sessionStorage
-        if (!session) {
-            const sessionData = sessionStorage.getItem('userSession');
-            if (sessionData) {
-                try {
-                    session = JSON.parse(sessionData);
-                    console.log('Session from sessionStorage:', session);
-                } catch (e) {
-                    console.error('Error parsing session data:', e);
-                }
-            }
-        }
-        
+        const session = window.authStatus?.getSession();
         if (!session || !session.uid) {
-            console.error('No valid session found');
-            authCheck.innerHTML = '<p style="color: #dc3545;">No session found. Redirecting to login...</p>';
-            setTimeout(() => {
-                window.location.href = getPagePath('login.html');
-            }, 2000);
+            window.location.href = getPagePath('login.html');
             return;
         }
         
-        console.log('Session found:', { uid: session.uid, userType: session.userType, username: session.username });
-        
-        // Show mainContent first - force display
-        authCheck.classList.add('hidden');
-        authCheck.style.display = 'none';
-        mainContent.classList.remove('hidden');
-        mainContent.style.display = '';
-        
-        // Check admin access
+        // Only admins can access this page
         if (session.userType !== 'admin') {
-            console.log('User is not an admin:', session.userType);
+            authCheck.classList.add('hidden');
+            mainContent.classList.remove('hidden');
             adminCheck.innerHTML = '<p style="color: #dc3545;">Access denied. Admin privileges required.</p>';
             adminCheck.style.display = 'block';
             adminContent.classList.add('hidden');
-            adminContent.style.display = 'none';
             return;
         }
         
-        console.log('Admin access confirmed, showing admin content');
-        
-        // Hide admin check and show admin content - force display immediately
+        // Show content
+        authCheck.classList.add('hidden');
+        mainContent.classList.remove('hidden');
         adminCheck.classList.add('hidden');
-        adminCheck.style.display = 'none';
         adminContent.classList.remove('hidden');
-        adminContent.style.display = '';
         
-        // Setup event listeners first (don't wait for approvals)
+        // Setup event listeners and load approvals
         setupEventListeners();
-        
-        // Load approvals asynchronously (don't block UI)
-        loadPendingApprovals().then(() => {
-            console.log('Approvals loaded successfully');
-        }).catch((error) => {
-            console.error('Error loading approvals:', error);
-            const approvalsList = document.getElementById('approvalsList');
-            if (approvalsList) {
-                approvalsList.innerHTML = `<div class="no-approvals" style="color: #dc3545;">Error loading approvals: ${error.message || 'Unknown error'}. Please refresh the page.</div>`;
-            }
-        });
+        await loadPendingApprovals();
     } catch (error) {
-        console.error('Error in checkAdminAccess:', error);
-        console.error('Error stack:', error.stack);
-        const authCheck = document.getElementById('authCheck');
-        const adminCheck = document.getElementById('adminCheck');
-        const errorMsg = error.message || 'Unknown error';
-        if (authCheck) {
-            authCheck.innerHTML = `<p style="color: #dc3545;">Error: ${errorMsg}. Please refresh the page.</p>`;
-            authCheck.style.display = 'block';
-        }
-        if (adminCheck) {
-            adminCheck.innerHTML = `<p style="color: #dc3545;">Error: ${errorMsg}. Please refresh the page.</p>`;
-            adminCheck.style.display = 'block';
-        }
+        console.error('Error checking admin access:', error);
+        authCheck.innerHTML = `<p style="color: #dc3545;">Error: ${error.message || 'Unknown error'}. Please refresh the page.</p>`;
     }
 }
 
