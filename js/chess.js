@@ -800,12 +800,7 @@ class ChessGame {
     
     updateDisplay() {
         const playerName = this.currentPlayer === 'white' ? this.player1Name : this.player2Name;
-        const isComputerTurn = this.isComputerTurn();
         let displayText = `Current Player: ${playerName} (${this.currentPlayer})`;
-        
-        if (isComputerTurn) {
-            displayText += ' 🤖 (Computer is thinking...)';
-        }
         
         this.currentPlayerDisplay.textContent = displayText;
         this.moveCountDisplay.textContent = `Moves: ${this.moveCount}`;

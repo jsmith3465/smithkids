@@ -808,12 +808,7 @@ class CheckersGame {
     updateDisplay() {
         const playerName = this.currentPlayer === 'red' ? this.player1Name : this.player2Name;
         const playerColor = this.currentPlayer === 'red' ? 'Red' : 'Black';
-        const isComputerTurn = this.isComputerTurn();
         let displayText = `Current Player: ${playerName} (${playerColor})`;
-        
-        if (isComputerTurn) {
-            displayText += ' 🤖 (Computer is thinking...)';
-        }
         
         if (this.mustJump) {
             displayText += ' - Must Jump!';
