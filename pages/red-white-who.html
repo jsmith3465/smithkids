@@ -290,13 +290,6 @@
             object-fit: cover;
             border-radius: 10px;
             border: 3px solid #DAA520;
-            margin-bottom: 20px;
-        }
-        
-        .quiz-button-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
         }
         
         .take-quiz-btn {
@@ -308,9 +301,11 @@
             font-weight: 600;
             border-radius: 10px;
             cursor: pointer;
+            width: 100%;
+            max-width: 200px;
             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
             transition: all 0.3s ease;
-            white-space: nowrap;
+            margin-top: 20px;
         }
         
         .take-quiz-btn:hover:not(:disabled) {
@@ -324,15 +319,8 @@
             opacity: 0.6;
         }
         
-        .quiz-attempts-text {
-            margin-top: 8px;
-            font-size: 0.9rem;
-            color: #666;
-            text-align: right;
-        }
-        
         .key-facts-section {
-            margin-top: 20px;
+            margin-top: 0;
         }
         
         .key-facts-section h3 {
@@ -622,16 +610,13 @@
                                 <img id="biographyMainPhoto" src="" alt="">
                             </div>
                             <div class="biography-header-right">
-                                <div class="quiz-button-container">
-                                    <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
-                                    <div class="quiz-attempts-text" id="quizAttemptsText"></div>
-                                </div>
                                 <div class="key-facts-section">
                                     <h3>Key Facts</h3>
                                     <ul id="keyFactsList" class="key-facts-list">
                                         <!-- Key facts will be loaded here -->
                                     </ul>
                                 </div>
+                                <button class="take-quiz-btn" id="takeQuizBtn" onclick="startQuiz()">📝 Take Quiz</button>
                             </div>
                         </div>
                     </div>

@@ -633,17 +633,14 @@ function displayBiography(individual, canTakeQuiz, attemptCount) {
         photoGalleryGrid.innerHTML = '<div style="color: #666; grid-column: 1 / -1; text-align: center; padding: 20px;">No additional photos available.</div>';
     }
     
-    // Set quiz button and attempts text
+    // Set quiz button
     const quizBtn = document.getElementById('takeQuizBtn');
-    const attemptsText = document.getElementById('quizAttemptsText');
     if (canTakeQuiz) {
         quizBtn.disabled = false;
-        quizBtn.textContent = '📝 Take Quiz';
-        attemptsText.textContent = `${3 - attemptCount} attempt${3 - attemptCount !== 1 ? 's' : ''} remaining`;
+        quizBtn.textContent = `📝 Take Quiz (${3 - attemptCount} attempt${3 - attemptCount !== 1 ? 's' : ''} remaining)`;
     } else {
         quizBtn.disabled = true;
-        quizBtn.textContent = '📝 Quiz Unavailable';
-        attemptsText.textContent = '3 attempts used';
+        quizBtn.textContent = '📝 Quiz Unavailable (3 attempts used)';
     }
 }
 
@@ -840,19 +837,12 @@ async function submitQuiz() {
         
         // Update quiz button
         const quizBtn = document.getElementById('takeQuizBtn');
-        const attemptsText = document.getElementById('quizAttemptsText');
         if (canTakeQuiz) {
             quizBtn.disabled = false;
-            quizBtn.textContent = '📝 Take Quiz';
-            if (attemptsText) {
-                attemptsText.textContent = `${3 - attemptCount} attempt${3 - attemptCount !== 1 ? 's' : ''} remaining`;
-            }
+            quizBtn.textContent = `📝 Take Quiz (${3 - attemptCount} attempt${3 - attemptCount !== 1 ? 's' : ''} remaining)`;
         } else {
             quizBtn.disabled = true;
-            quizBtn.textContent = '📝 Quiz Unavailable';
-            if (attemptsText) {
-                attemptsText.textContent = '3 attempts used';
-            }
+            quizBtn.textContent = '📝 Quiz Unavailable (3 attempts used)';
         }
         
     } catch (error) {
