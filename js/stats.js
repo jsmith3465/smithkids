@@ -133,6 +133,9 @@ async function loadStatistics(tabName) {
         case 'chess':
             await loadChessStatistics();
             break;
+        case 'blackjack':
+            await loadBlackjackStatistics();
+            break;
     }
 }
 
@@ -1403,6 +1406,127 @@ async function loadChessStatistics() {
         chessStatsDiv.innerHTML = isMissingTable
             ? '<div class="no-data">Chess statistics table is not set up yet.<br><small>Run <code>create_chess_table.sql</code> in Supabase, then play a game.</small></div>'
             : `<div class="no-data">Error loading Chess statistics: ${msg}</div>`;
+    }
+}
+
+async function loadBlackjackStatistics() {
+    const blackjackStatsDiv = document.getElementById('blackjackStats');
+    
+    try {
+        const { data: scores, error: scoresError } = await supabase
+            .from('blackjack_scores')
+            .select('user_uid, result, player_final_hand, dealer_final_hand, player_blackjack, dealer_blackjack, game_duration_seconds, created_at')
+            .order('created_at', { ascending: false });
+        
+        if (scoresError) throw scoresError;
+        
+        if (!scores || scores.length === 0) {
+            blackjackStatsDiv.innerHTML = '<div class="no-data">No Blackjack game data available yet. Play the game to see statistics!</div>';
+            return;
+        }
+        
+        const userIds = [...new Set(scores.map(s => s.user_uid))];
+        const { data: users, error: usersError } = await supabase
+            .from('Users')
+            .select('UID, First_Name, Last_Name, Username')
+            .in('UID', userIds);
+        
+        if (usersError) throw usersError;
+        
+        const userMap = {};
+        if (users) {
+            users.forEach(user => {
+                userMap[user.UID] = user;
+            });
+        }
+        
+        const userStats = {};
+        scores.forEach(score => {
+            if (!userStats[score.user_uid]) {
+                userStats[score.user_uid] = {
+                    gamesPlayed: 0,
+                    wins: 0,
+                    losses: 0,
+                    pushes: 0,
+                    blackjacks: 0,
+                    totalTime: 0
+                };
+            }
+            userStats[score.user_uid].gamesPlayed++;
+            if (score.result === 'win') userStats[score.user_uid].wins++;
+            else if (score.result === 'loss') userStats[score.user_uid].losses++;
+            else if (score.result === 'push') userStats[score.user_uid].pushes++;
+            
+            if (score.player_blackjack) {
+                userStats[score.user_uid].blackjacks++;
+            }
+            
+            userStats[score.user_uid].totalTime += Number(score.game_duration_seconds || 0);
+        });
+        
+        const table = document.createElement('table');
+        table.className = 'stats-table';
+        
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Player</th>
+            <th>Games Played</th>
+            <th>Wins</th>
+            <th>Losses</th>
+            <th>Pushes</th>
+            <th>Blackjacks</th>
+            <th>Win %</th>
+            <th>Total Time</th>
+        `;
+        table.appendChild(headerRow);
+        
+        const sortedUsers = Object.entries(userStats).sort((a, b) => {
+            const winRateA = a[1].gamesPlayed > 0 ? a[1].wins / a[1].gamesPlayed : 0;
+            const winRateB = b[1].gamesPlayed > 0 ? b[1].wins / b[1].gamesPlayed : 0;
+            return winRateB - winRateA;
+        });
+        
+        sortedUsers.forEach(([uid, stats]) => {
+            const user = userMap[uid];
+            if (!user) return;
+            
+            const winPercentage = stats.gamesPlayed > 0 
+                ? ((stats.wins / stats.gamesPlayed) * 100).toFixed(1) 
+                : '0.0';
+            const totalMinutes = Math.floor(stats.totalTime / 60);
+            const totalSeconds = stats.totalTime % 60;
+            const timeDisplay = totalMinutes > 0 
+                ? `${totalMinutes}m ${totalSeconds}s` 
+                : `${totalSeconds}s`;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${getUserDisplayName(user)}</td>
+                <td>${stats.gamesPlayed}</td>
+                <td>${stats.wins}</td>
+                <td>${stats.losses}</td>
+                <td>${stats.pushes}</td>
+                <td>${stats.blackjacks}</td>
+                <td><strong>${winPercentage}%</strong></td>
+                <td>${timeDisplay}</td>
+            `;
+            table.appendChild(row);
+        });
+        
+        blackjackStatsDiv.innerHTML = '';
+        blackjackStatsDiv.appendChild(table);
+        
+    } catch (error) {
+        console.error('Error loading Blackjack statistics:', error);
+        const msg = error?.message || 'Unknown error';
+        const isMissingTable = /table.*does not exist/i.test(msg) || 
+                              /Could not find the table/i.test(msg) || 
+                              /schema cache/i.test(msg) ||
+                              error?.code === '42P01' ||
+                              error?.code === 'PGRST116';
+        blackjackStatsDiv.innerHTML = isMissingTable
+            ? '<div class="no-data">Blackjack statistics table is not set up yet.<br><small>Run <code>create_blackjack_table.sql</code> in Supabase, then play a game.</small></div>'
+            : `<div class="no-data">Error loading Blackjack statistics: ${msg}</div>`;
     }
 }
 

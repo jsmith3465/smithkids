@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack - Smith Team Six</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .blackjack-container {
+            max-width: min(95vw, 1200px);
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: calc(100% - 40px);
+            padding: 40px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .blackjack-container {
+                max-width: 100%;
+                padding: 20px;
+            }
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #DAA520;
+            border-radius: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .score-display {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .score-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #DAA520;
+        }
+        
+        .game-area {
+            background: #0d7a0d;
+            border: 5px solid #8B4513;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 400px;
+        }
+        
+        .hand-section {
+            margin: 20px 0;
+            min-height: 150px;
+        }
+        
+        .hand-label {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hand-value {
+            color: #FFD700;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+        }
+        
+        .card {
+            width: 80px;
+            height: 112px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+        
+        .card.red {
+            color: #d32f2f;
+        }
+        
+        .card.black {
+            color: #212121;
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        .card-rank {
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        
+        .card-suit {
+            font-size: 1.5rem;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .game-message {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #DAA520;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            min-height: 30px;
+        }
+        
+        .game-message.win {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .game-message.loss {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .game-message.push {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .game-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn-game {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid;
+        }
+        
+        .btn-hit {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .btn-hit:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-stand {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-stand:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-game:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 600px) {
+            .card {
+                width: 60px;
+                height: 84px;
+            }
+            
+            .card-rank {
+                font-size: 1rem;
+            }
+            
+            .card-suit {
+                font-size: 1.2rem;
+            }
+            
+            header h1 {
+                font-size: 2.5rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 2rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blackjack-container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h1 style="margin: 0; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #DAA520 0%, #CC5500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🃏 Blackjack</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="userInfo" style="color: #666; font-size: 0.9rem;"></span>
+                    <button id="logoutBtn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div id="authCheck" style="text-align: center; padding: 40px;">
+            <p>Checking authentication...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="game-header">
+                <div class="score-display">
+                    <div class="score-label">Wins</div>
+                    <div class="score-value" id="winsDisplay">0</div>
+                </div>
+                <div class="score-display">
+                    <div class="score-label">Losses</div>
+                    <div class="score-value" id="lossesDisplay">0</div>
+                </div>
+                <div class="score-display">
+                    <div class="score-label">Pushes</div>
+                    <div class="score-value" id="pushesDisplay">0</div>
+                </div>
+            </div>
+            
+            <div class="game-area">
+                <div class="hand-section">
+                    <div class="hand-label">Dealer's Hand</div>
+                    <div class="hand-value" id="dealerValue"></div>
+                    <div class="cards-container" id="dealerCards"></div>
+                </div>
+                
+                <div class="game-message hidden" id="gameMessage"></div>
+                
+                <div class="hand-section">
+                    <div class="hand-label">Your Hand</div>
+                    <div class="hand-value" id="playerValue"></div>
+                    <div class="cards-container" id="playerCards"></div>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <button id="dealBtn" class="btn btn-primary">Deal Cards</button>
+                <button id="hitBtn" class="btn-game btn-hit" disabled>Hit</button>
+                <button id="standBtn" class="btn-game btn-stand" disabled>Stand</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/profile-menu.js"></script>
+    <script type="module" src="../js/blackjack.js"></script>
+</body>
+</html>
+
